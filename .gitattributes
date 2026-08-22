@@ -1,0 +1,3 @@
+# Preserve adversarial conformance fixtures byte-for-byte. Some intentionally
+# contain invalid UTF-8, NUL bytes, or trailing JSON whitespace.
+spec/fixtures/json_test_suite/test_parsing/*.json -diff -text

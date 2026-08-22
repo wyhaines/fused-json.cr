@@ -1,0 +1,22 @@
+name: fused_json
+version: 0.1.0
+
+authors:
+  - Kirk Haines <wyhaines@gmail.com>
+
+description: A fast, strict JSON parser with dynamic, typed, pull, and streaming APIs
+repository: https://github.com/wyhaines/fused-json.cr
+homepage: https://github.com/wyhaines/fused-json.cr
+
+crystal: ">= 1.21.0, < 2.0.0"
+
+development_dependencies:
+  ameba:
+    github: crystal-ameba/ameba
+    version: 1.7.0-dev
+
+targets:
+  ameba:
+    main: lib/ameba/bin/ameba.cr
+
+license: MIT AND Apache-2.0

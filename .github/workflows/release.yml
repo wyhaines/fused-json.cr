@@ -1,0 +1,167 @@
+name: Release
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: Version without the v prefix
+        required: true
+        type: string
+      commit:
+        description: Full commit SHA to release
+        required: true
+        type: string
+
+permissions:
+  contents: read
+
+concurrency:
+  group: release-${{ inputs.version }}
+  cancel-in-progress: false
+
+jobs:
+  validate:
+    name: Validate Crystal ${{ matrix.crystal }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    strategy:
+      fail-fast: false
+      matrix:
+        crystal:
+          - 1.21.0
+          - latest
+
+    steps:
+      - name: Check out release commit
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          ref: ${{ inputs.commit }}
+          persist-credentials: false
+
+      - name: Verify selected commit
+        run: |
+          [[ "$RELEASE_COMMIT" =~ ^[0-9a-f]{40}$ ]]
+          test "$(git rev-parse HEAD)" = "$RELEASE_COMMIT"
+        env:
+          RELEASE_COMMIT: ${{ inputs.commit }}
+
+      - name: Install Crystal
+        uses: crystal-lang/install-crystal@d8ef131ecec0352ce0e39b81b0a6d95def58fe2f # v1.9.2
+        with:
+          crystal: ${{ matrix.crystal }}
+
+      - name: Install dependencies
+        run: shards install
+
+      - name: Check release version and metadata
+        run: crystal run scripts/check_release.cr -- "$RELEASE_VERSION"
+        env:
+          RELEASE_VERSION: ${{ inputs.version }}
+
+      - name: Check shard metadata and formatting
+        run: |
+          shards check
+          crystal tool format --check src spec bench examples scripts
+
+      - name: Run Ameba
+        run: |
+          shards build ameba
+          bin/ameba src spec bench examples scripts
+
+      - name: Check canonical consumer installation
+        shell: bash
+        env:
+          RELEASE_COMMIT: ${{ inputs.commit }}
+          SHARDS_CACHE_PATH: ${{ runner.temp }}/fused-json-shards-cache
+        run: |
+          consumer_dir="$(mktemp -d)"
+          mkdir -p "$consumer_dir/src"
+          cat > "$consumer_dir/shard.yml" <<EOF
+          name: fused_json_consumer
+          version: 0.0.0
+
+          dependencies:
+            fused_json:
+              github: wyhaines/fused-json.cr
+              commit: $RELEASE_COMMIT
+          EOF
+          cat > "$consumer_dir/src/main.cr" <<'EOF'
+          require "fused_json"
+
+          value = FusedJSON.load(%({"ok":true}))
+          abort "unexpected parse result" unless value["ok"].as_bool
+          EOF
+          cd "$consumer_dir"
+          shards install
+          crystal run --error-on-warnings src/main.cr
+
+      - name: Check public documentation
+        run: |
+          crystal run scripts/check_doc_examples.cr
+          crystal docs --error-on-warnings --output=/tmp/fused-json-docs src/fused_json.cr
+          test -f /tmp/fused-json-docs/FusedJSON/ParseError.html
+          test -f /tmp/fused-json-docs/FusedJSON/PullParser.html
+          test ! -e /tmp/fused-json-docs/FusedJSON/Parser.html
+          test ! -e /tmp/fused-json-docs/FusedJSON/StreamingParser.html
+          test ! -e /tmp/fused-json-docs/FusedJSON/StreamingPullParser.html
+
+      - name: Compile public examples
+        run: |
+          for example in examples/*.cr; do
+            crystal build --no-codegen --error-on-warnings "$example"
+          done
+
+      - name: Run release specs
+        run: |
+          crystal spec --order=random --error-on-warnings
+          crystal spec -Dfused_json_force_portable_float --order=random --error-on-warnings
+          crystal spec -Dfused_json_force_scalar_string_scan --order=random --error-on-warnings
+          crystal spec -Dfused_json_force_portable_float -Dfused_json_force_scalar_string_scan --order=random --error-on-warnings
+
+      - name: Build release benchmarks
+        run: |
+          crystal build --release --no-debug bench/parse.cr -o /tmp/fused-json-bench
+          crystal build --release --no-debug bench/pull.cr -o /tmp/fused-json-pull-bench
+          crystal build --release --no-debug bench/typed.cr -o /tmp/fused-json-typed-bench
+          crystal build --release --no-debug bench/stream.cr -o /tmp/fused-json-stream-bench
+          crystal build --release --no-debug -Dfused_json_force_scalar_string_scan bench/parse.cr -o /tmp/fused-json-scalar-bench
+
+  publish:
+    name: Publish GitHub release
+    if: github.repository == 'wyhaines/fused-json.cr'
+    needs: validate
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    environment: release
+    permissions:
+      contents: write
+
+    steps:
+      - name: Create release
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_REPOSITORY: ${{ github.repository }}
+          RELEASE_COMMIT: ${{ inputs.commit }}
+          RELEASE_VERSION: ${{ inputs.version }}
+        run: |
+          [[ "$RELEASE_COMMIT" =~ ^[0-9a-f]{40}$ ]]
+          test "$(gh api "repos/$GITHUB_REPOSITORY/commits/$RELEASE_COMMIT" --jq .sha)" = "$RELEASE_COMMIT"
+
+          release_tag="v${RELEASE_VERSION}"
+          if gh api "repos/$GITHUB_REPOSITORY/git/ref/tags/$release_tag" >/dev/null 2>&1; then
+            echo "tag $release_tag already exists" >&2
+            exit 1
+          fi
+          if gh release view --repo "$GITHUB_REPOSITORY" "$release_tag" >/dev/null 2>&1; then
+            echo "release $release_tag already exists" >&2
+            exit 1
+          fi
+
+          release_args=("$release_tag" --target "$RELEASE_COMMIT" --title "$release_tag" --generate-notes)
+          if [[ "$RELEASE_VERSION" == *-* ]]; then
+            release_args+=(--prerelease)
+          fi
+          gh release create --repo "$GITHUB_REPOSITORY" "${release_args[@]}"
+
+          published_sha="$(gh api "repos/$GITHUB_REPOSITORY/git/ref/tags/$release_tag" --jq .object.sha)"
+          test "$published_sha" = "$RELEASE_COMMIT"

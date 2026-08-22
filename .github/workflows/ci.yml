@@ -1,0 +1,121 @@
+name: CI
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+  schedule:
+    - cron: "17 6 * * 1"
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    name: Crystal ${{ matrix.label }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    continue-on-error: ${{ matrix.experimental }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - label: minimum
+            crystal: 1.21.0
+            experimental: false
+          - label: stable
+            crystal: latest
+            experimental: false
+          - label: nightly
+            crystal: nightly
+            experimental: true
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          persist-credentials: false
+
+      - name: Install Crystal
+        uses: crystal-lang/install-crystal@d8ef131ecec0352ce0e39b81b0a6d95def58fe2f # v1.9.2
+        with:
+          crystal: ${{ matrix.crystal }}
+
+      - name: Show compiler version
+        run: crystal version
+
+      - name: Install dependencies
+        run: shards install
+
+      - name: Check shard metadata
+        run: shards check
+
+      - name: Run Ameba
+        run: |
+          shards build ameba
+          bin/ameba src spec bench examples scripts
+
+      - name: Check consumer installation
+        shell: bash
+        run: |
+          consumer_dir="$(mktemp -d)"
+          mkdir -p "$consumer_dir/src"
+          cat > "$consumer_dir/shard.yml" <<EOF
+          name: fused_json_consumer
+          version: 0.0.0
+
+          dependencies:
+            fused_json:
+              path: $GITHUB_WORKSPACE
+          EOF
+          cat > "$consumer_dir/src/main.cr" <<'EOF'
+          require "fused_json"
+
+          value = FusedJSON.load(%({"ok":true}))
+          abort "unexpected parse result" unless value["ok"].as_bool
+          EOF
+          cd "$consumer_dir"
+          shards install
+          crystal run --error-on-warnings src/main.cr
+
+      - name: Check formatting
+        run: crystal tool format --check src spec bench examples scripts
+
+      - name: Compile public examples
+        run: |
+          for example in examples/*.cr; do
+            crystal build --no-codegen --error-on-warnings "$example"
+          done
+
+      - name: Compile documentation examples
+        run: crystal run scripts/check_doc_examples.cr
+
+      - name: Check API documentation
+        run: |
+          crystal docs --error-on-warnings --output=/tmp/fused-json-docs src/fused_json.cr
+          test -f /tmp/fused-json-docs/FusedJSON/ParseError.html
+          test -f /tmp/fused-json-docs/FusedJSON/PullParser.html
+          test ! -e /tmp/fused-json-docs/FusedJSON/Parser.html
+          test ! -e /tmp/fused-json-docs/FusedJSON/StreamingParser.html
+          test ! -e /tmp/fused-json-docs/FusedJSON/StreamingPullParser.html
+
+      - name: Run specs
+        run: crystal spec --order=random --error-on-warnings
+
+      - name: Run specs with portable float fallback
+        run: crystal spec -Dfused_json_force_portable_float --order=random --error-on-warnings
+
+      - name: Run specs with scalar string scanner
+        run: crystal spec -Dfused_json_force_scalar_string_scan --order=random --error-on-warnings
+
+      - name: Run specs with portable fallbacks
+        run: crystal spec -Dfused_json_force_portable_float -Dfused_json_force_scalar_string_scan --order=random --error-on-warnings
+
+      - name: Build release benchmarks
+        if: ${{ matrix.experimental == false }}
+        run: |
+          crystal build --release --no-debug bench/parse.cr -o /tmp/fused-json-bench
+          crystal build --release --no-debug bench/pull.cr -o /tmp/fused-json-pull-bench
+          crystal build --release --no-debug bench/typed.cr -o /tmp/fused-json-typed-bench
+          crystal build --release --no-debug bench/stream.cr -o /tmp/fused-json-stream-bench
+          crystal build --release --no-debug -Dfused_json_force_scalar_string_scan bench/parse.cr -o /tmp/fused-json-scalar-bench
