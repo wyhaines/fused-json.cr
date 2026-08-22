@@ -124,6 +124,8 @@ jobs:
           crystal build --release --no-debug bench/pull.cr -o /tmp/fused-json-pull-bench
           crystal build --release --no-debug bench/typed.cr -o /tmp/fused-json-typed-bench
           crystal build --release --no-debug bench/stream.cr -o /tmp/fused-json-stream-bench
+          crystal build --release --no-debug bench/tic_fixture.cr -o /tmp/fused-json-tic-fixture
+          crystal build --release --no-debug bench/tic.cr -o /tmp/fused-json-tic-bench
           crystal build --release --no-debug -Dfused_json_force_scalar_string_scan bench/parse.cr -o /tmp/fused-json-scalar-bench
 
   publish:

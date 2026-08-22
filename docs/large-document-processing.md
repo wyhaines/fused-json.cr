@@ -22,6 +22,8 @@ Add typed decoding at the current `FusedJSON::PullParser` position:
 ```text
 pull.read(type : T.class) : T forall T
 pull.read_array(type : T.class, & : T ->) : Nil forall T
+pull.raw_number_value : String
+pull.read_raw_number : String
 ```
 
 `read(T)` must accept any value position, including values nested in objects
@@ -39,6 +41,13 @@ untyped block overload remains available.
 No lazy `Iterator(T)`, JSONPath selector, root-field registry, or new public
 adapter is included in this milestone. The pull API already supplies the
 needed structural navigation and skipping.
+
+`raw_number_value` returns the current integer or float token without consuming
+it. `read_raw_number` returns that token and advances once. Both methods reject
+non-number events, preserve the source spelling exactly, and exclude surrounding
+whitespace. They support applications that store an exact number for later
+conversion, including values outside `Int128` or `UInt128`. They do not add
+general raw-value access for strings, arrays, or objects.
 
 ## Example TiC workflow
 
@@ -126,6 +135,13 @@ Crystal pull behavior. `load` and `parse` keep their existing `JSON::Any`
 behavior and reject values outside those domains. This is a pre-1.0 revision
 to the experimental pull contract and must be documented in the changelog and
 migration guide.
+
+Raw-number reads never perform a numeric conversion. They still require a
+grammar-valid JSON number, respect `max_token_bytes` on streaming input, and
+allocate a `String` proportional to the token. Repeated access need not return
+the same `String` object. A TiC consumer that must defer its numeric policy can
+therefore pass `pull.read_raw_number` directly to its decimal or database layer
+without first converting through `Int64`, `Int128`, or `Float64`.
 
 ## Completion and errors
 

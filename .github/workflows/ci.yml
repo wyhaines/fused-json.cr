@@ -118,4 +118,16 @@ jobs:
           crystal build --release --no-debug bench/pull.cr -o /tmp/fused-json-pull-bench
           crystal build --release --no-debug bench/typed.cr -o /tmp/fused-json-typed-bench
           crystal build --release --no-debug bench/stream.cr -o /tmp/fused-json-stream-bench
+          crystal build --release --no-debug bench/tic_fixture.cr -o /tmp/fused-json-tic-fixture
+          crystal build --release --no-debug bench/tic.cr -o /tmp/fused-json-tic-bench
           crystal build --release --no-debug -Dfused_json_force_scalar_string_scan bench/parse.cr -o /tmp/fused-json-scalar-bench
+
+      - name: Smoke test TiC benchmark tools
+        if: ${{ matrix.experimental == false }}
+        run: |
+          /tmp/fused-json-tic-fixture --profile many-small --bytes 65537 --seed 7 --output /tmp/fused-json-tic.json --gzip-output /tmp/fused-json-tic.json.gz --manifest /tmp/fused-json-tic.meta.json
+          /tmp/fused-json-tic-bench verify --input /tmp/fused-json-tic.json --gzip-input /tmp/fused-json-tic.json.gz --manifest /tmp/fused-json-tic.meta.json > /tmp/fused-json-tic-verify.json
+          /tmp/fused-json-tic-bench run --input /tmp/fused-json-tic.json --manifest /tmp/fused-json-tic.meta.json --mode plain-drain --commit "$GITHUB_SHA" > /tmp/fused-json-tic-plain.json
+          /tmp/fused-json-tic-bench run --input /tmp/fused-json-tic.json --gzip-input /tmp/fused-json-tic.json.gz --manifest /tmp/fused-json-tic.meta.json --mode gzip-drain --commit "$GITHUB_SHA" > /tmp/fused-json-tic-gzip.json
+          /tmp/fused-json-tic-bench run --input /tmp/fused-json-tic.json --manifest /tmp/fused-json-tic.meta.json --mode fused-pull --commit "$GITHUB_SHA" > /tmp/fused-json-tic-fused.json
+          /tmp/fused-json-tic-bench run --input /tmp/fused-json-tic.json --manifest /tmp/fused-json-tic.meta.json --mode crystal-pull --commit "$GITHUB_SHA" > /tmp/fused-json-tic-crystal.json

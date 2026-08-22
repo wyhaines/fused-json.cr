@@ -32,3 +32,7 @@ into release notes unless the commit and procedure are reproducible.
 The controlled [reference results](benchmark-results.md) record the commit,
 host, commands, medians, variability, and managed allocation data used for the
 Milestone 7 release review.
+
+The [TiC large-document benchmark guide](tic-benchmarking.md) covers generated
+streaming fixtures, semantic verification, decompression baselines, one-shot
+parser receipts, and external peak-RSS measurements.

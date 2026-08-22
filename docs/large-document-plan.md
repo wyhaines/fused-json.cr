@@ -14,7 +14,7 @@ Status: proposed. This plan implements the requirements in
 - Keep each implementation commit focused and update public documentation with
   the behavior it introduces.
 
-## Milestone 1: Fixtures and baselines
+## Milestone 1: Fixtures and baselines (implemented)
 
 Add a deterministic, streaming TiC-shaped generator at
 `bench/tic_fixture.cr`. It must produce a manifest with the seed, exact byte
@@ -30,16 +30,17 @@ Add `bench/tic.cr` with initial modes for plain drain, gzip
 decompress-and-drain, current FusedJSON pull traversal, and equivalent Crystal
 pull traversal. Milestones 3 and 4 add plain typed parsing, gzip plus typed
 parsing, and the two-pass TiC workflow when those APIs exist. Every parse mode
-must use the same fields and observable count; untimed preflight verifies the
-strong digest.
+must use the same fields and observable count. Untimed preflight verifies the
+projection SHA-256. Timed parser modes use the same fields with a compact
+checksum so digest construction does not dominate the result.
 
 Capture compiler, LLVM, CPU, OS, zlib, buffer size, compressed and decompressed
-bytes, wall and CPU time, first-item latency, and items per second. Managed
-allocation is cumulative work even when values are discarded, so report it as
-bytes per item or per decompressed MiB. Record process peak RSS as a separate
-series. Never derive parser time or memory by subtracting two modes. A two-pass
-rate uses twice the decompressed byte count and also reports elapsed time per
-logical document.
+bytes, wall and CPU time, first projected-price latency, and projected prices
+per second. Managed allocation is cumulative work even when values are
+discarded, so report it as bytes per projected price or per decompressed MiB.
+Record process peak RSS as a separate series. Never derive parser time or
+memory by subtracting two modes. A two-pass rate uses twice the decompressed
+byte count and also reports elapsed time per logical document.
 
 The proposed command shape is:
 
@@ -48,7 +49,8 @@ $ crystal build --release --no-debug bench/tic_fixture.cr -o bin/tic-fixture
 $ crystal build --release --no-debug bench/tic.cr -o bin/tic-bench
 $ bin/tic-fixture --profile many-small --bytes 1073741824 --output /tmp/tic-1g.json --manifest /tmp/tic-1g.meta.json
 $ bin/tic-bench verify --input /tmp/tic-1g.json --manifest /tmp/tic-1g.meta.json
-$ /usr/bin/time -v bin/tic-bench rss --input /tmp/tic-1g.json --mode fused-pull
+$ FUSED_JSON_COMMIT=$(git rev-parse HEAD)
+$ /usr/bin/time -v bin/tic-bench rss --input /tmp/tic-1g.json --manifest /tmp/tic-1g.meta.json --mode fused-pull --commit "$FUSED_JSON_COMMIT"
 ```
 
 Acceptance: generated receipts verify before timing, the Crystal and FusedJSON
@@ -61,6 +63,19 @@ path. Scanning or skipping a valid wide number must not narrow it. Direct
 `Int64` and `Float64` access retains the current checked conversions, and
 dynamic `load` and `parse` behavior does not change.
 
+Expose `raw_number_value` and `read_raw_number` on `PullParser`. The first
+method observes the current numeric lexeme without advancing; the second
+returns it and advances once. Cover integer and float spellings, exponents,
+negative zero, values beyond fixed-width integer ranges, repeated observation,
+wrong event kinds, token limits, and tiny stream buffers. Keep whole-value raw
+replay private.
+
+Extend the TiC traversal with a raw-number verification case. It must include
+the exact lexeme in its result checksum so the public path used by Sunlight is
+tested against generated large input rather than only isolated tokens. Give
+that checksum a new algorithm version instead of changing
+`fnv1a64-fields-v1` semantics.
+
 Add focused tests for wide integer and floating tokens at the root and within
 containers, including reads, skips, wrong-type failures, and tiny stream
 buffers. Change `read_int` and the integer branch of `read_float` to use the
@@ -68,9 +83,10 @@ lazy checked getters rather than the previously eager value slots. Integer to
 float reads continue to reject values outside `Int64`. Update the pull
 contract, migration guide, and changelog in the same change.
 
-Acceptance: all existing dynamic, pull, typed, conformance, portable-float,
-and scalar-scanner suites pass. Existing dynamic benchmark gates show no
-material regression.
+Acceptance: raw number methods preserve every byte of the numeric lexeme and
+consume exactly as documented without narrowing. All existing dynamic, pull,
+typed, conformance, portable-float, and scalar-scanner suites pass. Existing
+dynamic benchmark gates show no material regression.
 
 ## Milestone 3: Typed reads at the cursor
 
@@ -84,8 +100,8 @@ Add `PullParser#read(T)`. Exercise every type and `JSON::Serializable` feature
 already promised by `from_json`, plus nested positions, sequential mixed
 types, `BigInt`, `BigFloat`, exact `BigDecimal`, raw converters,
 discriminators, unknown fields, constructor errors, and attempts to consume
-zero or multiple values. Add the internal raw-number bridge required by the
-borrowed adapter without making raw replay public.
+zero or multiple values. Reuse the native raw-number bridge for Crystal's
+`raw_value` contract without exposing whole-value replay on the native reader.
 
 Acceptance: decoding the same isolated value through `read(T)` and
 `from_json` has equal results and errors. Representative streaming values pass
