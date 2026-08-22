@@ -1,3 +1,6 @@
+[![CI](https://github.com/wyhaines/fused-json.cr/actions/workflows/ci.yml/badge.svg)](https://github.com/wyhaines/fused-json.cr/actions/workflows/ci.yml)
+[![GitHub release](https://img.shields.io/github/release/wyhaines/fused-json.cr.svg)](https://github.com/wyhaines/fused-json.cr/releases)
+
 # FusedJSON
 
 FusedJSON is an experimental, strict JSON parser for Crystal. It provides a fast in-memory `String` path and incremental `IO` parsing without first copying the complete input. Both paths avoid the standard parser's intermediate lexer.
