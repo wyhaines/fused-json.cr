@@ -5,9 +5,9 @@ The workflow validates the exact selected commit on Crystal 1.21 and latest
 stable before creating a `vX.Y.Z` tag and GitHub release. It uploads no
 binaries; Shards resolves library releases from Git tags.
 
-Before the first release, configure the repository's `release` environment
-with a required reviewer. The publish job targets that environment, but the
-workflow cannot configure its protection rules.
+The repository's `release` environment must have a required reviewer. The
+publish job targets that environment, but the workflow cannot configure its
+protection rules.
 
 1. Start from a clean tree and review third-party notices.
 2. Set the same version in `shard.yml` and `FusedJSON::VERSION`.

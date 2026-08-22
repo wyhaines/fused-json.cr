@@ -1,8 +1,8 @@
-# Implementation Plan
+# Version 0.1.0 Implementation History
 
-Last updated: 2026-08-21. This plan orders the work needed to turn the current
-prototype into a dependable shard. Milestones are sequential where one changes
-the parser abstraction; testing and performance measurement continue throughout.
+Milestone record completed: 2026-08-21. This document records the milestones
+completed for version 0.1.0. It describes the implementation sequence and the
+evidence used at milestone closeout; the README contains the current roadmap.
 
 ## Working Rules
 
@@ -346,7 +346,7 @@ Crystal `JSON.parse` for default dynamic `String` parsing, with no canonical
 corpus materially slower than the standard library. Hardware-independent CI
 checks semantics and portable fallbacks rather than absolute MiB/s.
 
-## Milestone 7: Public Release — Complete
+## Milestone 7: Release Preparation — Complete
 
 Completed work:
 
@@ -388,7 +388,10 @@ Acceptance evidence:
   release workflow; no remote push, tag, or GitHub release was created during
   implementation.
 
-## Post-Release Opportunities
+## Ideas Recorded at Version 0.1.0 Closeout
+
+These were the follow-up ideas recorded before version 0.1.0 was published.
+The README contains the current roadmap.
 
 1. Exercise the word scanner on real big-endian and 32-bit runners when they
    become available; retain forced-scalar CI coverage meanwhile.

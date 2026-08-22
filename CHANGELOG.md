@@ -4,6 +4,8 @@ All notable changes to FusedJSON are recorded here. The project follows semantic
 
 ## Unreleased
 
+## 0.1.0 - 2026-08-22
+
 ### Added
 
 - Strict dynamic parsing into `JSON::Any` from `String` and `IO`.
@@ -11,8 +13,3 @@ All notable changes to FusedJSON are recorded here. The project follows semantic
 - Typed decoding through Crystal's `JSON::Serializable` constructors, including `BigInt` when `big/json` is loaded.
 - UTF-8 validation, bounded nesting, optional key caching, and streaming token limits.
 - JSONTestSuite conformance coverage, portable scanner and float fallbacks, release benchmarks, and Crystal 1.21/latest/nightly CI.
-
-### Changed
-
-
-The first published release will be `0.1.0`.

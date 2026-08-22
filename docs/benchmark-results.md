@@ -6,8 +6,9 @@ not a throughput guarantee. They were collected on 2026-08-21 from commit
 `[2e13e6a73]`, LLVM 21.1.8, target `x86_64-pc-linux-gnu`, and an AMD Ryzen 9
 7940HS pinned to CPU 4. Every executable used `--release --no-debug`.
 
-The benchmark commit predates the pre-release rename from `OjCrystal` to
-FusedJSON. The tables use the current name; the historical output used
+The benchmark commit belongs to the former development repository and is not
+part of this repository's history. It also predates the rename from `OjCrystal`
+to FusedJSON. The tables use the current name; the historical output used
 `OjCrystal`. The commands below preserve its `OJ_CRYSTAL_*` environment names;
 current checkouts use the equivalent `FUSED_JSON_*` names.
 
