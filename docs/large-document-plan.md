@@ -1,0 +1,204 @@
+# Large-document typed streaming implementation plan
+
+Status: proposed. This plan implements the requirements in
+[Large-document typed streaming specification](large-document-processing.md).
+
+## Working rules
+
+- Establish semantic parity before optimizing.
+- Keep the in-memory fused tree path separate from the pull and streaming
+  changes.
+- Measure plain parsing, decompression, and consumer retention independently.
+- Do not commit TiC corpus files, download them automatically, or require
+  proprietary or very large inputs.
+- Keep each implementation commit focused and update public documentation with
+  the behavior it introduces.
+
+## Milestone 1: Fixtures and baselines
+
+Add a deterministic, streaming TiC-shaped generator at
+`bench/tic_fixture.cr`. It must produce a manifest with the seed, exact byte
+sizes, item counts, largest token and item, field order, and a canonical result
+digest. Define that digest as SHA-256 over a versioned JSON Lines projection of
+the fields used by the benchmark, with fixed key order and number spelling.
+Profiles should cover many small items, one wide nested item,
+skip-heavy data, Unicode at buffer boundaries, and both orders of
+`provider_references` and `in_network`. Optional gzip output must be
+reproducible.
+
+Add `bench/tic.cr` with initial modes for plain drain, gzip
+decompress-and-drain, current FusedJSON pull traversal, and equivalent Crystal
+pull traversal. Milestones 3 and 4 add plain typed parsing, gzip plus typed
+parsing, and the two-pass TiC workflow when those APIs exist. Every parse mode
+must use the same fields and observable count; untimed preflight verifies the
+strong digest.
+
+Capture compiler, LLVM, CPU, OS, zlib, buffer size, compressed and decompressed
+bytes, wall and CPU time, first-item latency, and items per second. Managed
+allocation is cumulative work even when values are discarded, so report it as
+bytes per item or per decompressed MiB. Record process peak RSS as a separate
+series. Never derive parser time or memory by subtracting two modes. A two-pass
+rate uses twice the decompressed byte count and also reports elapsed time per
+logical document.
+
+The proposed command shape is:
+
+```console
+$ crystal build --release --no-debug bench/tic_fixture.cr -o bin/tic-fixture
+$ crystal build --release --no-debug bench/tic.cr -o bin/tic-bench
+$ bin/tic-fixture --profile many-small --bytes 1073741824 --output /tmp/tic-1g.json --manifest /tmp/tic-1g.meta.json
+$ bin/tic-bench verify --input /tmp/tic-1g.json --manifest /tmp/tic-1g.meta.json
+$ /usr/bin/time -v bin/tic-bench rss --input /tmp/tic-1g.json --mode fused-pull
+```
+
+Acceptance: generated receipts verify before timing, the Crystal and FusedJSON
+baselines agree, and no benchmark builds the complete document.
+
+## Milestone 2: Range-neutral pull numbers
+
+Separate number recognition from numeric materialization in the public pull
+path. Scanning or skipping a valid wide number must not narrow it. Direct
+`Int64` and `Float64` access retains the current checked conversions, and
+dynamic `load` and `parse` behavior does not change.
+
+Add focused tests for wide integer and floating tokens at the root and within
+containers, including reads, skips, wrong-type failures, and tiny stream
+buffers. Change `read_int` and the integer branch of `read_float` to use the
+lazy checked getters rather than the previously eager value slots. Integer to
+float reads continue to reject values outside `Int64`. Update the pull
+contract, migration guide, and changelog in the same change.
+
+Acceptance: all existing dynamic, pull, typed, conformance, portable-float,
+and scalar-scanner suites pass. Existing dynamic benchmark gates show no
+material regression.
+
+## Milestone 3: Typed reads at the cursor
+
+Refactor the private Crystal pull adapter so it can borrow an existing native
+reader and expose exactly one current value. Give the adapter a value-boundary
+guard: it presents EOF after that value, rejects incomplete constructors, and
+never exposes a sibling. Keep separate concrete String and IO specializations
+so the streaming hot path does not gain union dispatch.
+
+Add `PullParser#read(T)`. Exercise every type and `JSON::Serializable` feature
+already promised by `from_json`, plus nested positions, sequential mixed
+types, `BigInt`, `BigFloat`, exact `BigDecimal`, raw converters,
+discriminators, unknown fields, constructor errors, and attempts to consume
+zero or multiple values. Add the internal raw-number bridge required by the
+borrowed adapter without making raw replay public.
+
+Acceptance: decoding the same isolated value through `read(T)` and
+`from_json` has equal results and errors. Representative streaming values pass
+at every byte split and with one-byte reads. A failed read never yields a
+partial value.
+
+## Milestone 4: Typed array blocks and TiC workflow
+
+Add `PullParser#read_array(T)`. Implement it on `read(T)` and preserve the
+existing untyped overload. Test empty arrays, item order, nested arrays,
+duplicate object members, early block exit, callback exceptions, malformed
+later items, malformed one-token lookahead, and malformed document suffixes.
+
+Add a compile-checked large-document example that:
+
+1. opens plain or caller-wrapped gzip IO;
+2. walks a root object without assuming member order;
+3. captures a root scalar;
+4. streams one named array as typed values and skips the others; and
+5. calls `finish` before committing staged output.
+
+Add a second example or test that walks an outer item structurally and streams
+a nested typed array. It must place parent metadata both before and after the
+nested array, use sequence IDs with separate metadata and child sinks, and
+retain no complete outer item. Include a two-pass example or test that
+recreates the IO for each pass. Do not add CMS field names to the library
+itself.
+
+Acceptance: lookahead tests prove that the first plain-input object is yielded
+without traversing the next object or document tail. Scalar arrays may scan
+one complete next token before yielding, as specified. Truncation, trailing
+garbage, invalid UTF-8, and a bad gzip trailer are all detected on a complete
+traversal. IO ownership remains unchanged.
+
+## Milestone 5: Resource limits
+
+Write and approve a short companion API decision before coding a unified
+limits object. It must decide how to cover the existing nesting and token
+controls plus decoded document bytes, a selected typed value, total values,
+entries per container, cached keys, and duplicate-key rejection. The decision
+must define what each counter includes, how duplicate tracking affects memory,
+and where each error points. Counters that can follow document size use
+`Int64`. Enforceable byte limits must interrupt consumption rather than report
+only after a large value has been built.
+
+Keep current keyword options source compatible during 0.x. Define how explicit
+keywords interact with the new object and measure the overhead of disabled
+limits before enabling the API on all parser paths. The list above is a set of
+requirements for the decision, not approval of names or one implementation.
+
+Acceptance: ordinary boundary tests cover the accepted limits on String and IO
+for skipped and typed values. A generated IO places a known token or error
+after byte `2^32` and verifies its exact offset without constructing a 4 GiB
+String. A no-limit configuration has no material throughput regression. The
+memory guide states that byte limits do not equal an exact Crystal heap limit.
+
+## Milestone 6: Performance and scale validation
+
+Use isolated release builds and a quiet, CPU-pinned host. Predeclare at least
+20 paired blocks per profile. Each block contains one fresh FusedJSON process
+and one fresh Crystal process in a predetermined, balanced AB/BA order. One
+process result is one observation; iterations within a process are not
+independent samples. Retain every valid run and define exclusions before the
+campaign starts. Use plain inputs from a warmed page cache and identical parser
+buffers for the throughput gate; the plain-drain mode records the storage and
+copying ceiling without being subtracted from parse time.
+
+For each pair, compute `log(Fused throughput / Crystal throughput)`. Report its
+geometric mean ratio and a one-sided 95% paired-bootstrap lower bound using at
+least 10,000 fixed-seed resamples. On both many-small and wide-item profiles,
+the geometric mean must be at least 1.05 and the lower bound must exceed 1.0.
+Treat gzip end-to-end throughput, first-item latency, and Ruby/Oj as reported
+measurements until stable baselines exist.
+
+Measure end-to-end process peak RSS with GNU `/usr/bin/time -v` in fresh
+processes. The bounded series uses plain files, typed parsing, no retained
+values, a constant-size count and digest sink, fixed item width and key
+vocabulary, `cache_keys: false`, and fixed parser, GC, and host settings. Run
+at least five fresh processes at both 256 MiB and 1 GiB. Before any larger run,
+freeze a ceiling of
+`maximum baseline RSS + max(16 MiB, 25% of maximum baseline RSS)`. At least
+three fresh runs over 4 GiB must remain below it. Record wide-item, gzip-only,
+gzip-plus-parse, and retained-output RSS as separate series and never subtract
+process peaks.
+
+Set `FUSED_JSON_TIC_CORPUS` to a local Sunlight
+`data/raw/payer-cache` directory for an opt-in compatibility run. Freeze
+per-file counts and digests from the existing Oj pipeline before comparison.
+Do not copy the corpus into FusedJSON or make it a public CI dependency. The
+scale-only manifest, when available, is
+`data/raw/tic/palm_beach/florida_blue/manifest.json` in the Sunlight checkout;
+its large raw files are not retained locally.
+
+Acceptance: semantic digests match, exact post-`2^32` offsets match, and
+current canonical dynamic-parser gates still pass. Run two prescheduled
+complete performance and memory campaigns on the same compiler and host, keep
+all receipts, and require both to pass. Do not rerun selected failures until a
+passing pair appears.
+
+## Milestone 7: Documentation and release review
+
+Update `README.md`, `docs/api.md`, `docs/design.md`, `docs/streaming.md`,
+`docs/typed-decoding.md`, `docs/benchmarking.md`, and `CHANGELOG.md`. Document
+normal completion, unchecked early exit, two-pass input ownership, gzip
+composition, numeric migration, largest-current-value memory, and reproducible
+benchmark commands.
+
+CI should run small generated cases and all correctness suites. A scheduled
+job may run a 256 MiB generated case and retain measurement artifacts, but
+shared-runner timing does not gate releases. The dedicated release host runs
+256 MiB, 1 GiB, and greater-than-4-GiB profiles. Add ARM64 and macOS as
+reported measurements until dedicated baselines exist.
+
+Close the work only after the documented API, tests, examples, and benchmark
+receipts agree. Repeated-document and NDJSON support then returns as a separate
+roadmap item.
