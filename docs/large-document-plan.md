@@ -56,7 +56,7 @@ $ /usr/bin/time -v bin/tic-bench rss --input /tmp/tic-1g.json --manifest /tmp/ti
 Acceptance: generated receipts verify before timing, the Crystal and FusedJSON
 baselines agree, and no benchmark builds the complete document.
 
-## Milestone 2: Range-neutral pull numbers
+## Milestone 2: Range-neutral pull numbers (implemented)
 
 Separate number recognition from numeric materialization in the public pull
 path. Scanning or skipping a valid wide number must not narrow it. Direct

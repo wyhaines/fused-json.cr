@@ -118,8 +118,15 @@ module TICBench
     end
   end
 
-  record GeneratedPrice, fragment : Fragment, row : ProjectionRow
-  record GeneratedItem, fragment : Fragment, row : ProjectionRow
+  record GeneratedPrice,
+    fragment : Fragment,
+    row : ProjectionRow,
+    raw_number_row : RawNumberProjectionRow
+
+  record GeneratedItem,
+    fragment : Fragment,
+    row : ProjectionRow,
+    raw_number_row : RawNumberProjectionRow
 
   class TrackedOutput
     PADDING_CHUNK = "a" * (16 * 1024)
@@ -215,11 +222,12 @@ module TICBench
     getter unicode_splits : Array(UnicodeSplit)
     getter projection_sha256 : String
     getter projection_checksum : String
+    getter raw_number_checksum : String
 
     def initialize(@config, @document_sha256, @root_key_order, @counts,
                    @maximum_nesting, @largest_token, @largest_item,
                    @unicode_splits, @projection_sha256,
-                   @projection_checksum)
+                   @projection_checksum, @raw_number_checksum)
     end
 
     def manifest(gzip : GzipMetadata? = nil) : Manifest
@@ -240,7 +248,9 @@ module TICBench
         projection: ProjectionMetadata.new(
           counts.negotiated_prices,
           projection_sha256,
-          projection_checksum
+          projection_checksum,
+          RAW_NUMBER_CHECKSUM_ALGORITHM,
+          raw_number_checksum
         ),
         gzip: gzip
       )
@@ -258,6 +268,7 @@ module TICBench
       @counts = Counts.new
       @projection = ProjectionDigest.new
       @projection_checksum = ProjectionChecksum.new
+      @raw_number_checksum = RawNumberProjectionChecksum.new
       @root_key_order = [] of String
       @unicode_splits = [] of UnicodeSplit
     end
@@ -298,7 +309,8 @@ module TICBench
         output.largest_item,
         @unicode_splits,
         projection_sha256,
-        @projection_checksum.hex
+        @projection_checksum.hex,
+        @raw_number_checksum.hex
       )
     end
 
@@ -351,6 +363,7 @@ module TICBench
         output.write_fragment(generated.fragment)
         @projection.add(generated.row)
         @projection_checksum.add(generated.row)
+        @raw_number_checksum.add(generated.raw_number_row)
         index += 1
       end
 
@@ -397,6 +410,7 @@ module TICBench
         output.write_fragment(generated.fragment)
         @projection.add(generated.row)
         @projection_checksum.add(generated.row)
+        @raw_number_checksum.add(generated.raw_number_row)
         price_index += 1
       end
 
@@ -525,7 +539,7 @@ module TICBench
         output.write_raw("]}]}")
         output.note_item(item_start, "/in_network/*")
       end
-      GeneratedItem.new(result, generated_price.row)
+      GeneratedItem.new(result, generated_price.row, generated_price.raw_number_row)
     end
 
     private def price(sequence : Int64, price_index : Int64, metadata) : GeneratedPrice
@@ -563,7 +577,22 @@ module TICBench
         "professional",
         service_code
       )
-      GeneratedPrice.new(result, row)
+      raw_number_row = RawNumberProjectionRow.new(
+        sequence,
+        metadata[:item_index],
+        price_index,
+        metadata[:billing_code],
+        metadata[:name],
+        metadata[:code_type],
+        metadata[:arrangement],
+        metadata[:description],
+        metadata[:provider_group_id],
+        "negotiated",
+        rate,
+        "professional",
+        service_code
+      )
+      GeneratedPrice.new(result, row, raw_number_row)
     end
 
     private def item_metadata(item_index : Int64)

@@ -8,6 +8,98 @@ module TICBench
   record DrainResult, bytes : Int64, checksum : UInt64
   record ContentDigest, bytes : Int64, sha256 : String
 
+  class NormalizedTraversalProjection
+    def initialize(strong_digest : Bool)
+      @digest = strong_digest ? ProjectionDigest.new : nil
+      @checksum = ProjectionChecksum.new
+    end
+
+    def read_rate(pull : P) : Float64 forall P
+      pull.read_float
+    end
+
+    def add(sequence : Int64, item_index : Int64, price_index : Int64,
+            provider_group_id : Int64, metadata, negotiated_type : String,
+            negotiated_rate : Float64, billing_class : String,
+            service_code : String) : Nil
+      row = ProjectionRow.new(
+        sequence,
+        item_index,
+        price_index,
+        metadata[:billing_code],
+        metadata[:name],
+        metadata[:code_type],
+        metadata[:arrangement],
+        metadata[:description],
+        provider_group_id,
+        negotiated_type,
+        cents(negotiated_rate),
+        billing_class,
+        service_code
+      )
+      @digest.try(&.add(row))
+      @checksum.add(row)
+    end
+
+    def result(counts : Counts, first_item_seconds : Float64?) : TraversalResult
+      TraversalResult.new(
+        counts,
+        @digest.try(&.hexfinal),
+        @checksum.hex,
+        first_item_seconds
+      )
+    end
+
+    private def cents(value : Float64) : Int64
+      raise "fixture negotiated rate is not finite" unless value.finite?
+      scaled = value * 100.0
+      rounded = scaled.round.to_i64
+      unless (scaled - rounded).abs <= 1e-7
+        raise "fixture negotiated rate has more than two decimal places"
+      end
+      rounded
+    end
+  end
+
+  class RawNumberTraversalProjection
+    def initialize
+      @checksum = RawNumberProjectionChecksum.new
+    end
+
+    def read_rate(pull : FusedJSON::PullParser) : String
+      pull.read_raw_number
+    end
+
+    def read_rate(pull : JSON::PullParser) : String
+      pull.raw_value.tap { pull.read_next }
+    end
+
+    def add(sequence : Int64, item_index : Int64, price_index : Int64,
+            provider_group_id : Int64, metadata, negotiated_type : String,
+            negotiated_rate : String, billing_class : String,
+            service_code : String) : Nil
+      @checksum.add(RawNumberProjectionRow.new(
+        sequence,
+        item_index,
+        price_index,
+        metadata[:billing_code],
+        metadata[:name],
+        metadata[:code_type],
+        metadata[:arrangement],
+        metadata[:description],
+        provider_group_id,
+        negotiated_type,
+        negotiated_rate,
+        billing_class,
+        service_code
+      ))
+    end
+
+    def result(counts : Counts, _first_item_seconds : Float64?) : RawNumberTraversalResult
+      RawNumberTraversalResult.new(counts, @checksum.hex)
+    end
+  end
+
   extend self
 
   def fused_pull(path : String, buffer_size : Int32,
@@ -22,7 +114,7 @@ module TICBench
         max_nesting: max_nesting,
         cache_keys: false
       )
-      traverse(pull, started, strong_digest)
+      traverse(pull, started, NormalizedTraversalProjection.new(strong_digest))
     end
   end
 
@@ -34,7 +126,33 @@ module TICBench
       file.buffer_size = buffer_size
       pull = JSON::PullParser.new(file)
       pull.max_nesting = max_nesting
-      traverse(pull, started, strong_digest)
+      traverse(pull, started, NormalizedTraversalProjection.new(strong_digest))
+    end
+  end
+
+  def fused_raw_number_pull(path : String, buffer_size : Int32,
+                            max_nesting : Int32 = 512) : RawNumberTraversalResult
+    started = Time.instant
+    File.open(path) do |file|
+      file.read_buffering = false
+      pull = FusedJSON::PullParser.new(
+        file,
+        buffer_size: buffer_size,
+        max_nesting: max_nesting,
+        cache_keys: false
+      )
+      traverse(pull, started, RawNumberTraversalProjection.new)
+    end
+  end
+
+  def crystal_raw_number_pull(path : String, buffer_size : Int32,
+                              max_nesting : Int32 = 512) : RawNumberTraversalResult
+    started = Time.instant
+    File.open(path) do |file|
+      file.buffer_size = buffer_size
+      pull = JSON::PullParser.new(file)
+      pull.max_nesting = max_nesting
+      traverse(pull, started, RawNumberTraversalProjection.new)
     end
   end
 
@@ -84,11 +202,22 @@ module TICBench
     end
   end
 
+  def verify_raw_number_result(result : RawNumberTraversalResult,
+                               manifest : Manifest,
+                               implementation : String) : Nil
+    unless result.counts == manifest.counts
+      raise "#{implementation} raw-number counts do not match the fixture manifest"
+    end
+    expected = manifest.projection.raw_number_checksum ||
+               raise("fixture manifest does not contain a raw-number checksum")
+    unless result.raw_number_checksum == expected
+      raise "#{implementation} raw-number checksum does not match the fixture manifest"
+    end
+  end
+
   private def traverse(pull : P, started : Time::Instant,
-                       strong_digest : Bool) : TraversalResult forall P
+                       projection : S) forall P, S
     counts = Counts.new
-    projection = strong_digest ? ProjectionDigest.new : nil
-    checksum = ProjectionChecksum.new
     first_item_seconds = nil.as(Float64?)
 
     pull.read_object do |key|
@@ -96,7 +225,7 @@ module TICBench
       when "provider_references"
         read_provider_references(pull, counts)
       when "in_network"
-        read_in_network(pull, counts, projection, checksum, started) do |seconds|
+        read_in_network(pull, counts, projection, started) do |seconds|
           first_item_seconds ||= seconds
         end
       when "_fixture_unicode_boundary"
@@ -107,12 +236,7 @@ module TICBench
     end
     finish(pull)
 
-    TraversalResult.new(
-      counts,
-      projection.try(&.hexfinal),
-      checksum.hex,
-      first_item_seconds
-    )
+    projection.result(counts, first_item_seconds)
   end
 
   private def read_provider_references(pull : P, counts : Counts) : Nil forall P
@@ -133,9 +257,8 @@ module TICBench
   end
 
   private def read_in_network(pull : P, counts : Counts,
-                              projection : ProjectionDigest?,
-                              checksum : ProjectionChecksum,
-                              started : Time::Instant, &) : Nil forall P
+                              projection : S,
+                              started : Time::Instant, &) : Nil forall P, S
     pull.read_array do
       item_index = counts.in_network
       counts.in_network += 1
@@ -169,7 +292,6 @@ module TICBench
             pull,
             counts,
             projection,
-            checksum,
             started,
             item_index,
             metadata
@@ -184,10 +306,9 @@ module TICBench
   end
 
   private def read_negotiated_rates(pull : P, counts : Counts,
-                                    projection : ProjectionDigest?,
-                                    checksum : ProjectionChecksum,
+                                    projection : S,
                                     started : Time::Instant,
-                                    item_index : Int64, metadata, &) : Nil forall P
+                                    item_index : Int64, metadata, &) : Nil forall P, S
     pull.read_array do
       counts.negotiated_rates += 1
       provider_group_id = nil.as(Int64?)
@@ -207,7 +328,6 @@ module TICBench
             pull,
             counts,
             projection,
-            checksum,
             started,
             item_index,
             provider_id,
@@ -223,15 +343,14 @@ module TICBench
   end
 
   private def read_prices(pull : P, counts : Counts,
-                          projection : ProjectionDigest?,
-                          checksum : ProjectionChecksum,
+                          projection : S,
                           started : Time::Instant,
                           item_index : Int64,
-                          provider_group_id : Int64, metadata, &) : Nil forall P
+                          provider_group_id : Int64, metadata, &) : Nil forall P, S
     price_index = 0_i64
     pull.read_array do
       negotiated_type = nil.as(String?)
-      negotiated_rate = nil.as(Float64?)
+      negotiated_rate = nil
       billing_class = nil.as(String?)
       service_code = nil.as(String?)
 
@@ -240,7 +359,7 @@ module TICBench
         when "negotiated_type"
           negotiated_type = pull.read_string
         when "negotiated_rate"
-          negotiated_rate = pull.read_float
+          negotiated_rate = projection.read_rate(pull)
         when "billing_class"
           billing_class = pull.read_string
         when "service_code"
@@ -255,25 +374,18 @@ module TICBench
         end
       end
 
-      rate_cents = cents(required(negotiated_rate, "negotiated_rate"))
       sequence = counts.negotiated_prices
-      row = ProjectionRow.new(
+      projection.add(
         sequence,
         item_index,
         price_index,
-        metadata[:billing_code],
-        metadata[:name],
-        metadata[:code_type],
-        metadata[:arrangement],
-        metadata[:description],
         provider_group_id,
+        metadata,
         required(negotiated_type, "negotiated_type"),
-        rate_cents,
+        required(negotiated_rate, "negotiated_rate"),
         required(billing_class, "billing_class"),
         required(service_code, "service_code")
       )
-      projection.try(&.add(row))
-      checksum.add(row)
       counts.negotiated_prices += 1
       yield (Time.instant - started).total_seconds if sequence == 0
       price_index += 1
@@ -282,16 +394,6 @@ module TICBench
 
   private def required(value : T?, name : String) : T forall T
     value || raise "fixture is missing #{name} before its dependent value"
-  end
-
-  private def cents(value : Float64) : Int64
-    raise "fixture negotiated rate is not finite" unless value.finite?
-    scaled = value * 100.0
-    rounded = scaled.round.to_i64
-    unless (scaled - rounded).abs <= 1e-7
-      raise "fixture negotiated rate has more than two decimal places"
-    end
-    rounded
   end
 
   private def finish(pull : FusedJSON::PullParser) : Nil

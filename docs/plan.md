@@ -363,8 +363,9 @@ Completed work:
    validates the exact version, ref, and supported compilers before creating a
    tag and GitHub release.
 5. Documented explicit typed `BigInt` decoding through Crystal's `big/json`
-   adapter for both `String` and `IO`. Dynamic `JSON::Any` and the public pull
-   reader deliberately retain their `Int64` domain.
+   adapter for both `String` and `IO`. At the 0.1.0 release, dynamic `JSON::Any`
+   and the public pull reader both retained their `Int64` domain; large-document
+   Milestone 2 later made public pull recognition range neutral.
 6. Collected five alternating-order pull and typed samples and three streaming
    samples, then recorded the complete method, medians, RSD, and managed
    allocation results in [`benchmark-results.md`](benchmark-results.md).

@@ -39,7 +39,7 @@ module FusedJSON
         max_nesting: max_nesting,
         cache_keys: cache_keys,
         max_token_bytes: max_token_bytes,
-        enforce_dynamic_numbers: true
+        enforce_dynamic_numbers: false
       )
     end
 

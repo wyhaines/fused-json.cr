@@ -70,8 +70,13 @@ describe "pull JSONTestSuite conformance" do
       if error = pull_rejection(source, skip: false)
         failures << "#{name} build: #{error}"
       end
-      if error = pull_rejection(source, skip: true)
-        failures << "#{name} skip: #{error}"
+      skip_error = pull_rejection(source, skip: true)
+      if JSONTestSuiteSupport::I_RANGE_NEUTRAL_NUMBERS.includes?(name)
+        unless skip_error == "accepted"
+          failures << "#{name} skip: #{skip_error || "rejected"}"
+        end
+      elsif skip_error
+        failures << "#{name} skip: #{skip_error}"
       end
     end
 

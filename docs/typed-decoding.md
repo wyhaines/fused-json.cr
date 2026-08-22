@@ -73,14 +73,16 @@ value = FusedJSON.from_json(
 )
 ```
 
-This is explicit typed decoding; `load` and the public pull reader retain
-Crystal's dynamic `JSON::Any` domain and reject integers outside `Int64`.
-Floating tokens are syntax-checked before use; converting one to `Float32` or
-`Float64` applies Crystal's standard constructor path and FusedJSON's
-finite-`Float64` policy. Raw converters and skipped fields may preserve a valid
-token outside that range. Direct and union `Float32` conversions intentionally
-follow their respective Crystal stdlib paths. `cache_keys` remains local to one
-decode and is useful for documents with repeated object keys.
+This is explicit typed decoding; `load` retains Crystal's dynamic `JSON::Any`
+domain and rejects integers outside `Int64`. The public pull reader recognizes
+wide numbers without converting them, but direct integer reads still require
+`Int64`. Floating tokens are syntax-checked before use; converting one to
+`Float32` or `Float64` applies Crystal's standard constructor path and
+FusedJSON's finite-`Float64` policy. Raw converters and skipped fields may
+preserve a valid token outside that range. Direct and union `Float32`
+conversions intentionally follow their respective Crystal stdlib paths.
+`cache_keys` remains local to one decode and is useful for documents with
+repeated object keys.
 
 Native syntax, type, and structural failures raise `FusedJSON::ParseError`;
 generated serializers may wrap them in `JSON::SerializableError`. Standard

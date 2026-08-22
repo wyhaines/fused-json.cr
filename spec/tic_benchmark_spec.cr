@@ -82,6 +82,53 @@ describe "TiC benchmark fixtures" do
     projection.hexfinal.should eq(Digest::SHA256.hexdigest(line))
   end
 
+  it "keeps the normalized v1 checksum stable and versions raw number spelling" do
+    row = TICBench::ProjectionRow.new(
+      0_i64,
+      2_i64,
+      3_i64,
+      "01234",
+      "quoted \"name\"",
+      "CPT",
+      "ffs",
+      "München λ",
+      10_000_001_i64,
+      "negotiated",
+      12_345_i64,
+      "professional",
+      "01"
+    )
+    normalized = TICBench::ProjectionChecksum.new
+    normalized.add(row)
+    normalized.hex.should eq("0xfd57530e2d877c80")
+    TICBench::PROJECTION_CHECKSUM_ALGORITHM.should eq("fnv1a64-fields-v1")
+
+    raw = TICBench::RawNumberProjectionRow.new(
+      0_i64,
+      2_i64,
+      3_i64,
+      "01234",
+      "quoted \"name\"",
+      "CPT",
+      "ffs",
+      "München λ",
+      10_000_001_i64,
+      "negotiated",
+      "123.4500",
+      "professional",
+      "01"
+    )
+    raw_checksum = TICBench::RawNumberProjectionChecksum.new
+    raw_checksum.add(raw)
+    raw_checksum.hex.should eq("0x5a98b99012bf63a1")
+    TICBench::RAW_NUMBER_CHECKSUM_ALGORITHM.should eq("fnv1a64-fields-raw-number-v2")
+
+    alternate_spelling = raw.copy_with(negotiated_rate: "1.234500e2")
+    alternate_checksum = TICBench::RawNumberProjectionChecksum.new
+    alternate_checksum.add(alternate_spelling)
+    alternate_checksum.hex.should_not eq(raw_checksum.hex)
+  end
+
   it "is deterministic and keeps the semantic digest independent of root order" do
     first_source, first = generate_tic_memory(
       TICBench::FixtureProfile::ManySmall,
@@ -115,6 +162,7 @@ describe "TiC benchmark fixtures" do
 
   it "parses both root-field orders through both pull baselines" do
     results = {} of TICBench::FieldOrder => Tuple(TICBench::TraversalResult, TICBench::TraversalResult)
+    raw_results = {} of TICBench::FieldOrder => Tuple(TICBench::RawNumberTraversalResult, TICBench::RawNumberTraversalResult)
 
     {TICBench::FieldOrder::ProvidersFirst, TICBench::FieldOrder::RatesFirst}.each do |order|
       with_tic_file(TICBench::FixtureProfile::ManySmall, order) do |path, generated|
@@ -135,6 +183,14 @@ describe "TiC benchmark fixtures" do
         fused.projection_sha256.should eq(crystal.projection_sha256)
         fused.projection_checksum.should eq(crystal.projection_checksum)
         results[order] = {fused, crystal}
+
+        fused_raw = TICBench.fused_raw_number_pull(path, 1024)
+        crystal_raw = TICBench.crystal_raw_number_pull(path, 1024)
+        TICBench.verify_raw_number_result(fused_raw, manifest, "FusedJSON")
+        TICBench.verify_raw_number_result(crystal_raw, manifest, "Crystal")
+        fused_raw.counts.should eq(crystal_raw.counts)
+        fused_raw.raw_number_checksum.should eq(crystal_raw.raw_number_checksum)
+        raw_results[order] = {fused_raw, crystal_raw}
       end
     end
 
@@ -143,6 +199,11 @@ describe "TiC benchmark fixtures" do
     providers_first[0].counts.should eq(rates_first[0].counts)
     providers_first[0].projection_sha256.should eq(rates_first[0].projection_sha256)
     providers_first[0].projection_checksum.should eq(rates_first[0].projection_checksum)
+
+    providers_first_raw = raw_results[TICBench::FieldOrder::ProvidersFirst]
+    rates_first_raw = raw_results[TICBench::FieldOrder::RatesFirst]
+    providers_first_raw[0].counts.should eq(rates_first_raw[0].counts)
+    providers_first_raw[0].raw_number_checksum.should eq(rates_first_raw[0].raw_number_checksum)
   end
 
   it "generates and verifies every bounded-memory profile" do
@@ -166,6 +227,12 @@ describe "TiC benchmark fixtures" do
         TICBench.verify_result(crystal, manifest, "Crystal")
         fused.counts.should eq(crystal.counts)
         fused.projection_sha256.should eq(crystal.projection_sha256)
+
+        fused_raw = TICBench.fused_raw_number_pull(path, 1024)
+        crystal_raw = TICBench.crystal_raw_number_pull(path, 1024)
+        TICBench.verify_raw_number_result(fused_raw, manifest, "FusedJSON")
+        TICBench.verify_raw_number_result(crystal_raw, manifest, "Crystal")
+        fused_raw.raw_number_checksum.should eq(crystal_raw.raw_number_checksum)
 
         if profile.wide_item?
           result.counts.in_network.should eq(1)
@@ -237,6 +304,8 @@ describe "TiC benchmark fixtures" do
     round_trip = TICBench::Manifest.from_json(manifest.to_json)
     round_trip.validate!
     round_trip.to_json.should eq(manifest.to_json)
+    round_trip.projection.raw_number_checksum_algorithm.should eq(TICBench::RAW_NUMBER_CHECKSUM_ALGORITHM)
+    round_trip.projection.raw_number_checksum.should eq(result.raw_number_checksum)
 
     bad_digest = altered_manifest(manifest) do |root|
       root["document_sha256"] = JSON::Any.new("g" * 64)
@@ -258,6 +327,29 @@ describe "TiC benchmark fixtures" do
     expect_raises(ArgumentError, "unsupported fixture projection checksum") do
       bad_checksum.validate!
     end
+
+    bad_raw_checksum = altered_manifest(manifest) do |root|
+      root["projection"].as_h["raw_number_checksum"] = JSON::Any.new("0xnot-a-checksum")
+    end
+    expect_raises(ArgumentError, "unsupported fixture raw-number checksum") do
+      bad_raw_checksum.validate!
+    end
+
+    bad_raw_algorithm = altered_manifest(manifest) do |root|
+      root["projection"].as_h["raw_number_checksum_algorithm"] = JSON::Any.new("fnv1a64-fields-v1")
+    end
+    expect_raises(ArgumentError, "unsupported fixture raw-number checksum") do
+      bad_raw_algorithm.validate!
+    end
+
+    milestone_one_manifest = altered_manifest(manifest) do |root|
+      projection = root["projection"].as_h
+      projection.delete("raw_number_checksum_algorithm")
+      projection.delete("raw_number_checksum")
+    end
+    milestone_one_manifest.validate!
+    milestone_one_manifest.projection.raw_number_checksum_algorithm.should be_nil
+    milestone_one_manifest.projection.raw_number_checksum.should be_nil
 
     missing_root_array = altered_manifest(manifest) do |root|
       root["root_key_order"] = JSON::Any.new([JSON::Any.new("in_network")])

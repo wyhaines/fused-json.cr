@@ -24,6 +24,22 @@ Options are keyword-only. Key caching is scoped to one parse. The token limit
 counts raw bytes for each string or number, including string quotes and escape
 spellings; it is not a document-size or result-size limit.
 
+## Pull Number Access
+
+The pull reader recognizes a valid JSON number without immediately converting
+it. At an `Int` or `Float` event, `raw_number_value : String` returns the exact
+source token without advancing. `read_raw_number : String` returns the same
+spelling and advances once. Surrounding whitespace is excluded, non-number
+events raise `ParseError`, and streaming token limits still apply. Each call
+returns an owned `String` proportional to the token; repeated observations need
+not return the same object.
+
+`int_value` and `read_int` perform checked `Int64` conversion. `float_value` and
+float-event `read_float` require a finite `Float64`; reading an integer event as
+a float first performs the checked `Int64` conversion. Skipping or advancing
+past a number does not convert it. The dynamic `load` and `parse` APIs retain
+their existing `JSON::Any` numeric limits.
+
 ## Error Contract
 
 Invalid option ranges raise `ArgumentError` before an `IO` is read. Invalid

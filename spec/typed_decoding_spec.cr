@@ -101,10 +101,10 @@ describe ".from_json" do
     typed_parity(source, Float32 | String).as(Float32).unsafe_as(UInt32).should eq(0x3f80_0001_u32)
   end
 
-  it "keeps the public pull reader's Int64 domain" do
-    expect_raises(FusedJSON::ParseError) do
-      FusedJSON::PullParser.new("9223372036854775808")
-    end
+  it "keeps direct public pull integer reads in the Int64 domain" do
+    pull = FusedJSON::PullParser.new("9223372036854775808")
+    expect_raises(FusedJSON::ParseError) { pull.read_int }
+    pull.kind.should eq(FusedJSON::PullParser::Kind::Int)
   end
 
   it "rejects values outside the requested numeric type" do

@@ -17,9 +17,10 @@ results on representative documents before enabling `cache_keys`.
 ## Behavioral Differences
 
 - Exactly one JSON document is required; trailing content is rejected.
-- Dynamic integers are limited to `Int64`; dynamic floats must be finite
-  `Float64`. Typed fixed-width integers may use their wider target domain, and
-  typed `BigInt` is available after `require "big/json"`.
+- Dynamic integers returned by `load` or `parse` are limited to `Int64`, and
+  dynamic floats must be finite `Float64`. Typed fixed-width integers may use
+  their wider target domain, and typed `BigInt` is available after
+  `require "big/json"`.
 - Invalid syntax raises `FusedJSON::ParseError`, not every exception type used
   by Crystal's standard parser or Ruby Oj. Exact English messages differ.
 - Duplicate object fields keep the last value in dynamic and typed results;
@@ -30,3 +31,13 @@ results on representative documents before enabling `cache_keys`.
 For `IO`, the caller retains ownership and the parser requires EOF after one
 document. Review buffering, read-ahead, transcoding offsets, and resource limits
 in the [streaming guide](streaming.md) before migrating network input.
+
+## Pull Number Migration
+
+The pull reader now recognizes and skips grammar-valid numbers without forcing
+them into the dynamic numeric domain. Code that relied on construction or
+`skip` to reject a wide integer or a token outside the finite `Float64` domain
+must call `read_int`, `read_float`, or a dynamic facade instead. Use
+`raw_number_value` to inspect the current spelling without advancing, or
+`read_raw_number` to return that spelling and consume the event. Both raw
+methods can return values wider than every fixed-width Crystal integer.

@@ -1,6 +1,6 @@
 # Large-document typed streaming specification
 
-Status: proposed for the next 0.x milestone.
+Status: accepted for the next 0.x milestone. Milestones 1 and 2 are implemented.
 
 ## Purpose
 

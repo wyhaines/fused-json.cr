@@ -1,4 +1,20 @@
 module FusedJSON
+  # Keeps streaming JSON::Any construction in its checked numeric domain while
+  # public pull traversal remains range neutral until a numeric getter is used.
+  private class DynamicStreamingPullParser < StreamingPullParser
+    def initialize(input : IO, *, buffer_size : Int, max_nesting : Int,
+                   cache_keys : Bool, max_token_bytes : Int?)
+      super(
+        input,
+        buffer_size: buffer_size,
+        max_nesting: max_nesting,
+        cache_keys: cache_keys,
+        max_token_bytes: max_token_bytes,
+        enforce_dynamic_numbers: true
+      )
+    end
+  end
+
   # :nodoc:
   # Builds a standard `JSON::Any` tree from a caller-owned IO without first
   # loading the complete JSON document into a String. `max_token_bytes`
@@ -9,7 +25,7 @@ module FusedJSON
     def initialize(input : IO, *, buffer_size : Int = StreamingPullParser::DEFAULT_BUFFER_SIZE,
                    max_nesting : Int = PullParser::MAX_NESTING, cache_keys : Bool = false,
                    max_token_bytes : Int? = nil)
-      @pull = StreamingPullParser.new(
+      @pull = DynamicStreamingPullParser.new(
         input,
         buffer_size: buffer_size,
         max_nesting: max_nesting,

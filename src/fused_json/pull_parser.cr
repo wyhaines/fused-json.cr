@@ -54,7 +54,7 @@ module FusedJSON
     @enforce_dynamic_numbers : Bool
 
     def initialize(source : String, *, max_nesting : Int = MAX_NESTING, cache_keys : Bool = false)
-      initialize(source, max_nesting: max_nesting, cache_keys: cache_keys, enforce_dynamic_numbers: true)
+      initialize(source, max_nesting: max_nesting, cache_keys: cache_keys, enforce_dynamic_numbers: false)
     end
 
     private def initialize(source : String, *, max_nesting : Int, cache_keys : Bool, enforce_dynamic_numbers : Bool)
@@ -131,11 +131,22 @@ module FusedJSON
       @string_value
     end
 
-    protected def raw_number_value : String
+    # Returns an owned copy of the exact source token for the current integer
+    # or float without consuming it. Raises `ParseError` at any other event.
+    def raw_number_value : String
       unless @kind.int? || @kind.float?
         raise_error("expected a number, found #{@kind}", @byte_offset)
       end
       materialize_number(@number_token)
+    end
+
+    # Returns an owned copy of the exact source token for the current integer
+    # or float and advances to the next event. Raises `ParseError` at any other
+    # event.
+    def read_raw_number : String
+      value = raw_number_value
+      read_next
+      value
     end
 
     # Consumes the current event and returns the kind of the next event.
@@ -180,7 +191,7 @@ module FusedJSON
 
     def read_int : Int64
       expect_kind(Kind::Int)
-      value = @int_value
+      value = int_value
       read_next
       value
     end
@@ -189,9 +200,9 @@ module FusedJSON
     def read_float : Float64
       value = case @kind
               when .int?
-                @int_value.to_f64
+                int_value.to_f64
               when .float?
-                @float_value
+                float_value
               else
                 raise_error("expected Float, found #{@kind}", @byte_offset)
               end

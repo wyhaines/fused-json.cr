@@ -4,6 +4,14 @@ All notable changes to FusedJSON are recorded here. The project follows semantic
 
 ## Unreleased
 
+### Added
+
+- Exact `PullParser#raw_number_value` and `#read_raw_number` access for integer and float tokens.
+
+### Changed
+
+- Pull traversal and skipping no longer narrow valid numbers until a numeric value is requested. Dynamic `load` and `parse` behavior is unchanged.
+
 ## 0.1.0 - 2026-08-22
 
 ### Added

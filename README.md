@@ -88,6 +88,8 @@ pull.finish
 
 Use `kind`, the scalar and container `read_*` methods, `read_array`, `read_object`, `read_next`, and `skip_value`/`skip` to advance. Invalid input or an incompatible read raises `FusedJSON::ParseError`. This reader intentionally has its own type; it is not a drop-in `JSON::PullParser` subclass.
 
+At an integer or float event, `raw_number_value` returns the exact JSON token without advancing and `read_raw_number` returns it while advancing once. These methods do not narrow the value, so they can preserve decimal spelling or integers wider than `Int128`. Direct `read_int` and `read_float` calls still perform checked `Int64` and finite-`Float64` conversion.
+
 Pass an `IO` instead of a `String` to use the same event API incrementally:
 
 ```crystal
@@ -140,7 +142,7 @@ At `9f614df`, five-process medians on the same host put direct typed decoding at
 
 Version 0.1.0 contains the core dynamic, pull, typed, and streaming parsers. Current priorities are:
 
-- Typed reads from the current pull position, block-based typed array iteration, and exact access to the current number token, so named arrays inside very large root objects can be processed without building the complete collection in memory or narrowing numbers before application code sees them. This work is defined in the [large-document specification](docs/large-document-processing.md) and [implementation plan](docs/large-document-plan.md). A separate reader will later handle NDJSON or repeated JSON documents and reuse its buffers between records. `load` and `parse` will remain eager, strict, single-document operations.
+- Typed reads from the current pull position and block-based typed array iteration, so named arrays inside very large root objects can be processed without building the complete collection in memory. Exact number-token access is now available through `raw_number_value` and `read_raw_number`. This work is defined in the [large-document specification](docs/large-document-processing.md) and [implementation plan](docs/large-document-plan.md). A separate reader will later handle NDJSON or repeated JSON documents and reuse its buffers between records. `load` and `parse` will remain eager, strict, single-document operations.
 - An opt-in dynamic value type that can hold integers beyond `Int64`, exact decimals, or the original number spelling. The existing `JSON::Any` API will keep its Crystal-compatible numeric behavior. Typed decoding for `BigInt`, `BigFloat`, and `BigDecimal` will be verified and documented.
 - One limits configuration across all parsing APIs, covering document size, token size, total value count, entries per container, and key-cache growth. Applications will also be able to reject duplicate keys when parsing untrusted input. Returned values will still require memory proportional to their size.
 - Fewer allocations in dynamic and typed decoding. Streaming tree construction will build values directly from `IO` instead of routing them through pull events. Reproducible release benchmarks will cover stable Crystal on x86-64, then expand to ARM64 when suitable runners are available.

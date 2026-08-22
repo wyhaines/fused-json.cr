@@ -79,6 +79,21 @@ module TICBenchmarkCLI
       raise "FusedJSON and Crystal traversal results differ"
     end
 
+    raw_number_verified = false
+    raw_number_checksum = nil.as(String?)
+    if manifest.projection.raw_number_checksum
+      fused_raw = TICBench.fused_raw_number_pull(input, buffer_size, max_nesting)
+      TICBench.verify_raw_number_result(fused_raw, manifest, "FusedJSON")
+      crystal_raw = TICBench.crystal_raw_number_pull(input, buffer_size, max_nesting)
+      TICBench.verify_raw_number_result(crystal_raw, manifest, "Crystal")
+      unless fused_raw.counts == crystal_raw.counts &&
+             fused_raw.raw_number_checksum == crystal_raw.raw_number_checksum
+        raise "FusedJSON and Crystal raw-number traversal results differ"
+      end
+      raw_number_verified = true
+      raw_number_checksum = fused_raw.raw_number_checksum
+    end
+
     gzip_verified = false
     if compressed_path = gzip_input
       compressed = manifest.gzip || raise "manifest does not describe a gzip fixture"
@@ -113,6 +128,13 @@ module TICBenchmarkCLI
         json.field "document_sha256", plain_content.sha256
         json.field "projection_sha256", fused.projection_sha256
         json.field "projection_checksum", fused.projection_checksum
+        json.field "raw_number_verified", raw_number_verified
+        nullable_field(
+          json,
+          "raw_number_checksum_algorithm",
+          manifest.projection.raw_number_checksum_algorithm
+        )
+        nullable_field(json, "raw_number_checksum", raw_number_checksum)
         json.field "gzip_verified", gzip_verified
         write_counts(json, fused.counts)
         json.field "buffer_size", buffer_size

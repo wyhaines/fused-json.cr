@@ -1,7 +1,7 @@
 # Streaming Input
 
 FusedJSON can parse one complete JSON document directly from an `IO`. The
-streaming entry points use the same strict grammar, numeric domains, nesting
+streaming entry points use the same strict grammar, numeric behavior, nesting
 rules, and duplicate-key behavior as their `String` counterparts.
 
 ## Entry Points
@@ -39,6 +39,12 @@ end
 Construction primes the reader on its first semantic event. After consuming
 the root value, call `finish` to require end of input. `skip` and `skip_value`
 still validate the complete skipped value.
+
+At a numeric event, `raw_number_value` returns the exact token without
+advancing, while `read_raw_number` returns it and advances once. Neither method
+performs numeric conversion. Direct integer and float reads retain their checked
+conversion limits, and dynamic tree construction still uses `Int64` and finite
+`Float64` values.
 
 The dynamic-tree overloads build `JSON::Any`; `parse` is an alias for `load`:
 
@@ -110,7 +116,9 @@ buffers are outside this limit.
   buffers grow geometrically, so this is a logical token limit rather than an
   exact total-memory cap. Completed scratch up to
   `max(2 * buffer_size, 64 KiB)` is reused; larger scratch is released for GC
-  when the reader advances. Returned strings are owned values.
+  when the reader advances. Returned strings are owned values. Each
+  `raw_number_value` or `read_raw_number` call allocates an owned string
+  proportional to the current token.
 - `cache_keys: true` retains one pooled copy of each distinct materialized key
   for the parser's lifetime; returned values may retain those strings longer.
 - `load(IO)` and `parse(IO)` necessarily allocate the complete `JSON::Any`

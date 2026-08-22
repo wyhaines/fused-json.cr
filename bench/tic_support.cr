@@ -7,6 +7,8 @@ module TICBench
   PROJECTION_FORMAT             = "fused-json-tic-prices-jsonl"
   PROJECTION_VERSION            = 1
   PROJECTION_CHECKSUM_ALGORITHM = "fnv1a64-fields-v1"
+  RAW_NUMBER_CHECKSUM_ALGORITHM = "fnv1a64-fields-raw-number-v2"
+  RAW_NUMBER_CHECKSUM_VERSION   =                              2
   FNV_OFFSET                    = 14_695_981_039_346_656_037_u64
   FNV_PRIME                     =          1_099_511_628_211_u64
 
@@ -66,8 +68,12 @@ module TICBench
     getter sha256 : String
     getter checksum_algorithm : String
     getter checksum : String
+    getter raw_number_checksum_algorithm : String?
+    getter raw_number_checksum : String?
 
     def initialize(@lines, @sha256, @checksum,
+                   @raw_number_checksum_algorithm = nil,
+                   @raw_number_checksum = nil,
                    @format = PROJECTION_FORMAT,
                    @version = PROJECTION_VERSION,
                    @algorithm = "sha256",
@@ -149,6 +155,18 @@ module TICBench
              projection.checksum.matches?(/\A0x[0-9a-f]{16}\z/)
         raise ArgumentError.new("unsupported fixture projection checksum")
       end
+      validate_raw_number_checksum
+    end
+
+    private def validate_raw_number_checksum : Nil
+      algorithm = projection.raw_number_checksum_algorithm
+      checksum = projection.raw_number_checksum
+      return unless algorithm || checksum
+
+      unless algorithm == RAW_NUMBER_CHECKSUM_ALGORITHM &&
+             checksum.try(&.matches?(/\A0x[0-9a-f]{16}\z/))
+        raise ArgumentError.new("unsupported fixture raw-number checksum")
+      end
     end
 
     private def validate_gzip : Nil
@@ -177,6 +195,21 @@ module TICBench
     provider_group_id : Int64,
     negotiated_type : String,
     negotiated_rate_cents : Int64,
+    billing_class : String,
+    service_code : String
+
+  record RawNumberProjectionRow,
+    sequence : Int64,
+    item_index : Int64,
+    price_index : Int64,
+    billing_code : String,
+    name : String,
+    code_type : String,
+    arrangement : String,
+    description : String,
+    provider_group_id : Int64,
+    negotiated_type : String,
+    negotiated_rate : String,
     billing_class : String,
     service_code : String
 
@@ -294,11 +327,72 @@ module TICBench
     end
   end
 
+  # FNV-1a over the fields observed by the raw-number traversal. This is a
+  # separate algorithm so the established normalized v1 checksum stays stable.
+  class RawNumberProjectionChecksum
+    getter lines : Int64
+    getter value : UInt64
+
+    def initialize
+      @lines = 0_i64
+      @value = FNV_OFFSET
+    end
+
+    def add(row : RawNumberProjectionRow) : Nil
+      unless row.sequence == @lines
+        raise ArgumentError.new("projection sequence #{row.sequence} does not follow #{@lines - 1}")
+      end
+
+      mix_i64(RAW_NUMBER_CHECKSUM_VERSION)
+      mix_i64(row.sequence)
+      mix_i64(row.item_index)
+      mix_i64(row.price_index)
+      mix_string(row.billing_code)
+      mix_string(row.name)
+      mix_string(row.code_type)
+      mix_string(row.arrangement)
+      mix_string(row.description)
+      mix_i64(row.provider_group_id)
+      mix_string(row.negotiated_type)
+      mix_string(row.negotiated_rate)
+      mix_string(row.billing_class)
+      mix_string(row.service_code)
+      @lines += 1
+    end
+
+    def hex : String
+      sprintf("0x%016x", @value)
+    end
+
+    private def mix_string(value : String) : Nil
+      mix_u64(value.bytesize.to_u64)
+      value.each_byte { |byte| mix_byte(byte) }
+    end
+
+    private def mix_i64(value : Int) : Nil
+      mix_u64(value.to_i64.unsafe_as(UInt64))
+    end
+
+    private def mix_u64(value : UInt64) : Nil
+      8.times do |index|
+        mix_byte(((value >> (index * 8)) & 0xff_u64).to_u8)
+      end
+    end
+
+    private def mix_byte(byte : UInt8) : Nil
+      @value = (@value ^ byte) &* FNV_PRIME
+    end
+  end
+
   record TraversalResult,
     counts : Counts,
     projection_sha256 : String?,
     projection_checksum : String,
     first_item_seconds : Float64?
+
+  record RawNumberTraversalResult,
+    counts : Counts,
+    raw_number_checksum : String
 
   def self.file_sha256(path : String) : String
     Digest::SHA256.new.file(path).hexfinal

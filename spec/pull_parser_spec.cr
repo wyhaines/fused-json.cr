@@ -256,7 +256,6 @@ describe FusedJSON::PullParser do
       %q([1,]),
       %q({"x":[1 2]}),
       %q({"x":1} trailing),
-      "[1e309]",
     ]
 
     invalid.each do |source|
@@ -275,8 +274,6 @@ describe FusedJSON::PullParser do
       "-",
       "1.",
       "1e+",
-      "9223372036854775808",
-      "1e309",
       %q("bad\xescape"),
       %q("\uDC00"),
       %q({"a" 1}),

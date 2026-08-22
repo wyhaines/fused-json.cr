@@ -10,6 +10,22 @@ module JSONTestSuiteSupport
     i_structure_500_nested_arrays.json
   )
 
+  # These fixtures contain grammar-valid numbers outside the dynamic
+  # Int64/finite-Float64 domain. Pull skipping accepts them without conversion,
+  # while dynamic construction continues to reject them.
+  I_RANGE_NEUTRAL_NUMBERS = %w(
+    i_number_double_huge_neg_exp.json
+    i_number_huge_exp.json
+    i_number_neg_int_huge_exp.json
+    i_number_pos_double_huge_exp.json
+    i_number_real_neg_overflow.json
+    i_number_real_pos_overflow.json
+    i_number_real_underflow.json
+    i_number_too_big_neg_int.json
+    i_number_too_big_pos_int.json
+    i_number_very_big_negative_int.json
+  )
+
   I_REJECT = %w(
     i_number_double_huge_neg_exp.json
     i_number_huge_exp.json

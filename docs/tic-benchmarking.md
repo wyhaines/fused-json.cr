@@ -47,7 +47,10 @@ The default is `rates-first` for `wide-item` and `unicode-boundary`, and
 The manifest records the seed, root key order, exact byte counts, logical item
 counts, maximum nesting, largest token and array item, Unicode split offsets,
 document SHA-256, and canonical price projection SHA-256. It also records the
-low-overhead projection checksum used by timed parser runs. String token sizes
+low-overhead normalized projection checksum used by timed parser runs and a
+separately versioned checksum that includes each negotiated-rate token's exact
+spelling. The established `fnv1a64-fields-v1` checksum remains unchanged; raw
+number verification uses `fnv1a64-fields-raw-number-v2`. String token sizes
 include their quotes and escapes. The generator writes padding in fixed chunks
 to reach the requested size.
 
@@ -74,6 +77,14 @@ Lines projection. Each projection row includes the selected item metadata,
 provider group ID, negotiated price, billing class, and service code.
 Provider-reference contents and ignored fields remain covered by strict JSON
 validation and the whole-document hash.
+
+Verification also makes a separate pass through each parser that reads every
+negotiated rate as a raw number. Its checksum includes the exact source lexeme,
+so spellings such as `123.4500` and `1.234500e2` remain distinguishable. The
+FusedJSON pass exercises `read_raw_number`; this raw-number pass is not a timed
+benchmark mode. Manifests created by Milestone 1 remain usable: verification
+skips the raw pass when both v2 fields are absent and records
+`raw_number_verified: false`. Regenerate the fixture to add raw-number coverage.
 
 ## Record one workload
 
@@ -122,6 +133,7 @@ pull parser uses a `File` buffer of the same size; its lexer does not expose an
 equivalent parser-buffer option. Do not describe these as identical internal
 buffers.
 
-These Milestone 1 modes use structural pull parsing. Typed parsing, gzip plus
-parsing, the two-pass TiC workflow, statistical release gates, and multi-size
-RSS campaigns belong to later milestones.
+The timed modes still use Milestone 1 structural pull parsing. Milestone 2 adds
+the untimed raw-number verification pass. Typed parsing, gzip plus parsing, the
+two-pass TiC workflow, statistical release gates, and multi-size RSS campaigns
+belong to later milestones.

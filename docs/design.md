@@ -123,17 +123,17 @@ block contract raises `ParseError`; a wrong-kind read does not advance.
 
 The pull API is strict about the complete document. It does not reproduce
 Crystal's current behavior of silently ignoring a second scalar root. It uses
-the same Int64, finite Float64, Unicode, and nesting policies as `load`. Every
-object-key event is exposed, including duplicates; tree and typed consumers
-apply their documented last-value policy.
+the same number grammar, Unicode, and nesting policies as `load`, but recognizes
+and skips numbers without immediately converting them. Every object-key event
+is exposed, including duplicates; tree and typed consumers apply their
+documented last-value policy.
 
-Typed decoding retains an exact source range for every number. Requested
-integer types may use the full fixed-width domain through `UInt128`, or
-`BigInt` when Crystal's `big/json` adapter is loaded; `load` and the public pull
-reader keep their Int64 domain. In the typed engine, skipped integers and
-floats used only as raw values are grammar-validated without being forced into
-the dynamic numeric domain. Converting a floating token retains the
-finite-Float64 policy and follows Crystal's target constructor behavior.
+Pull and typed decoding retain an exact source range for every number.
+`raw_number_value` observes that spelling and `read_raw_number` returns it while
+advancing. Requested typed integers may use the full fixed-width domain through
+`UInt128`, or `BigInt` when Crystal's `big/json` adapter is loaded. Direct pull
+integer reads remain checked `Int64` conversions, and converting a floating
+token retains the finite-`Float64` policy.
 
 Streaming entry points borrow the `IO` and never close it. They read from its
 current position through `IO#read_utf8`, accept positive short reads, and treat
@@ -262,10 +262,9 @@ The current implementation has seven layers:
    with a bounded input buffer and reusable current-token scratch.
 6. `StreamingParser` recursively builds a `JSON::Any` tree from streaming pull
    events.
-7. Typed pull variants relax eager dynamic-number conversion. Private concrete
-   adapters for `String` and `IO` mirror native state into the nominal stdlib
-   pull-parser type required by generated deserializers; a generic shared base
-   keeps each native parser type statically known.
+7. Private concrete adapters for `String` and `IO` mirror native state into the
+   nominal stdlib pull-parser type required by generated deserializers; a
+   generic shared base keeps each native parser type statically known.
 
 The in-memory parsers dispatch values from the current byte and share byte-level
 recognition without lexer tokens. Their structural drivers deliberately differ:
@@ -282,11 +281,11 @@ In-memory syntax-error locations may scan from the beginning because they are
 off the success path.
 
 Numeric recognition returns a source range before conversion. The tree path
-and public pull path immediately enforce the dynamic Int64/Float64 domain; the
-typed path converts lazily or materializes an exact raw spelling only when a
-stdlib constructor requires it. Crystal's `UInt64`, `Int128`, `UInt128`, and
-`BigInt` constructors currently require that raw `String`, so those typed paths
-allocate one numeric substring.
+immediately enforces the dynamic Int64/Float64 domain. Public and typed pull
+paths convert lazily or materialize an exact raw spelling only when the caller
+or a stdlib constructor requires it. Crystal's `UInt64`, `Int128`, `UInt128`,
+and `BigInt` constructors currently require that raw `String`, so those typed
+paths allocate one numeric substring.
 
 `Float64Decoder` isolates Crystal's compiler-internal pointer-range `fast_float`
 machinery. Crystal versions from 1.21 through the reviewed range below 1.23-dev
