@@ -1,6 +1,6 @@
 # Large-document typed streaming specification
 
-Status: accepted for the next 0.x milestone. Milestones 1 and 2 are implemented.
+Status: accepted for the next 0.x milestone. Milestones 1 through 3 are implemented.
 
 ## Purpose
 
@@ -159,9 +159,12 @@ traverse a next array or object. A malformed lookahead token can fail the read
 before the completed element is yielded. `max_token_bytes` also applies to
 this token.
 
-No partial current element is yielded. A later syntax or IO failure cannot
-undo callbacks for earlier elements. Applications that require all-or-nothing
-behavior must stage their writes and commit them only after `finish` succeeds.
+No partial current element is yielded. For `read(T)`, this means the method
+returns no `T` unless its constructor consumed the complete selected value; it
+does not promise transactionally rolled-back parser state or constructor side
+effects. A later syntax or IO failure cannot undo callbacks for earlier
+elements. Applications that require all-or-nothing behavior must stage their
+writes and commit them only after `finish` succeeds.
 
 If a typed constructor or callback raises, or a block exits early, FusedJSON
 does not drain the array or validate the remaining document. The reader must

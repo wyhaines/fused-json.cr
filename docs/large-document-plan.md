@@ -1,6 +1,7 @@
 # Large-document typed streaming implementation plan
 
-Status: proposed. This plan implements the requirements in
+Status: in progress. Milestones 1 through 3 are implemented. This plan
+implements the requirements in
 [Large-document typed streaming specification](large-document-processing.md).
 
 ## Working rules
@@ -88,13 +89,14 @@ consume exactly as documented without narrowing. All existing dynamic, pull,
 typed, conformance, portable-float, and scalar-scanner suites pass. Existing
 dynamic benchmark gates show no material regression.
 
-## Milestone 3: Typed reads at the cursor
+## Milestone 3: Typed reads at the cursor (implemented)
 
-Refactor the private Crystal pull adapter so it can borrow an existing native
-reader and expose exactly one current value. Give the adapter a value-boundary
-guard: it presents EOF after that value, rejects incomplete constructors, and
-never exposes a sibling. Keep separate concrete String and IO specializations
-so the streaming hot path does not gain union dispatch.
+Add borrowed variants of the private Crystal pull adapters that expose exactly
+one current value while preserving the unbounded owning adapters used by
+`from_json`. Give each borrowed adapter a value-boundary guard: it presents EOF
+after that value, rejects incomplete constructors, and never exposes a sibling.
+Keep separate concrete String and IO specializations so neither hot path gains
+union dispatch.
 
 Add `PullParser#read(T)`. Exercise every type and `JSON::Serializable` feature
 already promised by `from_json`, plus nested positions, sequential mixed
@@ -114,6 +116,9 @@ Add `PullParser#read_array(T)`. Implement it on `read(T)` and preserve the
 existing untyped overload. Test empty arrays, item order, nested arrays,
 duplicate object members, early block exit, callback exceptions, malformed
 later items, malformed one-token lookahead, and malformed document suffixes.
+Measure per-element adapter cost for representative records and scalar arrays.
+Retained-reference safety forbids adapter reuse; any lighter initialization or
+primitive fast path must preserve the same one-value boundary semantics.
 
 Add a compile-checked large-document example that:
 

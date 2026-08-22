@@ -19,6 +19,7 @@ FusedJSON.parse(io : IO, *, buffer_size : Int = 32 * 1024,
 FusedJSON.from_json(io : IO, type : T.class, *, buffer_size : Int = 32 * 1024,
                     max_nesting : Int = 512, cache_keys : Bool = false,
                     max_token_bytes : Int? = nil) : T
+pull.read(type : T.class) : T
 ```
 
 Use the pull reader when values should be processed incrementally:
@@ -39,6 +40,12 @@ end
 Construction primes the reader on its first semantic event. After consuming
 the root value, call `finish` to require end of input. `skip` and `skip_value`
 still validate the complete skipped value.
+
+`read(T)` materializes one typed value at the current cursor without requiring
+document EOF, then leaves the native reader on the next sibling or enclosing
+end event. This supports structural navigation around selected typed values.
+The typed constructor cannot cross that value boundary. If it raises or does
+not consume exactly one complete value, discard the reader.
 
 At a numeric event, `raw_number_value` returns the exact token without
 advancing, while `read_raw_number` returns it and advances once. Neither method
@@ -91,6 +98,12 @@ positioned immediately after the current event. The facade APIs consume to
 EOF. In the pull API, advancing after the root scans trailing whitespace and
 probes EOF; `finish` then asserts that EOF was reached. These APIs are therefore
 for one document per IO, not concatenated documents.
+
+Advancing a typed value performs the same one-event lookahead as every other
+pull read. A following string or number is scanned completely; if that token is
+malformed or exceeds `max_token_bytes`, the typed read fails before returning
+the completed value. A following array or object stops at its opening event and
+does not traverse its contents.
 
 Short positive reads are supported. Following Crystal's `IO` contract, a
 zero-length read means permanent EOF and is not retried. An IO representing

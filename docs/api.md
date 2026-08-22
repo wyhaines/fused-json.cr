@@ -24,6 +24,26 @@ Options are keyword-only. Key caching is scoped to one parse. The token limit
 counts raw bytes for each string or number, including string quotes and escape
 spellings; it is not a document-size or result-size limit.
 
+## Typed Pull Reads
+
+`PullParser#read(type : T.class) : T` decodes exactly one value at the current
+cursor through `T.new(pull : JSON::PullParser)`. It accepts root values and
+values nested in arrays or objects, then leaves the native cursor on the next
+sibling, enclosing end event, or document EOF. Object keys, container ends,
+and EOF are not value positions and raise `ParseError` without advancing.
+
+The private compatibility adapter presents EOF immediately after the selected
+value, so a custom constructor cannot inspect or consume its sibling. Returning
+without consuming the complete value is an error. Advancement still performs
+the pull reader's normal one-event lookahead, so a malformed or oversized next
+string or number can fail the current read before it returns.
+
+A failed typed read never returns a partial `T`, but it is not transactional:
+constructor side effects and bytes already consumed cannot be rolled back.
+Discard the reader after any constructor or typed-read error. Whole-value raw
+converters, ambiguous unions, and discriminators may allocate storage
+proportional to the selected value.
+
 ## Pull Number Access
 
 The pull reader recognizes a valid JSON number without immediately converting

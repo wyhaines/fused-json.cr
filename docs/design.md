@@ -109,6 +109,7 @@ FusedJSON::PullParser.new(source : IO, *, buffer_size : Int = 32 * 1024,
                           max_nesting : Int = 512,
                           cache_keys : Bool = false,
                           max_token_bytes : Int? = nil)
+pull.read(type : T.class) : T
 ```
 
 Construction primes the reader on the first semantic event. `kind` is one of
@@ -121,6 +122,15 @@ Each `read_array` or `read_object` yield must consume at least one complete
 value and stay within that container. Reading the wrong kind or violating a
 block contract raises `ParseError`; a wrong-kind read does not advance.
 
+`read(T)` constructs exactly one current value through Crystal's standard
+typed pull interface. A value-boundary adapter presents synthetic EOF after
+that value while the native cursor advances to its sibling, enclosing end, or
+document EOF. It rejects object keys and end events before construction and
+rejects constructors that return after consuming zero or only part of a value.
+Typed-read failures do not return a partial value, but they cannot roll back
+constructor side effects or native input consumption; the reader must then be
+discarded.
+
 The pull API is strict about the complete document. It does not reproduce
 Crystal's current behavior of silently ignoring a second scalar root. It uses
 the same number grammar, Unicode, and nesting policies as `load`, but recognizes
@@ -131,9 +141,10 @@ documented last-value policy.
 Pull and typed decoding retain an exact source range for every number.
 `raw_number_value` observes that spelling and `read_raw_number` returns it while
 advancing. Requested typed integers may use the full fixed-width domain through
-`UInt128`, or `BigInt` when Crystal's `big/json` adapter is loaded. Direct pull
-integer reads remain checked `Int64` conversions, and converting a floating
-token retains the finite-`Float64` policy.
+`UInt128`; `BigInt`, `BigFloat`, and exact `BigDecimal` are available when
+Crystal's `big/json` adapter is loaded. Direct pull integer reads remain checked
+`Int64` conversions, and converting a floating token directly retains the
+finite-`Float64` policy.
 
 Streaming entry points borrow the `IO` and never close it. They read from its
 current position through `IO#read_utf8`, accept positive short reads, and treat
@@ -264,7 +275,8 @@ The current implementation has seven layers:
    events.
 7. Private concrete adapters for `String` and `IO` mirror native state into the
    nominal stdlib pull-parser type required by generated deserializers; a
-   generic shared base keeps each native parser type statically known.
+   generic shared base keeps each native parser type statically known and can
+   bound borrowed readers to one current value.
 
 The in-memory parsers dispatch values from the current byte and share byte-level
 recognition without lexer tokens. Their structural drivers deliberately differ:
@@ -324,13 +336,27 @@ Crystal's generated constructors.
 
 ## Typed and Streaming Integration
 
-Typed decoding reuses each pull engine through a private subclass adapter for
-Crystal's nominal `JSON::PullParser`; the public pull type remains independent.
-The adapter initializes private base state, then overrides value access,
-advancement, raw traversal, skipping, locations, and errors. Separate concrete
-adapters avoid adding union dispatch to the in-memory path. Adapter dispatch,
-annotations, raw replay, converters, discriminators, and strict trailing
-content remain tested on every supported compiler.
+Typed decoding reuses each pull engine through private adapters for Crystal's
+nominal `JSON::PullParser`; the public pull type remains independent. Owning,
+unbounded adapters preserve the existing whole-document `from_json` hot path.
+Separate borrowed adapters add the one-value boundary needed by cursor reads,
+so whole-document decoding does not pay its depth tracking or boundary state.
+Concrete String and IO forms avoid adding union dispatch to either path.
+Adapter dispatch, annotations, raw replay, converters, discriminators, and
+strict trailing content remain tested on every supported compiler.
+
+For a cursor read, the adapter tracks structural depth relative to the selected
+value. It lets the native reader perform its normal one-event lookahead, then
+publishes EOF when that value closes instead of mirroring the next native event.
+All delegated getters, raw operations, key reads, and skips honor that boundary,
+including if a custom constructor retains the adapter. A fresh adapter is
+required per typed read because retained references must remain permanently
+bounded. In-memory boundary locations are reconstructed only if queried, so a
+normal successful typed read does not add a second pass over consumed input;
+streaming boundary locations are captured from incremental state. The fresh
+adapter's fixed allocation and initialization cost is a performance target for
+typed array blocks, but adapters cannot be reused while retained references are
+part of the constructor contract.
 
 Streaming scanning preserves tokens split at any byte boundary, including
 UTF-8 sequences, escapes, literals, and exponents. It retains parser state, a
