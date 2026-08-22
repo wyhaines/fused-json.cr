@@ -1,6 +1,6 @@
 # Large-document typed streaming implementation plan
 
-Status: in progress. Milestones 1 through 3 are implemented. This plan
+Status: in progress. Milestones 1 through 4 are implemented. This plan
 implements the requirements in
 [Large-document typed streaming specification](large-document-processing.md).
 
@@ -110,7 +110,7 @@ Acceptance: decoding the same isolated value through `read(T)` and
 at every byte split and with one-byte reads. A failed read never yields a
 partial value.
 
-## Milestone 4: Typed array blocks and TiC workflow
+## Milestone 4: Typed array blocks and TiC workflow (implemented)
 
 Add `PullParser#read_array(T)`. Implement it on `read(T)` and preserve the
 existing untyped overload. Test empty arrays, item order, nested arrays,

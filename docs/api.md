@@ -44,6 +44,18 @@ Discard the reader after any constructor or typed-read error. Whole-value raw
 converters, ambiguous unions, and discriminators may allocate storage
 proportional to the selected value.
 
+`PullParser#read_array(type : T.class, & : T ->) : Nil` consumes the current
+array and applies `read(T)` to each element in source order. The parser does
+not retain yielded values. A normally returning callback must not advance the
+native reader; doing so raises `ParseError` rather than silently skipping an
+element.
+
+Normal completion consumes the array end. A callback exception, `break`, or
+non-local return does not drain the array or validate the remaining document.
+Discard the reader in those cases. Earlier callback effects cannot be rolled
+back, so stage output and commit it only after the complete traversal and
+`finish` succeed.
+
 ## Pull Number Access
 
 The pull reader recognizes a valid JSON number without immediately converting

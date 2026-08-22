@@ -3,7 +3,19 @@ require "option_parser"
 require "./tic_workload"
 
 module TICBenchmarkCLI
-  MODES            = ["plain-drain", "gzip-drain", "fused-pull", "crystal-pull"]
+  STRUCTURAL_MODES = ["fused-pull", "crystal-pull"]
+  TYPED_MODES      = [
+    "fused-typed",
+    "crystal-typed",
+    "fused-gzip-typed",
+    "crystal-gzip-typed",
+    "fused-two-pass-typed",
+    "crystal-two-pass-typed",
+  ]
+  GZIP_MODES       = ["gzip-drain", "fused-gzip-typed", "crystal-gzip-typed"]
+  TWO_PASS_MODES   = ["fused-two-pass-typed", "crystal-two-pass-typed"]
+  PARSER_MODES     = STRUCTURAL_MODES + TYPED_MODES
+  MODES            = ["plain-drain", "gzip-drain"] + PARSER_MODES
   ENVIRONMENT_KEYS = [
     "CRYSTAL_WORKERS",
     "FUSED_JSON_BENCH_COMMIT",
@@ -33,6 +45,7 @@ module TICBenchmarkCLI
     gc_cycles_before : UInt64,
     gc_cycles_after : UInt64,
     traversal : TICBench::TraversalResult?,
+    typed_traversal : TICBench::TypedTraversalResult?,
     drain : TICBench::DrainResult?
 
   extend self
@@ -73,43 +86,21 @@ module TICBenchmarkCLI
     TICBench.verify_result(fused, manifest, "FusedJSON")
     crystal = TICBench.crystal_pull(input, buffer_size, max_nesting)
     TICBench.verify_result(crystal, manifest, "Crystal")
-    unless fused.counts == crystal.counts &&
-           fused.projection_sha256 == crystal.projection_sha256 &&
-           fused.projection_checksum == crystal.projection_checksum
-      raise "FusedJSON and Crystal traversal results differ"
-    end
+    verify_traversal_parity(fused, crystal)
 
-    raw_number_verified = false
-    raw_number_checksum = nil.as(String?)
-    if manifest.projection.raw_number_checksum
-      fused_raw = TICBench.fused_raw_number_pull(input, buffer_size, max_nesting)
-      TICBench.verify_raw_number_result(fused_raw, manifest, "FusedJSON")
-      crystal_raw = TICBench.crystal_raw_number_pull(input, buffer_size, max_nesting)
-      TICBench.verify_raw_number_result(crystal_raw, manifest, "Crystal")
-      unless fused_raw.counts == crystal_raw.counts &&
-             fused_raw.raw_number_checksum == crystal_raw.raw_number_checksum
-        raise "FusedJSON and Crystal raw-number traversal results differ"
-      end
-      raw_number_verified = true
-      raw_number_checksum = fused_raw.raw_number_checksum
-    end
+    fused_typed = TICBench.fused_typed_pull(input, buffer_size, max_nesting)
+    TICBench.verify_typed_result(fused_typed, manifest, "typed FusedJSON")
+    crystal_typed = TICBench.crystal_typed_pull(input, buffer_size, max_nesting)
+    TICBench.verify_typed_result(crystal_typed, manifest, "typed Crystal")
+    verify_typed_parity(fused_typed, crystal_typed)
 
-    gzip_verified = false
-    if compressed_path = gzip_input
-      compressed = manifest.gzip || raise "manifest does not describe a gzip fixture"
-      unless File.size(compressed_path) == compressed.bytes
-        raise "gzip input byte size does not match the fixture manifest"
-      end
-      unless TICBench.file_sha256(compressed_path) == compressed.sha256
-        raise "gzip input SHA-256 does not match the fixture manifest"
-      end
-      verify_content(
-        TICBench.gzip_content_digest(compressed_path, buffer_size),
-        manifest,
-        "gzip input"
-      )
-      gzip_verified = true
-    end
+    raw_number_verified, raw_number_checksum = verify_raw_numbers(
+      input,
+      manifest,
+      buffer_size,
+      max_nesting
+    )
+    gzip_verified = verify_gzip(gzip_input, manifest, buffer_size)
 
     JSON.build(STDOUT) do |json|
       json.object do
@@ -128,6 +119,12 @@ module TICBenchmarkCLI
         json.field "document_sha256", plain_content.sha256
         json.field "projection_sha256", fused.projection_sha256
         json.field "projection_checksum", fused.projection_checksum
+        json.field "typed_verified", true
+        json.field "typed_provider_checksum_algorithm", TICBench::PROVIDER_CHECKSUM_ALGORITHM
+        json.field "typed_provider_checksum", fused_typed.provider_checksum
+        json.field "typed_provider_records", fused_typed.provider_records
+        json.field "typed_price_records", fused_typed.price_records
+        json.field "typed_scalar_values", fused_typed.scalar_values
         json.field "raw_number_verified", raw_number_verified
         nullable_field(
           json,
@@ -144,6 +141,63 @@ module TICBenchmarkCLI
     STDOUT << '\n'
   end
 
+  private def verify_traversal_parity(fused : TICBench::TraversalResult,
+                                      crystal : TICBench::TraversalResult) : Nil
+    unless fused.counts == crystal.counts &&
+           fused.projection_sha256 == crystal.projection_sha256 &&
+           fused.projection_checksum == crystal.projection_checksum
+      raise "FusedJSON and Crystal traversal results differ"
+    end
+  end
+
+  private def verify_typed_parity(fused : TICBench::TypedTraversalResult,
+                                  crystal : TICBench::TypedTraversalResult) : Nil
+    unless fused.traversal.counts == crystal.traversal.counts &&
+           fused.traversal.projection_sha256 == crystal.traversal.projection_sha256 &&
+           fused.traversal.projection_checksum == crystal.traversal.projection_checksum &&
+           fused.provider_records == crystal.provider_records &&
+           fused.price_records == crystal.price_records &&
+           fused.scalar_values == crystal.scalar_values &&
+           fused.provider_checksum == crystal.provider_checksum
+      raise "FusedJSON and Crystal typed traversal results differ"
+    end
+  end
+
+  private def verify_raw_numbers(input : String, manifest : TICBench::Manifest,
+                                 buffer_size : Int32,
+                                 max_nesting : Int32) : Tuple(Bool, String?)
+    return {false, nil} unless manifest.projection.raw_number_checksum
+
+    fused = TICBench.fused_raw_number_pull(input, buffer_size, max_nesting)
+    TICBench.verify_raw_number_result(fused, manifest, "FusedJSON")
+    crystal = TICBench.crystal_raw_number_pull(input, buffer_size, max_nesting)
+    TICBench.verify_raw_number_result(crystal, manifest, "Crystal")
+    unless fused.counts == crystal.counts &&
+           fused.raw_number_checksum == crystal.raw_number_checksum
+      raise "FusedJSON and Crystal raw-number traversal results differ"
+    end
+    {true, fused.raw_number_checksum}
+  end
+
+  private def verify_gzip(path : String?, manifest : TICBench::Manifest,
+                          buffer_size : Int32) : Bool
+    return false unless compressed_path = path
+
+    compressed = manifest.gzip || raise "manifest does not describe a gzip fixture"
+    unless File.size(compressed_path) == compressed.bytes
+      raise "gzip input byte size does not match the fixture manifest"
+    end
+    unless TICBench.file_sha256(compressed_path) == compressed.sha256
+      raise "gzip input SHA-256 does not match the fixture manifest"
+    end
+    verify_content(
+      TICBench.gzip_content_digest(compressed_path, buffer_size),
+      manifest,
+      "gzip input"
+    )
+    true
+  end
+
   def measure(mode : String, input : String, gzip_input : String?,
               buffer_size : Int32, max_nesting : Int32) : Measurement
     GC.collect
@@ -153,29 +207,15 @@ module TICBenchmarkCLI
     started = Time.instant
 
     traversal = nil.as(TICBench::TraversalResult?)
+    typed_traversal = nil.as(TICBench::TypedTraversalResult?)
     drain = nil.as(TICBench::DrainResult?)
     case mode
-    when "plain-drain"
-      drain = TICBench.plain_drain(input, buffer_size)
-    when "gzip-drain"
-      compressed_path = gzip_input || raise "--gzip-input is required for gzip-drain"
-      drain = TICBench.gzip_drain(compressed_path, buffer_size)
-    when "fused-pull"
-      traversal = TICBench.fused_pull(
-        input,
-        buffer_size,
-        max_nesting,
-        strong_digest: false
-      )
-    when "crystal-pull"
-      traversal = TICBench.crystal_pull(
-        input,
-        buffer_size,
-        max_nesting,
-        strong_digest: false
-      )
+    when "plain-drain", "gzip-drain"
+      drain = measure_drain(mode, input, gzip_input, buffer_size)
+    when "fused-pull", "crystal-pull"
+      traversal = measure_structural(mode, input, buffer_size, max_nesting)
     else
-      raise "unknown mode #{mode.inspect}"
+      typed_traversal = measure_typed(mode, input, gzip_input, buffer_size, max_nesting)
     end
 
     elapsed = (Time.instant - started).total_seconds
@@ -196,8 +236,69 @@ module TICBenchmarkCLI
       prof_before.gc_no,
       prof_after.gc_no,
       traversal,
+      typed_traversal,
       drain
     )
+  end
+
+  private def measure_drain(mode : String, input : String,
+                            gzip_input : String?, buffer_size : Int32) : TICBench::DrainResult
+    case mode
+    when "plain-drain"
+      TICBench.plain_drain(input, buffer_size)
+    when "gzip-drain"
+      TICBench.gzip_drain(required_gzip_input(gzip_input, mode), buffer_size)
+    else
+      raise "unknown drain mode #{mode.inspect}"
+    end
+  end
+
+  private def measure_structural(mode : String, input : String,
+                                 buffer_size : Int32,
+                                 max_nesting : Int32) : TICBench::TraversalResult
+    case mode
+    when "fused-pull"
+      TICBench.fused_pull(input, buffer_size, max_nesting, strong_digest: false)
+    when "crystal-pull"
+      TICBench.crystal_pull(input, buffer_size, max_nesting, strong_digest: false)
+    else
+      raise "unknown structural mode #{mode.inspect}"
+    end
+  end
+
+  private def measure_typed(mode : String, input : String, gzip_input : String?,
+                            buffer_size : Int32,
+                            max_nesting : Int32) : TICBench::TypedTraversalResult
+    case mode
+    when "fused-typed"
+      TICBench.fused_typed_pull(input, buffer_size, max_nesting, strong_digest: false)
+    when "crystal-typed"
+      TICBench.crystal_typed_pull(input, buffer_size, max_nesting, strong_digest: false)
+    when "fused-gzip-typed"
+      TICBench.fused_gzip_typed_pull(
+        required_gzip_input(gzip_input, mode),
+        buffer_size,
+        max_nesting,
+        strong_digest: false
+      )
+    when "crystal-gzip-typed"
+      TICBench.crystal_gzip_typed_pull(
+        required_gzip_input(gzip_input, mode),
+        buffer_size,
+        max_nesting,
+        strong_digest: false
+      )
+    when "fused-two-pass-typed"
+      TICBench.fused_two_pass_typed_pull(input, buffer_size, max_nesting, strong_digest: false)
+    when "crystal-two-pass-typed"
+      TICBench.crystal_two_pass_typed_pull(input, buffer_size, max_nesting, strong_digest: false)
+    else
+      raise "unknown typed mode #{mode.inspect}"
+    end
+  end
+
+  private def required_gzip_input(path : String?, mode : String) : String
+    path || raise "--gzip-input is required for #{mode}"
   end
 
   def run(command : String, mode : String, input : String,
@@ -235,7 +336,7 @@ module TICBenchmarkCLI
                          manifest : TICBench::Manifest,
                          buffer_size : Int32, max_nesting : Int32) : Nil
     raise "max nesting is below the fixture requirement" if max_nesting < manifest.maximum_nesting
-    validate_boundary_buffer(manifest, buffer_size) if mode.ends_with?("-pull")
+    validate_boundary_buffer(manifest, buffer_size) if PARSER_MODES.includes?(mode)
     unless File.size(input) == manifest.decompressed_bytes
       raise "plain input byte size does not match the fixture manifest"
     end
@@ -243,14 +344,14 @@ module TICBenchmarkCLI
 
   def compressed_input_bytes(mode : String, gzip_input : String?,
                              manifest : TICBench::Manifest) : Int64?
-    unless mode == "gzip-drain"
+    unless GZIP_MODES.includes?(mode)
       if gzip_input
-        raise "--gzip-input is only accepted by gzip-drain; gzip plus parsing is not implemented"
+        raise "--gzip-input is only accepted by gzip benchmark modes"
       end
       return
     end
 
-    compressed_path = gzip_input || raise "--gzip-input is required for gzip-drain"
+    compressed_path = gzip_input || raise "--gzip-input is required for #{mode}"
     compressed = manifest.gzip || raise "manifest does not describe a gzip fixture"
     bytes = File.size(compressed_path)
     raise "gzip input byte size does not match the fixture manifest" unless bytes == compressed.bytes
@@ -267,6 +368,8 @@ module TICBenchmarkCLI
                          manifest : TICBench::Manifest, mode : String) : Nil
     if result = measurement.traversal
       TICBench.verify_result(result, manifest, mode, require_strong: false)
+    elsif result = measurement.typed_traversal
+      TICBench.verify_typed_result(result, manifest, mode, require_strong: false)
     elsif result = measurement.drain
       unless result.bytes == manifest.decompressed_bytes
         raise "#{mode} processed #{result.bytes} bytes, expected #{manifest.decompressed_bytes}"
@@ -284,11 +387,15 @@ module TICBenchmarkCLI
                         host : NamedTuple(os: String, cpu_model: String,
                           cpu_count: Int32, cpu_affinity: String)) : Nil
     wall = measurement.wall_seconds
-    processed_bytes = manifest.decompressed_bytes
-    mib = processed_bytes / 1_048_576.0
-    traversal = measurement.traversal
+    typed_traversal = measurement.typed_traversal
+    traversal = measurement.traversal || typed_traversal.try(&.traversal)
+    input_passes = typed_traversal.try(&.input_passes) || 1
+    processed_bytes = checked_processed_bytes(manifest.decompressed_bytes, input_passes)
+    logical_mib = manifest.decompressed_bytes / 1_048_576.0
+    processed_mib = processed_bytes / 1_048_576.0
     drain = measurement.drain
     item_count = traversal.try(&.counts.negotiated_prices)
+    typed_values = typed_traversal.try(&.typed_values)
 
     JSON.build(STDOUT) do |json|
       json.object do
@@ -308,9 +415,12 @@ module TICBenchmarkCLI
         json.field "expected_document_sha256", manifest.document_sha256
         json.field "expected_projection_sha256", manifest.projection.sha256
         json.field "expected_projection_checksum", manifest.projection.checksum
+        json.field "logical_document_bytes", manifest.decompressed_bytes
+        json.field "input_passes", input_passes
         json.field "processed_bytes", processed_bytes
         nullable_field(json, "compressed_ingress_bytes", compressed_bytes)
-        json.field "decompressed_mib_per_second", mib / wall
+        json.field "decompressed_mib_per_second", processed_mib / wall
+        json.field "logical_document_mib_per_second", logical_mib / wall
         nullable_field(
           json,
           "compressed_mib_per_second",
@@ -323,6 +433,11 @@ module TICBenchmarkCLI
         )
         nullable_field(
           json,
+          "typed_values_per_second",
+          typed_values.try { |count| count / wall }
+        )
+        nullable_field(
+          json,
           "first_projected_price_seconds",
           traversal.try(&.first_item_seconds)
         )
@@ -331,6 +446,42 @@ module TICBenchmarkCLI
           json,
           "projection_checksum",
           traversal.try(&.projection_checksum)
+        )
+        nullable_field(
+          json,
+          "typed_provider_checksum_algorithm",
+          typed_traversal.try { TICBench::PROVIDER_CHECKSUM_ALGORITHM }
+        )
+        nullable_field(
+          json,
+          "typed_provider_checksum",
+          typed_traversal.try(&.provider_checksum)
+        )
+        nullable_field(
+          json,
+          "typed_provider_records",
+          typed_traversal.try(&.provider_records)
+        )
+        nullable_field(
+          json,
+          "typed_price_records",
+          typed_traversal.try(&.price_records)
+        )
+        nullable_field(
+          json,
+          "typed_scalar_values",
+          typed_traversal.try(&.scalar_values)
+        )
+        nullable_field(
+          json,
+          "typed_records",
+          typed_traversal.try(&.typed_records)
+        )
+        nullable_field(json, "typed_values", typed_values)
+        nullable_field(
+          json,
+          "typed_pass_wall_seconds",
+          typed_traversal.try(&.pass_wall_seconds)
         )
         nullable_field(
           json,
@@ -359,8 +510,13 @@ module TICBenchmarkCLI
               "bytes_per_projected_price",
               item_count.try { |count| measurement.allocated_bytes.to_f / count }
             )
+            nullable_field(
+              json,
+              "bytes_per_typed_value",
+              typed_values.try { |count| measurement.allocated_bytes.to_f / count }
+            )
             json.field "bytes_per_decompressed_mib",
-              measurement.allocated_bytes.to_f / mib
+              measurement.allocated_bytes.to_f / processed_mib
             json.field "heap_before", measurement.heap_before
             json.field "heap_after", measurement.heap_after
             json.field "free_before", measurement.free_before
@@ -377,10 +533,12 @@ module TICBenchmarkCLI
           json.object do
             json.field "buffer_size", buffer_size
             json.field "max_nesting", max_nesting
+            nullable_field(json, "parser", parser_name(mode))
+            json.field "transport", GZIP_MODES.includes?(mode) ? "gzip" : "plain"
+            json.field "workload", workload_name(mode)
             json.field "fused_cache_keys", false
             json.field "crystal_key_pool", "standard library always enabled"
-            json.field "fused_input_buffer", "unbuffered File plus FusedJSON parser buffer"
-            json.field "crystal_input_buffer", "File buffer; Crystal lexer buffer is internal"
+            json.field "input_buffering", input_buffering(mode)
           end
         end
         json.field "runtime" do
@@ -422,8 +580,47 @@ module TICBenchmarkCLI
   end
 
   def measured_input(mode : String, input : String, gzip_input : String?) : String
-    return input unless mode == "gzip-drain"
-    gzip_input || raise "gzip-drain measurement is missing its input"
+    return input unless GZIP_MODES.includes?(mode)
+    gzip_input || raise "gzip measurement is missing its input"
+  end
+
+  def checked_processed_bytes(document_bytes : Int64, input_passes : Int32) : Int64
+    if document_bytes > Int64::MAX // input_passes
+      raise "processed byte count exceeds Int64"
+    end
+    document_bytes * input_passes
+  end
+
+  def parser_name(mode : String) : String?
+    return "FusedJSON" if mode.starts_with?("fused-")
+    return "Crystal JSON::PullParser" if mode.starts_with?("crystal-")
+    nil
+  end
+
+  def workload_name(mode : String) : String
+    return "drain" if mode.ends_with?("-drain")
+    return "typed-two-pass" if TWO_PASS_MODES.includes?(mode)
+    return "typed" if TYPED_MODES.includes?(mode)
+    "structural-pull"
+  end
+
+  def input_buffering(mode : String) : String
+    case mode
+    when "plain-drain"
+      "unbuffered File plus explicit benchmark drain buffer"
+    when "gzip-drain"
+      "unbuffered compressed File plus gzip reader and explicit benchmark drain buffer"
+    when "fused-gzip-typed"
+      "unbuffered compressed File plus gzip reader and FusedJSON parser buffer"
+    when "crystal-gzip-typed"
+      "unbuffered compressed File plus gzip reader; Crystal lexer buffer is internal"
+    when .starts_with?("fused-")
+      "unbuffered File plus FusedJSON parser buffer"
+    when .starts_with?("crystal-")
+      "File buffer set to benchmark buffer size; Crystal lexer buffer is internal"
+    else
+      raise "unknown benchmark mode #{mode.inspect}"
+    end
   end
 
   def write_counts(json : JSON::Builder, counts : TICBench::Counts) : Nil

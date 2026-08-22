@@ -44,6 +44,10 @@ root member order without changing the generated values or semantic digest.
 The default is `rates-first` for `wide-item` and `unicode-boundary`, and
 `providers-first` for the other profiles.
 
+For `unicode-boundary`, `--boundary-bytes` selects the fixed split boundary
+(default 32768; allowed range 64 through 16777216). Pass that same value as
+`--buffer-size` to `verify`, `run`, or `rss`; the benchmark rejects a mismatch.
+
 The manifest records the seed, root key order, exact byte counts, logical item
 counts, maximum nesting, largest token and array item, Unicode split offsets,
 document SHA-256, and canonical price projection SHA-256. It also records the
@@ -62,8 +66,8 @@ and zlib version match. The manifest records the zlib version and treats its
 ## Verify before measuring
 
 Verification streams each input to EOF. It checks the plain document hash,
-validates the gzip trailer when present, and compares both pull parsers with
-the manifest.
+validates the gzip trailer when present, and compares structural and typed
+FusedJSON/Crystal traversals with the manifest.
 
 ```console
 $ bin/tic-bench verify \
@@ -76,7 +80,10 @@ Both parsers count the same TiC containers and hash the same fixed-order JSON
 Lines projection. Each projection row includes the selected item metadata,
 provider group ID, negotiated price, billing class, and service code.
 Provider-reference contents and ignored fields remain covered by strict JSON
-validation and the whole-document hash.
+validation and the whole-document hash. The typed verification additionally
+decodes provider-reference records, scalar provider IDs, and negotiated-price
+records. A root-order-independent provider checksum verifies fields that are
+not part of the price projection.
 
 Verification also makes a separate pass through each parser that reads every
 negotiated rate as a raw number. Its checksum includes the exact source lexeme,
@@ -90,6 +97,15 @@ skips the raw pass when both v2 fields are absent and records
 
 Each `run` or `rss` invocation performs one workload. It does not run the
 cross-parser verification step in the measured process.
+
+| Mode | Transport | Passes | Parsing unit |
+| --- | --- | ---: | --- |
+| `plain-drain` | Plain | 1 | Bytes only |
+| `gzip-drain` | Gzip | 1 | Decompressed bytes only |
+| `fused-pull`, `crystal-pull` | Plain | 1 | Structural pull events |
+| `fused-typed`, `crystal-typed` | Plain | 1 | Nested typed values |
+| `fused-gzip-typed`, `crystal-gzip-typed` | Gzip | 1 | Decompression plus nested typed values |
+| `fused-two-pass-typed`, `crystal-two-pass-typed` | Plain | 2 | Reopened provider pass plus rate pass |
 
 ```console
 $ FUSED_JSON_COMMIT=$(git rev-parse HEAD)
@@ -106,17 +122,49 @@ $ bin/tic-bench run --input /tmp/tic-1g.json \
     --gzip-input /tmp/tic-1g.json.gz \
     --manifest /tmp/tic-1g.meta.json --mode gzip-drain \
     --commit "$FUSED_JSON_COMMIT"
+$ bin/tic-bench run --input /tmp/tic-1g.json \
+    --manifest /tmp/tic-1g.meta.json --mode fused-typed \
+    --commit "$FUSED_JSON_COMMIT"
+$ bin/tic-bench run --input /tmp/tic-1g.json \
+    --gzip-input /tmp/tic-1g.json.gz \
+    --manifest /tmp/tic-1g.meta.json --mode fused-gzip-typed \
+    --commit "$FUSED_JSON_COMMIT"
+$ bin/tic-bench run --input /tmp/tic-1g.json \
+    --manifest /tmp/tic-1g.meta.json --mode fused-two-pass-typed \
+    --commit "$FUSED_JSON_COMMIT"
 ```
+
+Run the matching `crystal-*` mode in a fresh process for comparison. Both typed
+implementations decode each root provider reference as a typed record, keep
+the outer `in_network` item structural, and decode each negotiated price as a
+typed record. FusedJSON decodes provider IDs with `read_array(Int64)`; the
+Crystal baseline constructs the same typed scalars in its untyped array loop.
+This keeps the `wide-item` profile bounded by a nested price instead of
+materializing its document-scale outer item.
+
+Gzip typed modes include file opening, decompression, parsing, complete input
+validation, and trailer validation. They are end-to-end transport results, not
+parser-only measurements. Two-pass modes reopen the plain file, select
+providers on the first complete traversal and rates on the second, and include
+the first pass in first-price latency.
 
 Set `FUSED_JSON_COMMIT` to the full 40-character commit SHA being measured. The
 JSON receipt includes wall and CPU time, throughput, first projected-price
 latency for parser modes, cumulative managed allocation, compiler and LLVM
-versions, zlib, host CPU, affinity, and buffer settings. Timed parser modes
-compare a compact field checksum with the manifest; the stronger projection
-SHA-256 belongs to the untimed verification pass. Drain modes report byte
-counts and a bounded, chunk-dependent observer value. They do not report
+versions, zlib, host CPU, affinity, and buffer settings. Typed receipts also
+record actual typed record/scalar counts, the provider checksum, per-pass wall
+times, typed values per second, and managed bytes per typed value. Timed parser
+modes compare a compact field checksum with the manifest; the stronger
+projection SHA-256 belongs to the untimed verification pass. Drain modes report
+byte counts and a bounded, chunk-dependent observer value. They do not report
 semantic items, and their observer values should not be compared across buffer
 sizes.
+
+For a two-pass receipt, `processed_bytes` is twice the decompressed document
+size and `decompressed_mib_per_second` uses that work denominator.
+`logical_document_mib_per_second` uses the document size once; wall time is the
+elapsed time for one logical two-pass import. One-pass modes report both rates
+with the same denominator.
 
 Use GNU `time` for a separate process peak-RSS record:
 
@@ -128,12 +176,13 @@ $ /usr/bin/time -v bin/tic-bench rss \
     --commit "$FUSED_JSON_COMMIT" >run.json 2>run.time
 ```
 
-FusedJSON uses an unbuffered `File` plus its configured parser buffer. Crystal's
-pull parser uses a `File` buffer of the same size; its lexer does not expose an
-equivalent parser-buffer option. Do not describe these as identical internal
-buffers.
+Each receipt's `configuration.input_buffering` describes the path actually
+used by that mode. Plain FusedJSON modes use an unbuffered `File` plus the
+configured parser buffer. Plain Crystal modes set the `File` buffer to the
+same size, but its lexer does not expose an equivalent parser-buffer option.
+Gzip modes use an unbuffered compressed file and a gzip reader; drain modes use
+the explicit benchmark drain buffer instead of either parser.
 
-The timed modes still use Milestone 1 structural pull parsing. Milestone 2 adds
-the untimed raw-number verification pass. Typed parsing, gzip plus parsing, the
-two-pass TiC workflow, statistical release gates, and multi-size RSS campaigns
-belong to later milestones.
+Typed parsing, gzip plus parsing, and the two-pass workflow are available now.
+The paired statistical release gates and multi-size RSS campaigns remain part
+of Milestone 6; do not infer them from a single shared-host run.

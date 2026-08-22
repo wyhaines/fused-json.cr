@@ -20,6 +20,7 @@ FusedJSON.from_json(io : IO, type : T.class, *, buffer_size : Int = 32 * 1024,
                     max_nesting : Int = 512, cache_keys : Bool = false,
                     max_token_bytes : Int? = nil) : T
 pull.read(type : T.class) : T
+pull.read_array(type : T.class, & : T ->) : Nil
 ```
 
 Use the pull reader when values should be processed incrementally:
@@ -46,6 +47,11 @@ document EOF, then leaves the native reader on the next sibling or enclosing
 end event. This supports structural navigation around selected typed values.
 The typed constructor cannot cross that value boundary. If it raises or does
 not consume exactly one complete value, discard the reader.
+
+`read_array(T)` consumes a current array and synchronously yields each decoded
+element without retaining it. The callback must not advance the shared reader.
+If the callback raises or exits early, the parser does not drain the remainder;
+discard it and recreate the input if another pass is required.
 
 At a numeric event, `raw_number_value` returns the exact token without
 advancing, while `read_raw_number` returns it and advances once. Neither method
@@ -143,6 +149,9 @@ buffers are outside this limit.
   Wide numeric constructors may also allocate the current numeric token.
 
 For bounded processing of large arrays or objects, prefer `PullParser` and
-consume or skip each value before advancing. Token limits do not bound source
+consume or skip each value before advancing. `read_array(T)` bounds parser
+retention by the current value when the callback does not retain results; a
+typed outer item can still be large, so navigate structurally to a smaller
+nested array when necessary. Token limits do not bound source
 bytes, container entries, cached-key totals, returned values, or caller-owned
 buffers; impose separate application limits where those dimensions matter.

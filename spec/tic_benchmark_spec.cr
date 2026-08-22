@@ -206,6 +206,103 @@ describe "TiC benchmark fixtures" do
     providers_first_raw[0].raw_number_checksum.should eq(rates_first_raw[0].raw_number_checksum)
   end
 
+  it "decodes typed values in one and two passes for both root-field orders" do
+    {TICBench::FieldOrder::ProvidersFirst, TICBench::FieldOrder::RatesFirst}.each do |order|
+      with_tic_file(TICBench::FixtureProfile::ManySmall, order) do |path, generated|
+        manifest = generated.manifest
+        fused = TICBench.fused_typed_pull(path, 1024)
+        crystal = TICBench.crystal_typed_pull(path, 1024)
+        fused_two_pass = TICBench.fused_two_pass_typed_pull(path, 1024)
+        crystal_two_pass = TICBench.crystal_two_pass_typed_pull(path, 1024)
+
+        {
+          "FusedJSON typed"          => fused,
+          "Crystal typed"            => crystal,
+          "FusedJSON typed two-pass" => fused_two_pass,
+          "Crystal typed two-pass"   => crystal_two_pass,
+        }.each do |label, result|
+          TICBench.verify_typed_result(result, manifest, label)
+          result.provider_records.should eq(manifest.counts.provider_references)
+          result.price_records.should eq(manifest.counts.negotiated_prices)
+          result.scalar_values.should eq(manifest.counts.negotiated_rates)
+          result.typed_records.should eq(result.provider_records + result.price_records)
+          result.typed_values.should eq(result.typed_records + result.scalar_values)
+        end
+
+        fused.input_passes.should eq(1)
+        crystal.input_passes.should eq(1)
+        fused_two_pass.input_passes.should eq(2)
+        crystal_two_pass.input_passes.should eq(2)
+        fused_two_pass.pass_wall_seconds.size.should eq(2)
+        crystal_two_pass.pass_wall_seconds.size.should eq(2)
+
+        fused.provider_checksum.should eq(crystal.provider_checksum)
+        fused.provider_checksum.should eq(fused_two_pass.provider_checksum)
+        fused.provider_checksum.should eq(crystal_two_pass.provider_checksum)
+        fused.traversal.projection_sha256.should eq(crystal.traversal.projection_sha256)
+        fused.traversal.projection_sha256.should eq(fused_two_pass.traversal.projection_sha256)
+        fused.traversal.projection_sha256.should eq(crystal_two_pass.traversal.projection_sha256)
+      end
+    end
+  end
+
+  it "keeps wide outer items structural while decoding nested typed prices" do
+    with_tic_file(
+      TICBench::FixtureProfile::WideItem,
+      TICBench::FieldOrder::RatesFirst,
+      128 * 1024_i64
+    ) do |path, generated|
+      manifest = generated.manifest
+      fused = TICBench.fused_typed_pull(path, 1024, strong_digest: false)
+      crystal = TICBench.crystal_typed_pull(path, 1024, strong_digest: false)
+
+      TICBench.verify_typed_result(fused, manifest, "FusedJSON typed", require_strong: false)
+      TICBench.verify_typed_result(crystal, manifest, "Crystal typed", require_strong: false)
+      fused.traversal.projection_sha256.should be_nil
+      crystal.traversal.projection_sha256.should be_nil
+      fused.traversal.counts.in_network.should eq(1)
+      fused.price_records.should be > 100
+      fused.provider_checksum.should eq(crystal.provider_checksum)
+      fused.traversal.projection_checksum.should eq(crystal.traversal.projection_checksum)
+    end
+  end
+
+  it "parses gzip typed inputs completely and rejects corrupt trailers" do
+    with_tic_file(
+      TICBench::FixtureProfile::ManySmall,
+      TICBench::FieldOrder::ProvidersFirst
+    ) do |path, generated|
+      gzip = File.tempfile("fused-json-tic-typed-", ".json.gz")
+      begin
+        gzip.close
+        TICBench.gzip_fixture(path, gzip.path)
+        manifest = generated.manifest
+
+        fused = TICBench.fused_gzip_typed_pull(gzip.path, 1024)
+        crystal = TICBench.crystal_gzip_typed_pull(gzip.path, 1024)
+        TICBench.verify_typed_result(fused, manifest, "gzip FusedJSON")
+        TICBench.verify_typed_result(crystal, manifest, "gzip Crystal")
+        fused.provider_checksum.should eq(crystal.provider_checksum)
+        fused.traversal.projection_sha256.should eq(crystal.traversal.projection_sha256)
+
+        File.open(gzip.path, "r+") do |file|
+          file.seek(-8, IO::Seek::End)
+          byte = file.read_byte || raise "gzip trailer is missing"
+          file.seek(-1, IO::Seek::Current)
+          file.write_byte(byte ^ 0xff_u8)
+        end
+        expect_raises(Compress::Gzip::Error) do
+          TICBench.fused_gzip_typed_pull(gzip.path, 1024)
+        end
+        expect_raises(Compress::Gzip::Error) do
+          TICBench.crystal_gzip_typed_pull(gzip.path, 1024)
+        end
+      ensure
+        gzip.delete
+      end
+    end
+  end
+
   it "generates and verifies every bounded-memory profile" do
     cases = [
       {TICBench::FixtureProfile::ManySmall, TICBench::FieldOrder::ProvidersFirst, 64 * 1024_i64},
@@ -233,6 +330,14 @@ describe "TiC benchmark fixtures" do
         TICBench.verify_raw_number_result(fused_raw, manifest, "FusedJSON")
         TICBench.verify_raw_number_result(crystal_raw, manifest, "Crystal")
         fused_raw.raw_number_checksum.should eq(crystal_raw.raw_number_checksum)
+
+        fused_typed = TICBench.fused_typed_pull(path, 1024)
+        crystal_typed = TICBench.crystal_typed_pull(path, 1024)
+        TICBench.verify_typed_result(fused_typed, manifest, "typed FusedJSON")
+        TICBench.verify_typed_result(crystal_typed, manifest, "typed Crystal")
+        fused_typed.traversal.counts.should eq(crystal_typed.traversal.counts)
+        fused_typed.traversal.projection_sha256.should eq(crystal_typed.traversal.projection_sha256)
+        fused_typed.provider_checksum.should eq(crystal_typed.provider_checksum)
 
         if profile.wide_item?
           result.counts.in_network.should eq(1)

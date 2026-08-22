@@ -35,6 +35,7 @@ FusedJSON.from_json(source : IO, type : T.class, *,
                     cache_keys : Bool = false,
                     max_token_bytes : Int? = nil) : T
 pull.read(type : T.class) : T
+pull.read_array(type : T.class, & : T ->) : Nil
 ```
 
 `from_json` decodes a complete document. `PullParser#read(T)` applies the same
@@ -58,6 +59,26 @@ pull.read_object do |key|
 end
 pull.finish
 event = events.first
+```
+
+To stream a selected array without retaining the complete collection, use the
+typed block overload:
+
+```crystal
+require "fused_json"
+
+struct StreamedEvent
+  include JSON::Serializable
+
+  getter id : UInt64
+end
+
+pull = FusedJSON::PullParser.new(%({"events":[{"id":1},{"id":2}]}))
+ids = [] of UInt64
+pull.read_object do |key|
+  key == "events" ? pull.read_array(StreamedEvent) { |event| ids << event.id } : pull.skip
+end
+pull.finish
 ```
 
 After a successful `read(T)`, the native cursor is on the next sibling,
@@ -131,6 +152,13 @@ before its completed value is returned. Failures are not transactional: no
 partial `T` is returned, but constructor side effects and input consumption
 cannot be undone. Discard the reader after any typed constructor or read error.
 
+The same lookahead applies between typed array callbacks. A callback is invoked
+only after its element and the next event are recognized; a malformed next
+string or number can therefore prevent the completed element from being
+yielded. Callbacks must not advance the shared reader. Exceptions and early
+block exits do not drain the array, so output that requires whole-document
+validity must be staged until `finish` succeeds.
+
 ## IO Behavior
 
 `buffer_size` applies only to `IO`, defaults to 32 KiB, and must be between 1
@@ -144,8 +172,8 @@ number token, including unknown fields that typed decoding skips. See
 
 ## Deferred
 
-Lazy iterators, typed array block iteration, automatic arbitrary-precision
-values in dynamic `JSON::Any`, and a public adapter object are not yet supported
-contracts. A type must eagerly consume one value through
+Lazy iterators, automatic arbitrary-precision values in dynamic `JSON::Any`,
+and a public adapter object are not yet supported contracts. A type must
+eagerly consume one value through
 `new(pull : JSON::PullParser)`; the facade verifies source exhaustion and a
 cursor read verifies completion of the selected value.

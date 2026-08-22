@@ -110,6 +110,7 @@ FusedJSON::PullParser.new(source : IO, *, buffer_size : Int = 32 * 1024,
                           cache_keys : Bool = false,
                           max_token_bytes : Int? = nil)
 pull.read(type : T.class) : T
+pull.read_array(type : T.class, & : T ->) : Nil
 ```
 
 Construction primes the reader on the first semantic event. `kind` is one of
@@ -130,6 +131,13 @@ rejects constructors that return after consuming zero or only part of a value.
 Typed-read failures do not return a partial value, but they cannot roll back
 constructor side effects or native input consumption; the reader must then be
 discarded.
+
+The typed `read_array(T)` overload delegates structural iteration to the
+untyped array loop and decodes each element with `read(T)`. It rejects a
+normally returning callback that advances the native cursor. Early block exit
+or an exception does not drain the remainder; the reader is discard-only.
+Each element receives a fresh bounded adapter because a custom constructor may
+retain it after returning.
 
 The pull API is strict about the complete document. It does not reproduce
 Crystal's current behavior of silently ignoring a second scalar root. It uses

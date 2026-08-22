@@ -90,6 +90,12 @@ Use `kind`, the scalar and container `read_*` methods, `read_array`, `read_objec
 
 `pull.read(Event)` decodes exactly one value at the current position through the same typed constructors as `FusedJSON.from_json`, then leaves the cursor on the next sibling or enclosing end event. This makes it possible to navigate a large outer document structurally while materializing only selected values. If a typed constructor raises or fails to consume exactly one value, discard that reader.
 
+`pull.read_array(Event) { |event| ... }` consumes the current array and yields
+one fully decoded element at a time. The callback must not advance `pull` and
+should retain only the values it needs. Call `finish` after normal traversal;
+an exception or early block exit leaves the remainder unchecked, so discard
+that reader.
+
 At an integer or float event, `raw_number_value` returns the exact JSON token without advancing and `read_raw_number` returns it while advancing once. These methods do not narrow the value, so they can preserve decimal spelling or integers wider than `Int128`. Direct `read_int` and `read_float` calls still perform checked `Int64` and finite-`Float64` conversion.
 
 Pass an `IO` instead of a `String` to use the same event API incrementally:
@@ -104,7 +110,10 @@ File.open("events.json") do |io|
 end
 ```
 
-The [pull example](examples/pull.cr) exercises both in-memory and streaming readers and is compiled on every supported Crystal version.
+The [pull example](examples/pull.cr) exercises both in-memory and streaming
+readers. The compile-checked [TiC streaming example](examples/tic_streaming.cr)
+shows typed root arrays, nested typed arrays, caller-wrapped gzip input, staged
+output, and two-pass input recreation.
 
 ## Development
 
@@ -126,6 +135,9 @@ $ crystal build --release --no-debug bench/typed.cr -o bin/typed-bench
 $ bin/typed-bench path/to/twitter.json
 $ crystal build --release --no-debug bench/stream.cr -o bin/stream-bench
 $ bin/stream-bench path/to/document.json
+$ crystal build --release --no-debug bench/tic_fixture.cr -o bin/tic-fixture
+$ crystal build --release --no-debug bench/tic.cr -o bin/tic-bench
+$ crystal build --release --no-debug bench/typed_cursor_cost.cr -o bin/typed-cursor-cost
 $ crystal run bench/fixture_parity.cr -- path/to/fixture-directory
 $ crystal run scripts/check_doc_examples.cr
 ```
@@ -144,7 +156,7 @@ At `9f614df`, five-process medians on the same host put direct typed decoding at
 
 Version 0.1.0 contains the core dynamic, pull, typed, and streaming parsers. Current priorities are:
 
-- Block-based typed array iteration is next, building on the available `PullParser#read(T)` and exact `raw_number_value`/`read_raw_number` APIs. It will let named arrays inside very large root objects be processed without building the complete collection in memory. This work is defined in the [large-document specification](docs/large-document-processing.md) and [implementation plan](docs/large-document-plan.md). A separate reader will later handle NDJSON or repeated JSON documents and reuse its buffers between records. `load` and `parse` will remain eager, strict, single-document operations.
+- Block-based `PullParser#read_array(T)` iteration now lets applications process named and nested arrays in very large documents without building the complete collection in memory. The [large-document specification](docs/large-document-processing.md), [implementation plan](docs/large-document-plan.md), and TiC benchmarks define the remaining limits and scale-validation work. A separate reader will later handle NDJSON or repeated JSON documents and reuse its buffers between records. `load` and `parse` remain eager, strict, single-document operations.
 - An opt-in dynamic value type that can hold integers beyond `Int64`, exact decimals, or the original number spelling. The existing `JSON::Any` API will keep its Crystal-compatible numeric behavior. Explicit typed decoding already supports `BigInt`, `BigFloat`, and `BigDecimal` after loading `big/json`.
 - One limits configuration across all parsing APIs, covering document size, token size, total value count, entries per container, and key-cache growth. Applications will also be able to reject duplicate keys when parsing untrusted input. Returned values will still require memory proportional to their size.
 - Fewer allocations in dynamic and typed decoding. Streaming tree construction will build values directly from `IO` instead of routing them through pull events. Reproducible release benchmarks will cover stable Crystal on x86-64, then expand to ARM64 when suitable runners are available.

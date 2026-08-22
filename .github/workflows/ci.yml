@@ -120,6 +120,7 @@ jobs:
           crystal build --release --no-debug bench/stream.cr -o /tmp/fused-json-stream-bench
           crystal build --release --no-debug bench/tic_fixture.cr -o /tmp/fused-json-tic-fixture
           crystal build --release --no-debug bench/tic.cr -o /tmp/fused-json-tic-bench
+          crystal build --release --no-debug bench/typed_cursor_cost.cr -o /tmp/fused-json-typed-cursor-cost
           crystal build --release --no-debug -Dfused_json_force_scalar_string_scan bench/parse.cr -o /tmp/fused-json-scalar-bench
 
       - name: Smoke test TiC benchmark tools
@@ -131,3 +132,25 @@ jobs:
           /tmp/fused-json-tic-bench run --input /tmp/fused-json-tic.json --gzip-input /tmp/fused-json-tic.json.gz --manifest /tmp/fused-json-tic.meta.json --mode gzip-drain --commit "$GITHUB_SHA" > /tmp/fused-json-tic-gzip.json
           /tmp/fused-json-tic-bench run --input /tmp/fused-json-tic.json --manifest /tmp/fused-json-tic.meta.json --mode fused-pull --commit "$GITHUB_SHA" > /tmp/fused-json-tic-fused.json
           /tmp/fused-json-tic-bench run --input /tmp/fused-json-tic.json --manifest /tmp/fused-json-tic.meta.json --mode crystal-pull --commit "$GITHUB_SHA" > /tmp/fused-json-tic-crystal.json
+          /tmp/fused-json-tic-bench run --input /tmp/fused-json-tic.json --manifest /tmp/fused-json-tic.meta.json --mode fused-typed --commit "$GITHUB_SHA" > /tmp/fused-json-tic-fused-typed.json
+          /tmp/fused-json-tic-bench run --input /tmp/fused-json-tic.json --manifest /tmp/fused-json-tic.meta.json --mode crystal-typed --commit "$GITHUB_SHA" > /tmp/fused-json-tic-crystal-typed.json
+          /tmp/fused-json-tic-bench run --input /tmp/fused-json-tic.json --gzip-input /tmp/fused-json-tic.json.gz --manifest /tmp/fused-json-tic.meta.json --mode fused-gzip-typed --commit "$GITHUB_SHA" > /tmp/fused-json-tic-fused-gzip-typed.json
+          /tmp/fused-json-tic-bench run --input /tmp/fused-json-tic.json --gzip-input /tmp/fused-json-tic.json.gz --manifest /tmp/fused-json-tic.meta.json --mode crystal-gzip-typed --commit "$GITHUB_SHA" > /tmp/fused-json-tic-crystal-gzip-typed.json
+          /tmp/fused-json-tic-bench run --input /tmp/fused-json-tic.json --manifest /tmp/fused-json-tic.meta.json --mode fused-two-pass-typed --commit "$GITHUB_SHA" > /tmp/fused-json-tic-fused-two-pass-typed.json
+          /tmp/fused-json-tic-bench run --input /tmp/fused-json-tic.json --manifest /tmp/fused-json-tic.meta.json --mode crystal-two-pass-typed --commit "$GITHUB_SHA" > /tmp/fused-json-tic-crystal-two-pass-typed.json
+          jq -e '.typed_verified == true and .gzip_verified == true' /tmp/fused-json-tic-verify.json > /dev/null
+          jq -e '.input_passes == 1 and .processed_bytes == .logical_document_bytes and .counts == null and .configuration.input_buffering == "unbuffered File plus explicit benchmark drain buffer"' /tmp/fused-json-tic-plain.json > /dev/null
+          jq -e '.input_passes == 1 and .processed_bytes == .logical_document_bytes and .counts == null and .configuration.transport == "gzip" and (.configuration.input_buffering | contains("gzip reader"))' /tmp/fused-json-tic-gzip.json > /dev/null
+          for m4_receipt in /tmp/fused-json-tic-fused-typed.json /tmp/fused-json-tic-crystal-typed.json /tmp/fused-json-tic-fused-gzip-typed.json /tmp/fused-json-tic-crystal-gzip-typed.json; do
+            jq -e '.input_passes == 1 and .processed_bytes == .logical_document_bytes and .typed_records == (.typed_provider_records + .typed_price_records) and .typed_values == (.typed_records + .typed_scalar_values) and (.configuration.input_buffering | length > 0)' "$m4_receipt" > /dev/null
+          done
+          for m4_receipt in /tmp/fused-json-tic-fused-two-pass-typed.json /tmp/fused-json-tic-crystal-two-pass-typed.json; do
+            jq -e '.input_passes == 2 and .processed_bytes == (.logical_document_bytes * 2) and (.typed_pass_wall_seconds | length) == 2 and .typed_records == (.typed_provider_records + .typed_price_records) and .typed_values == (.typed_records + .typed_scalar_values)' "$m4_receipt" > /dev/null
+          done
+          FUSED_JSON_BENCH_COMMIT="$GITHUB_SHA" \
+            FUSED_JSON_CURSOR_SCALARS=64 \
+            FUSED_JSON_CURSOR_RECORDS=16 \
+            FUSED_JSON_BENCH_WARMUP=0 \
+            FUSED_JSON_BENCH_TIME=0.01 \
+            FUSED_JSON_BENCH_ALLOCATIONS=1 \
+            /tmp/fused-json-typed-cursor-cost > /tmp/fused-json-typed-cursor-cost.txt

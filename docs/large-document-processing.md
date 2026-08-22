@@ -1,6 +1,6 @@
 # Large-document typed streaming specification
 
-Status: accepted for the next 0.x milestone. Milestones 1 through 3 are implemented.
+Status: accepted. Milestones 1 through 4 are implemented.
 
 ## Purpose
 
@@ -17,7 +17,7 @@ Root-array iteration alone would not cover this shape.
 
 ## Required API
 
-Add typed decoding at the current `FusedJSON::PullParser` position:
+Typed decoding at the current `FusedJSON::PullParser` position is available as:
 
 ```text
 pull.read(type : T.class) : T forall T
@@ -36,7 +36,8 @@ part of one is an error.
 The typed `read_array` overload consumes the current array and yields each
 fully decoded element in source order. It is synchronous, so the caller
 controls backpressure and retains only the values it needs. The existing
-untyped block overload remains available.
+untyped block overload remains available. The callback must not advance the
+shared reader.
 
 No lazy `Iterator(T)`, JSONPath selector, root-field registry, or new public
 adapter is included in this milestone. The pull API already supplies the
@@ -118,6 +119,10 @@ sinks and their storage limits.
 For gzip input, the caller wraps a newly opened file in
 `Compress::Gzip::Reader` for each pass. FusedJSON remains transport agnostic,
 does not detect archive formats, and never closes caller-owned IO.
+
+The compile-checked [TiC streaming example](../examples/tic_streaming.cr)
+implements the single-pass, nested-array, and two-pass forms without adding
+schema-specific behavior to FusedJSON itself.
 
 ## Numeric behavior
 

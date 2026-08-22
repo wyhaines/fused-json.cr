@@ -8,7 +8,9 @@ All notable changes to FusedJSON are recorded here. The project follows semantic
 
 - Exact `PullParser#raw_number_value` and `#read_raw_number` access for integer and float tokens.
 - `PullParser#read(T)` for decoding one typed value at the current String or IO cursor without exposing its sibling to the typed constructor.
+- `PullParser#read_array(T)` for synchronous, non-accumulating typed array processing from String or IO cursors.
 - Typed `BigFloat` and exact `BigDecimal` coverage through Crystal's `big/json` adapter, alongside `BigInt`.
+- Compile-checked TiC-style plain, caller-wrapped gzip, nested-array, and two-pass workflows, plus typed TiC benchmark modes and cursor-cost diagnostics.
 
 ### Changed
 

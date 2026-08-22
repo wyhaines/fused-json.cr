@@ -9,6 +9,7 @@ for Crystal's JSON generator.
 | `T.from_json(source)` | `FusedJSON.from_json(source, T)` |
 | `JSON::PullParser.new(source)` | `FusedJSON::PullParser.new(source)` |
 | `T.new(json_pull)` at the current cursor | `fused_pull.read(T)` |
+| `Array(T).new(json_pull) { |value| ... }` | `fused_pull.read_array(T) { |value| ... }` |
 | Ruby `Oj.load(source, mode: :strict)` | `FusedJSON.load(source)` |
 
 Add `fused_json` to `shard.yml`, run `shards install`, and require
@@ -56,3 +57,10 @@ Do not pass the native FusedJSON reader directly to code expecting a
 prevents the constructor from crossing into a sibling. A typed-read error is
 not recoverable: discard the reader because parsing and constructor side
 effects cannot be rolled back.
+
+Use `pull.read_array(T)` when the current value is an array that should be
+processed element by element. It preserves source order and does not retain
+elements, but the callback must not advance `pull`. A callback exception or
+early exit leaves the remainder unchecked; discard the reader and recreate
+the caller-owned input for another pass. Call `finish` before committing any
+staged output that depends on complete-document validation.

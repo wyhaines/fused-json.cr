@@ -492,6 +492,21 @@ module FusedJSON
       value
     end
 
+    # Consumes the current array and yields each element after decoding it
+    # through `read(T)`. Values are not retained by the parser. The callback
+    # must not advance this reader. A callback exception or early block exit
+    # leaves the remainder unconsumed, after which the reader must be discarded.
+    def read_array(type : T.class, & : T ->) : Nil forall T
+      read_array do
+        value = read(type)
+        callback_cursor = {@kind, @byte_offset, @event_context_id}
+        yield value
+        unless callback_cursor == {@kind, @byte_offset, @event_context_id}
+          raise_error("typed array callback must not advance the reader", @byte_offset)
+        end
+      end
+    end
+
     private def ensure_typed_value : Nil
       if @object_key
         raise_error("cannot decode an object key as a typed value", @byte_offset)
