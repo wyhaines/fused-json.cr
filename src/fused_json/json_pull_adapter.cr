@@ -5,8 +5,15 @@ module FusedJSON
   # Numeric tokens used by typed decoding keep their exact source range until
   # Crystal's target-type constructor decides how to interpret them.
   private class TypedPullParser < PullParser
-    def initialize(source : String, *, max_nesting : Int, cache_keys : Bool)
-      super(source, max_nesting: max_nesting, cache_keys: cache_keys, enforce_dynamic_numbers: false)
+    def initialize(source : String, *, max_nesting : Int, cache_keys : Bool, limits : Limits)
+      super(
+        source,
+        max_nesting: max_nesting,
+        cache_keys: cache_keys,
+        limits: limits,
+        enforce_dynamic_numbers: false
+      )
+      begin_current_typed_value_limit
     end
 
     def raw_number_value : String
@@ -18,15 +25,17 @@ module FusedJSON
   # into the dynamic JSON::Any numeric domain.
   private class StreamingTypedPullParser < StreamingPullParser
     def initialize(source : IO, *, buffer_size : Int, max_nesting : Int,
-                   cache_keys : Bool, max_token_bytes : Int?)
+                   cache_keys : Bool, max_token_bytes : Int?, limits : Limits)
       super(
         source,
         buffer_size: buffer_size,
         max_nesting: max_nesting,
         cache_keys: cache_keys,
         max_token_bytes: max_token_bytes,
+        limits: limits,
         enforce_dynamic_numbers: false
       )
+      begin_current_typed_value_limit
     end
 
     def raw_number_value : String
@@ -187,9 +196,14 @@ module FusedJSON
 
   # Adapts an owned in-memory reader for whole-document typed decoding.
   private class JSONPullAdapter < NativeJSONPullAdapter(TypedPullParser)
-    def initialize(source : String, *, max_nesting : Int, cache_keys : Bool)
+    def initialize(source : String, *, max_nesting : Int, cache_keys : Bool, limits : Limits)
       super(
-        TypedPullParser.new(source, max_nesting: max_nesting, cache_keys: cache_keys),
+        TypedPullParser.new(
+          source,
+          max_nesting: max_nesting,
+          cache_keys: cache_keys,
+          limits: limits
+        ),
         max_nesting: max_nesting
       )
     end
@@ -198,14 +212,16 @@ module FusedJSON
   # Adapts an owned streaming reader for whole-document typed decoding.
   private class StreamingJSONPullAdapter < NativeJSONPullAdapter(StreamingTypedPullParser)
     def initialize(source : IO, *, buffer_size : Int = StreamingPullParser::DEFAULT_BUFFER_SIZE,
-                   max_nesting : Int, cache_keys : Bool, max_token_bytes : Int?)
+                   max_nesting : Int, cache_keys : Bool, max_token_bytes : Int?,
+                   limits : Limits)
       super(
         StreamingTypedPullParser.new(
           source,
           buffer_size: buffer_size,
           max_nesting: max_nesting,
           cache_keys: cache_keys,
-          max_token_bytes: max_token_bytes
+          max_token_bytes: max_token_bytes,
+          limits: limits
         ),
         max_nesting: max_nesting
       )
@@ -486,6 +502,7 @@ module FusedJSON
     # `new(pull : JSON::PullParser)` constructor and advances to its sibling.
     def read(type : T.class) : T forall T
       ensure_typed_value
+      begin_current_typed_value_limit
       adapter = BoundedJSONPullAdapter.new(self, @bytes, max_nesting: @max_nesting)
       value = T.new(adapter)
       adapter.finish_value
@@ -524,6 +541,7 @@ module FusedJSON
     # Uses the streaming-specialized stdlib adapter for typed cursor reads.
     def read(type : T.class) : T forall T
       ensure_typed_value
+      begin_current_typed_value_limit
       adapter = BoundedStreamingJSONPullAdapter.new(self, max_nesting: @max_nesting)
       value = T.new(adapter)
       adapter.finish_value

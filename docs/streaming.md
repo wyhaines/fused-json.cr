@@ -9,16 +9,20 @@ rules, and duplicate-key behavior as their `String` counterparts.
 ```text
 FusedJSON::PullParser.new(io : IO, *, buffer_size : Int = 32 * 1024,
                           max_nesting : Int = 512, cache_keys : Bool = false,
-                          max_token_bytes : Int? = nil)
+                          max_token_bytes : Int? = nil,
+                          limits : Limits = Limits::DEFAULT)
 FusedJSON.load(io : IO, *, buffer_size : Int = 32 * 1024,
                max_nesting : Int = 512, cache_keys : Bool = false,
-               max_token_bytes : Int? = nil) : JSON::Any
+               max_token_bytes : Int? = nil,
+               limits : Limits = Limits::DEFAULT) : JSON::Any
 FusedJSON.parse(io : IO, *, buffer_size : Int = 32 * 1024,
                 max_nesting : Int = 512, cache_keys : Bool = false,
-                max_token_bytes : Int? = nil) : JSON::Any
+                max_token_bytes : Int? = nil,
+                limits : Limits = Limits::DEFAULT) : JSON::Any
 FusedJSON.from_json(io : IO, type : T.class, *, buffer_size : Int = 32 * 1024,
                     max_nesting : Int = 512, cache_keys : Bool = false,
-                    max_token_bytes : Int? = nil) : T
+                    max_token_bytes : Int? = nil,
+                    limits : Limits = Limits::DEFAULT) : T
 pull.read(type : T.class) : T
 pull.read_array(type : T.class, & : T ->) : Nil
 ```
@@ -84,15 +88,24 @@ record = File.open("record.json") do |io|
 end
 ```
 
-All entry points accept `buffer_size`, `max_nesting`, `cache_keys`, and
-`max_token_bytes` as keyword options. `buffer_size` defaults to 32 KiB and
-must be between 1 byte and 16 MiB, inclusive. `max_nesting` must be between 1
-and 512, inclusive. `max_token_bytes` defaults to no separate limit; when set,
-it must be between 1 and `Int32::MAX` and limits the raw bytes in each string or
-number token. String limits include the surrounding quotes and count escape
-spellings before decoding. Object keys and skipped values are also checked. An
-oversized token raises `FusedJSON::ParseError` at its opening byte; an invalid
-option raises `ArgumentError` before input is read.
+All entry points accept an immutable `FusedJSON::Limits`. It can bound the
+decoded document stream, individual string and number tokens, each selected
+typed value, the total value count, entries per container, and the local key
+cache. It can also reject duplicate decoded keys. The
+[API contract](api.md#entry-points-and-options) defines each counter.
+
+`buffer_size` defaults to 32 KiB and must be between 1 byte and 16 MiB.
+Existing `max_nesting` and `max_token_bytes` keywords remain available. If a
+legacy keyword and `limits` constrain the same resource, the smaller value
+wins. Invalid options raise `ArgumentError` before input is read; limit
+violations originate as `FusedJSON::ParseError`. Generated
+`JSON::Serializable` constructors may wrap the native error in
+`JSON::SerializableError` and retain it as the cause.
+
+`max_document_bytes` charges bytes as the parser logically consumes them from
+the decoded UTF-8 stream. Input fetched into a read-ahead buffer does not count
+until it is consumed. If pull traversal stops early, an unread tail is neither
+charged nor validated.
 
 ## IO Ownership and Exhaustion
 
@@ -109,7 +122,9 @@ Advancing a typed value performs the same one-event lookahead as every other
 pull read. A following string or number is scanned completely; if that token is
 malformed or exceeds `max_token_bytes`, the typed read fails before returning
 the completed value. A following array or object stops at its opening event and
-does not traverse its contents.
+does not traverse its contents. Global document, token, value-count, entry,
+cache, and duplicate checks apply during lookahead. The prior value's
+`max_typed_value_bytes` budget does not.
 
 Short positive reads are supported. Following Crystal's `IO` contract, a
 zero-length read means permanent EOF and is not retried. An IO representing
@@ -139,7 +154,15 @@ buffers are outside this limit.
   `raw_number_value` or `read_raw_number` call allocates an owned string
   proportional to the current token.
 - `cache_keys: true` retains one pooled copy of each distinct materialized key
-  for the parser's lifetime; returned values may retain those strings longer.
+  for the parser's lifetime. With duplicate rejection off, an untyped pull
+  `skip` leaves keys inside the skipped value unmaterialized and does not insert
+  them. Duplicate rejection must decode skipped keys; with caching also on,
+  they enter the pool. `max_cached_keys` bounds pool insertions, not the
+  duplicate sets.
+- Duplicate rejection retains one decoded key per distinct member in each open
+  object until that object closes. `max_container_entries` bounds each set,
+  but nested sets add together. Pair it with `max_token_bytes` when the input
+  is untrusted.
 - `load(IO)` and `parse(IO)` necessarily allocate the complete `JSON::Any`
   result tree.
 - Typed targets allocate their own result. String-returning raw operations—used
@@ -152,6 +175,13 @@ For bounded processing of large arrays or objects, prefer `PullParser` and
 consume or skip each value before advancing. `read_array(T)` bounds parser
 retention by the current value when the callback does not retain results; a
 typed outer item can still be large, so navigate structurally to a smaller
-nested array when necessary. Token limits do not bound source
-bytes, container entries, cached-key totals, returned values, or caller-owned
-buffers; impose separate application limits where those dimensions matter.
+nested array when necessary.
+
+Document, token, and typed-value byte limits count parser-visible decoded
+source spans. They are not exact Crystal heap limits. They do not include raw
+compressed ingress, caller-owned IO and decompressor buffers, allocator
+capacity, returned values, or data retained by callbacks. A scalar event is
+already scanned when `read(T)` selects it. Locating a retrospective typed-value
+failure for a string or number may copy that current token into error-reporting
+scratch. Use `max_token_bytes` as well as `max_typed_value_bytes` to bound the
+initial scan and this copy.

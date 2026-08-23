@@ -23,16 +23,42 @@ results on representative documents before enabling `cache_keys`.
   dynamic floats must be finite `Float64`. Typed fixed-width integers may use
   their wider target domain; typed `BigInt`, `BigFloat`, and `BigDecimal` are
   available after `require "big/json"`.
-- Invalid syntax raises `FusedJSON::ParseError`, not every exception type used
-  by Crystal's standard parser or Ruby Oj. Exact English messages differ.
-- Duplicate object fields keep the last value in dynamic and typed results;
-  the pull reader exposes every key event.
+- Native syntax failures raise `FusedJSON::ParseError`, not every exception
+  type used by Crystal's standard parser or Ruby Oj. Generated
+  `JSON::Serializable` constructors may wrap it in `JSON::SerializableError`
+  and retain the native error as the cause. Exact English messages differ.
+- Duplicate object fields keep the last value in dynamic and typed results,
+  and the pull reader exposes every key event. Set
+  `reject_duplicate_keys: true` in `FusedJSON::Limits` to reject the second
+  decoded key instead.
 - Oj compatibility modes, dumping, arbitrary class construction, comments,
   `NaN`, infinity, and trailing commas are not supported.
 
 For `IO`, the caller retains ownership and the parser requires EOF after one
 document. Review buffering, read-ahead, transcoding offsets, and resource limits
 in the [streaming guide](streaming.md) before migrating network input.
+
+## Resource limits
+
+Pass one immutable `FusedJSON::Limits` value to `load`, `parse`, `from_json`,
+or `PullParser`. It can constrain parser-consumed document bytes, raw string
+and number tokens, selected typed values, total values, entries per container,
+and cached keys. It can also reject duplicate keys in materialized, unknown,
+and skipped objects.
+
+Existing `max_nesting` and streaming `max_token_bytes` keywords remain valid.
+When a legacy keyword and `limits` cover the same resource, the smaller value
+wins. `max_cached_keys` limits actual insertions into the optional local pool;
+with duplicate rejection off, an untyped pull `skip` leaves keys inside the
+skipped value uncached. Duplicate rejection must decode skipped keys; if
+caching is also on, they enter the pool. Its separate per-object sets are
+bounded only when container entries and key token size are also bounded.
+
+Document, token, and typed-value byte limits count parser-visible source spans,
+not Crystal heap. They do not include raw compressed input, caller-owned IO or
+decompressor buffers, returned values, or application retention. Review the
+[resource-limits decision](resource-limits-decision.md) before applying these
+limits to untrusted input.
 
 ## Pull Number Migration
 

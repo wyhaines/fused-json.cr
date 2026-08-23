@@ -1,6 +1,7 @@
 # Large-document typed streaming specification
 
-Status: accepted. Milestones 1 through 4 are implemented.
+Status: accepted. Milestones 1 through 4 are implemented. Milestone 5 code and
+correctness checks are complete; baseline performance acceptance is pending.
 
 ## Purpose
 
@@ -25,6 +26,13 @@ pull.read_array(type : T.class, & : T ->) : Nil forall T
 pull.raw_number_value : String
 pull.read_raw_number : String
 ```
+
+All entry points accept `FusedJSON::Limits`. Large-document consumers can
+bound parser-consumed document bytes, raw tokens, each selected typed value,
+total values, entries per container, and the local key cache. The same policy
+can reject duplicate decoded keys. The
+[resource-limits decision](resource-limits-decision.md) defines the counters
+and error locations.
 
 `read(T)` must accept any value position, including values nested in objects
 and arrays. It constructs `T` through the same `JSON::PullParser` interface as
@@ -153,16 +161,19 @@ without first converting through `Int64`, `Int128`, or `Float64`.
 Normal traversal followed by `finish` validates the complete document,
 including trailing input and a gzip trailer read by the caller's wrapper.
 Malformed syntax, nesting overflow, token-limit overflow, and incompatible
-reads continue to raise `FusedJSON::ParseError`. Typed constructors may raise
-or wrap their existing conversion errors. Locations retain the current byte,
-line, and column contract.
+reads originate as `FusedJSON::ParseError`. Generated `JSON::Serializable`
+constructors may wrap that error in `JSON::SerializableError` and retain it as
+the cause. Other typed constructors may raise or wrap their existing conversion
+errors. Locations retain the current byte, line, and column contract.
 
 The current parser primes its next event when a value advances. A completed
 element may therefore wait for one-event lookahead before it is yielded. For a
 next string or number, that lookahead scans the complete token; it does not
 traverse a next array or object. A malformed lookahead token can fail the read
 before the completed element is yielded. `max_token_bytes` also applies to
-this token.
+this token. Document, token, total-value, container-entry, key-cache, and
+duplicate checks remain global during lookahead. The completed value's
+`max_typed_value_bytes` budget ends before that lookahead begins.
 
 No partial current element is yielded. For `read(T)`, this means the method
 returns no `T` unless its constructor consumed the complete selected value; it
@@ -186,18 +197,31 @@ depend on:
 - distinct cached keys when `cache_keys` is enabled; and
 - buffers owned by the input, decompressor, and consumer.
 
-With key caching disabled, FusedJSON-owned memory must not depend on total
-document size or total array length. The same guarantee holds with caching only
-when the distinct-key vocabulary is bounded. Caller-owned wrappers may have
-separate growth rules. A typed outer item can still be large, so callers may
-navigate to a smaller nested array before using typed reads. Examples and
-benchmarks must describe their results as end-to-end process memory, not parser
-memory.
+With key caching and duplicate rejection disabled, FusedJSON-owned memory must
+not depend on total document size or total array length. With caching, the same
+guarantee requires a bounded distinct-key vocabulary. Duplicate rejection also
+retains keys in every open object, so bounded retention requires limits on
+container entries and key token size. Caller-owned wrappers may have separate
+growth rules. A typed outer item can still be large, so callers may navigate to
+a smaller nested array before using typed reads. Examples and benchmarks must
+describe their results as end-to-end process memory, not parser memory.
 
-The existing `max_nesting` and streaming `max_token_bytes` options remain in
-force. A subsequent limits decision must address document, value, entry, total
-value, duplicate-key, and key-cache controls through one coherent API. This
-milestone must not add an incompatible one-off item-limit keyword.
+`FusedJSON::Limits` supplements the existing `max_nesting` and streaming
+`max_token_bytes` keywords. When both forms constrain the same resource, the
+smaller value wins. Global limits still apply to skipped values and unknown
+fields. `max_typed_value_bytes` applies only to values selected through
+`from_json` or `read(T)`; `read_array(T)` gives each element its own budget.
+
+Duplicate rejection retains one decoded key per distinct member in each open
+object. Its per-object sets are separate from the optional parser-wide key
+cache. `max_container_entries` bounds each set, but nested sets add together;
+`max_cached_keys` does not bound them. Pair duplicate rejection with a token
+limit when key size must also be bounded.
+
+Document, token, and typed-value byte limits describe decoded source spans,
+not Crystal heap usage. They exclude compressed ingress and caller-owned IO,
+decompressor, and output buffers. Returned values, raw replay, allocator
+capacity, and callback retention remain separate.
 
 ## Correctness and performance requirements
 
@@ -210,10 +234,11 @@ milestone must not add an incompatible one-off item-limit keyword.
   must account for the documented one-event lookahead.
 - A known token or intentional error after byte `2^32` must report its exact
   `Int64` offset.
-- With fixed-size elements, fixed key vocabulary, key caching disabled, and no
-  retained output, end-to-end process peak RSS must remain stable as generated
-  input grows from 256 MiB to more than 4 GiB. Wide-element tests must show
-  separately that memory follows the largest current value.
+- With fixed-size elements, fixed key vocabulary, key caching and duplicate
+  rejection disabled, and no retained output, end-to-end process peak RSS must
+  remain stable as generated input grows from 256 MiB to more than 4 GiB.
+  Wide-element tests must show separately that memory follows the largest
+  current value.
 - On a controlled release host, typed streaming must have a geometric-mean
   throughput ratio of at least 1.05 against an equivalent Crystal
   standard-library pull implementation. Its one-sided 95% paired-bootstrap

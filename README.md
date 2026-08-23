@@ -33,14 +33,40 @@ document["name"].as_s # => "Crystal"
 cached = FusedJSON.load(source, cache_keys: true)
 
 # Parse one complete document from a caller-owned IO.
-streamed = File.open("document.json") { |io| FusedJSON.load(io) }
+limits = FusedJSON::Limits.new(
+  max_document_bytes: 8_i64 * 1024 * 1024 * 1024,
+  max_token_bytes: 1024 * 1024,
+  max_total_values: 50_000_000,
+  reject_duplicate_keys: true
+)
+streamed = File.open("document.json") { |io| FusedJSON.load(io, limits: limits) }
 ```
 
 The complete [basic example](examples/basic.cr) is compiled in CI and can be run from a checkout with `crystal run examples/basic.cr`.
 
-`FusedJSON.parse` is an alias for `load`. Invalid input raises `FusedJSON::ParseError`, which includes byte offset, line, and column data. `String` and `IO` inputs must contain exactly one document. `max_nesting` accepts values from 1 through 512. `IO` overloads also accept `buffer_size`, which defaults to 32 KiB, and an optional `max_token_bytes` limit for raw string and number tokens; see the [streaming guide](docs/streaming.md) for ownership, exhaustion, and memory details.
+`FusedJSON.parse` is an alias for `load`. Native parsing failures raise
+`FusedJSON::ParseError`, which includes byte offset, line, and column data.
+Generated `JSON::Serializable` constructors may wrap that error in
+`JSON::SerializableError` and preserve it as the cause. `String` and `IO`
+inputs must contain exactly one document. The immutable
+`FusedJSON::Limits` configuration works with every parsing entry point and can
+bound document bytes, tokens, typed values, value counts, container entries,
+and cached keys. It can also reject duplicate object keys. See the
+[API contract](docs/api.md) for exact counting rules.
 
-Key caching is local to one parser and remains off by default. It hashes every materialized object key and reuses equal key strings; the pool retains one copy of every distinct key for the parser's lifetime, so measure both throughput and allocation before enabling it on a workload.
+The existing `max_nesting` keyword remains available, as does
+`max_token_bytes` on `IO`. If a legacy keyword and `limits` cover the same
+resource, the smaller value wins. `buffer_size` remains an `IO` option and
+defaults to 32 KiB.
+
+Key caching is local to one parser and remains off by default. It hashes every
+materialized object key and reuses equal key strings. With duplicate rejection
+off, an untyped pull `skip` leaves keys inside the skipped value
+unmaterialized, so they do not consume `max_cached_keys`. Duplicate rejection
+must decode those keys; when key caching is also on, they enter both the
+per-object duplicate set and the parser-wide pool. The pool retains its entries
+for the parser's lifetime, so measure both throughput and allocation before
+enabling it on a workload.
 
 ### Typed decoding
 
@@ -140,6 +166,7 @@ $ crystal build --release --no-debug bench/tic.cr -o bin/tic-bench
 $ crystal build --release --no-debug bench/typed_cursor_cost.cr -o bin/typed-cursor-cost
 $ crystal run bench/fixture_parity.cr -- path/to/fixture-directory
 $ crystal run scripts/check_doc_examples.cr
+$ crystal run --release --no-debug scripts/check_large_offset.cr
 ```
 
 For a current-checkout Ruby/Oj comparison, build Oj and run `OJ_ROOT=/path/to/oj ruby bench/parse_oj.rb document.json`.
@@ -156,9 +183,14 @@ At `9f614df`, five-process medians on the same host put direct typed decoding at
 
 Version 0.1.0 contains the core dynamic, pull, typed, and streaming parsers. Current priorities are:
 
-- Block-based `PullParser#read_array(T)` iteration now lets applications process named and nested arrays in very large documents without building the complete collection in memory. The [large-document specification](docs/large-document-processing.md), [implementation plan](docs/large-document-plan.md), and TiC benchmarks define the remaining limits and scale-validation work. A separate reader will later handle NDJSON or repeated JSON documents and reuse its buffers between records. `load` and `parse` remain eager, strict, single-document operations.
+- Block-based `PullParser#read_array(T)` iteration now lets applications process named and nested arrays in very large documents without building the complete collection in memory. The [large-document specification](docs/large-document-processing.md), [implementation plan](docs/large-document-plan.md), and TiC benchmarks define the remaining scale-validation work. A separate reader will later handle NDJSON or repeated JSON documents and reuse its buffers between records. `load` and `parse` remain eager, strict, single-document operations.
 - An opt-in dynamic value type that can hold integers beyond `Int64`, exact decimals, or the original number spelling. The existing `JSON::Any` API will keep its Crystal-compatible numeric behavior. Explicit typed decoding already supports `BigInt`, `BigFloat`, and `BigDecimal` after loading `big/json`.
-- One limits configuration across all parsing APIs, covering document size, token size, total value count, entries per container, and key-cache growth. Applications will also be able to reject duplicate keys when parsing untrusted input. Returned values will still require memory proportional to their size.
+- `FusedJSON::Limits` now provides one resource policy across all parsing APIs,
+  including duplicate-key rejection. The next large-document work is the
+  controlled throughput and multi-size RSS validation described in the
+  [implementation plan](docs/large-document-plan.md). Source-byte limits are
+  not Crystal heap limits; returned values and caller-owned buffers still use
+  memory according to their own representations.
 - Fewer allocations in dynamic and typed decoding. Streaming tree construction will build values directly from `IO` instead of routing them through pull events. Reproducible release benchmarks will cover stable Crystal on x86-64, then expand to ARM64 when suitable runners are available.
 - Expanded fuzz testing and broader platform coverage, beginning with ARM64 and macOS. The word scanner will be tested on real 32-bit and big-endian hardware when practical CI runners are available. The compiler-private float hook will either be replaced or moved behind a stable upstream API, while the tested public fallback remains available.
 

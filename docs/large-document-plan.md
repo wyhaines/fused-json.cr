@@ -1,7 +1,8 @@
 # Large-document typed streaming implementation plan
 
-Status: in progress. Milestones 1 through 4 are implemented. This plan
-implements the requirements in
+Status: in progress. Milestones 1 through 4 are implemented. Milestone 5 code
+and correctness checks are complete; baseline performance acceptance is
+pending. This plan implements the requirements in
 [Large-document typed streaming specification](large-document-processing.md).
 
 ## Working rules
@@ -141,27 +142,39 @@ one complete next token before yielding, as specified. Truncation, trailing
 garbage, invalid UTF-8, and a bad gzip trailer are all detected on a complete
 traversal. IO ownership remains unchanged.
 
-## Milestone 5: Resource limits
+## Milestone 5: Resource limits (performance acceptance pending)
 
-Write and approve a short companion API decision before coding a unified
-limits object. It must decide how to cover the existing nesting and token
-controls plus decoded document bytes, a selected typed value, total values,
-entries per container, cached keys, and duplicate-key rejection. The decision
-must define what each counter includes, how duplicate tracking affects memory,
-and where each error points. Counters that can follow document size use
-`Int64`. Enforceable byte limits must interrupt consumption rather than report
-only after a large value has been built.
+The accepted [resource-limits decision](resource-limits-decision.md) defines
+one immutable limits object for the existing nesting and token controls plus
+decoded document bytes, a selected typed value, total values, entries per
+container, cached keys, and duplicate-key rejection. It specifies each counter,
+duplicate-tracking memory, and error locations. Document-sized counters use
+`Int64`. Document limits and container typed-value limits are checked as input
+is consumed; the scalar typed-value scratch caveat is described in the
+decision.
 
-Keep current keyword options source compatible during 0.x. Define how explicit
-keywords interact with the new object and measure the overhead of disabled
-limits before enabling the API on all parser paths. The list above is a set of
-requirements for the decision, not approval of names or one implementation.
+Existing limit keywords remain source compatible during 0.x, and the smaller
+value wins when a keyword and `Limits` overlap. `bench/limits_overhead.cr`
+measures the cost of the default and explicit-empty policies on every parser
+path.
 
 Acceptance: ordinary boundary tests cover the accepted limits on String and IO
 for skipped and typed values. A generated IO places a known token or error
 after byte `2^32` and verifies its exact offset without constructing a 4 GiB
-String. A no-limit configuration has no material throughput regression. The
-memory guide states that byte limits do not equal an exact Crystal heap limit.
+String. The default-path campaign uses the eight workloads and fixed parameters
+in [`benchmarking.md`](benchmarking.md). For candidate/M4 pairs, median and
+geometric-mean throughput ratios must be at least 0.98 and the one-sided 95%
+paired-bootstrap lower bound must be at least 0.97. For explicit-empty/default
+pairs, the corresponding gates are 0.99 and 0.98. Managed B/op must remain
+within the documented fixed-or-0.1% tolerance. Record the complete campaign
+before marking this milestone implemented. The memory guide states that byte
+limits do not equal an exact Crystal heap limit.
+
+The large-offset check is separate from the fast spec suite:
+
+```console
+$ crystal run --release --no-debug scripts/check_large_offset.cr
+```
 
 ## Milestone 6: Performance and scale validation
 
@@ -184,9 +197,9 @@ measurements until stable baselines exist.
 Measure end-to-end process peak RSS with GNU `/usr/bin/time -v` in fresh
 processes. The bounded series uses plain files, typed parsing, no retained
 values, a constant-size count and digest sink, fixed item width and key
-vocabulary, `cache_keys: false`, and fixed parser, GC, and host settings. Run
-at least five fresh processes at both 256 MiB and 1 GiB. Before any larger run,
-freeze a ceiling of
+vocabulary, `cache_keys: false`, duplicate rejection disabled, and fixed
+parser, GC, and host settings. Run at least five fresh processes at both 256
+MiB and 1 GiB. Before any larger run, freeze a ceiling of
 `maximum baseline RSS + max(16 MiB, 25% of maximum baseline RSS)`. At least
 three fresh runs over 4 GiB must remain below it. Record wide-item, gzip-only,
 gzip-plus-parse, and retained-output RSS as separate series and never subtract

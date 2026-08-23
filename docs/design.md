@@ -46,52 +46,63 @@ result model.
 The final pre-1.0 names are the `fused_json` shard and require path and the
 `FusedJSON` namespace. The name describes the direct scan-and-build paths
 without implying that this strict Crystal-native subset is a drop-in Ruby Oj
-port. The supported surface is the module facade, `ParseError`, `PullParser`,
-and `PullParser::Kind`. Concrete tree builders, streaming subclasses, adapters,
-scanners, and decoders remain implementation details. [`api.md`](api.md)
-defines compatibility policy.
+port. The supported surface is the module facade, `Limits`, `ParseError`,
+`PullParser`, and `PullParser::Kind`. Concrete tree builders, streaming
+subclasses, adapters, scanners, and decoders remain implementation details.
+[`api.md`](api.md) defines compatibility policy.
 
 The current API is:
 
 ```text
 FusedJSON.load(source : String, *, max_nesting : Int = 512,
-               cache_keys : Bool = false) : JSON::Any
+               cache_keys : Bool = false,
+               limits : Limits = Limits::DEFAULT) : JSON::Any
 FusedJSON.load(source : IO, *, buffer_size : Int = 32 * 1024,
                max_nesting : Int = 512,
                cache_keys : Bool = false,
-               max_token_bytes : Int? = nil) : JSON::Any
+               max_token_bytes : Int? = nil,
+               limits : Limits = Limits::DEFAULT) : JSON::Any
 FusedJSON.parse(source : String, *, max_nesting : Int = 512,
-                cache_keys : Bool = false) : JSON::Any
+                cache_keys : Bool = false,
+                limits : Limits = Limits::DEFAULT) : JSON::Any
 FusedJSON.parse(source : IO, *, buffer_size : Int = 32 * 1024,
                 max_nesting : Int = 512,
                 cache_keys : Bool = false,
-                max_token_bytes : Int? = nil) : JSON::Any
+                max_token_bytes : Int? = nil,
+                limits : Limits = Limits::DEFAULT) : JSON::Any
 ```
 
 `parse` is an alias for `load`. Options are keyword-only. `max_nesting` must be
 between 1 and 512. The `IO` buffer defaults to 32 KiB and must be between 1 byte
 and 16 MiB. An explicit `max_token_bytes` must be between 1 and `Int32::MAX`.
-Values outside these ranges raise `ArgumentError`. Invalid JSON or a token that
-exceeds its configured limit raises `FusedJSON::ParseError`, a subclass of
-`JSON::ParseException`; a token-limit error points to the token's opening byte.
+Values outside these ranges raise `ArgumentError`. `Limits` adds document,
+typed-value, value-count, per-container entry, and key-cache bounds plus
+duplicate-key rejection. Its exact counters and error locations are defined in
+[`resource-limits-decision.md`](resource-limits-decision.md). When legacy and
+`Limits` options overlap, the smaller value wins.
 
-`cache_keys` interns object keys within one parser. It is disabled by default
-because its value depends on document shape. The cache must never be global:
-unbounded process-wide interning would turn untrusted keys into retained
-memory. Callers should opt in for repeated-schema documents; no repetition
-heuristic scans the input or changes policy during a parse.
+`cache_keys` interns materialized object keys within one parser. It is disabled
+by default because its value depends on document shape. With duplicate
+rejection off, an untyped pull `skip` does not materialize or cache keys inside
+the skipped value. Duplicate rejection must decode skipped keys; if caching is
+also on, those keys enter the pool. The cache must never be global: unbounded
+process-wide interning would turn untrusted keys into retained memory. Callers
+should opt in for repeated-schema documents; no repetition heuristic scans the
+input or changes policy during a parse.
 
 The experimental typed entry point is:
 
 ```text
 FusedJSON.from_json(source : String, type : T.class, *,
                     max_nesting : Int = 512,
-                    cache_keys : Bool = false) : T
+                    cache_keys : Bool = false,
+                    limits : Limits = Limits::DEFAULT) : T
 FusedJSON.from_json(source : IO, type : T.class, *,
                     buffer_size : Int = 32 * 1024,
                     max_nesting : Int = 512,
                     cache_keys : Bool = false,
-                    max_token_bytes : Int? = nil) : T
+                    max_token_bytes : Int? = nil,
+                    limits : Limits = Limits::DEFAULT) : T
 ```
 
 It decodes one complete document through Crystal's standard
@@ -104,11 +115,13 @@ The experimental pull API is:
 
 ```text
 FusedJSON::PullParser.new(source : String, *, max_nesting : Int = 512,
-                          cache_keys : Bool = false)
+                          cache_keys : Bool = false,
+                          limits : Limits = Limits::DEFAULT)
 FusedJSON::PullParser.new(source : IO, *, buffer_size : Int = 32 * 1024,
                           max_nesting : Int = 512,
                           cache_keys : Bool = false,
-                          max_token_bytes : Int? = nil)
+                          max_token_bytes : Int? = nil,
+                          limits : Limits = Limits::DEFAULT)
 pull.read(type : T.class) : T
 pull.read_array(type : T.class, & : T ->) : Nil
 ```
@@ -141,10 +154,11 @@ retain it after returning.
 
 The pull API is strict about the complete document. It does not reproduce
 Crystal's current behavior of silently ignoring a second scalar root. It uses
-the same number grammar, Unicode, and nesting policies as `load`, but recognizes
-and skips numbers without immediately converting them. Every object-key event
-is exposed, including duplicates; tree and typed consumers apply their
-documented last-value policy.
+the same number grammar, Unicode, limits, and nesting policies as `load`, but
+recognizes and skips numbers without immediately converting them. By default,
+every object-key event is exposed and tree and typed consumers apply their
+documented last-value policy. `reject_duplicate_keys` instead rejects a second
+decoded key in any object, including one being skipped.
 
 Pull and typed decoding retain an exact source range for every number.
 `raw_number_value` observes that spelling and `read_raw_number` returns it while
@@ -161,8 +175,9 @@ document and requires EOF, so reads may run ahead and an open source can block
 after delivering a complete root value. IO errors propagate unchanged.
 
 Typed object policies follow the requested Crystal type. `Hash` and
-`JSON::Serializable` use the last duplicate field. A normal serializable skips
-and validates unknown fields, `JSON::Serializable::Strict` rejects them, and
+`JSON::Serializable` use the last duplicate field unless the limits policy
+rejects duplicates. A normal serializable skips and validates unknown fields,
+`JSON::Serializable::Strict` rejects them, and
 `JSON::Serializable::Unmapped` materializes them as `JSON::Any` values.
 
 ## JSON Semantics
@@ -222,9 +237,10 @@ are first retained in reusable scratch.
 Strings returned by the pull reader are owned `String` values, not borrowed
 slices. They remain valid after the reader advances or is collected. Key
 pooling, when requested, is local to that reader. Strings are materialized
-lazily. The in-memory reader validates skipped strings without decoding,
-copying, or interning their contents; the streaming reader must retain a
-skipped string in scratch only when it crosses a refill.
+lazily. With duplicate rejection off, the in-memory reader validates skipped
+strings without decoding, copying, or interning their contents; the streaming
+reader must retain a skipped string in scratch only when it crosses a refill.
+Duplicate rejection materializes object keys but not other skipped strings.
 
 ## Errors
 
@@ -244,20 +260,34 @@ The recursive tree builders are capped at 512 containers. Raising that ceiling
 is not safe until they use explicit frame stacks; a caller-provided depth must
 never be allowed to exhaust the native stack.
 
-The in-memory API does not impose separate limits on source bytes, token bytes,
-or container entries; callers must bound an untrusted `String` externally.
-Streaming callers can set `max_token_bytes` to limit each raw string or number,
-including object keys and skipped values. The limit counts decoded UTF-8 input
-bytes, includes string quotes, and rejects a token before writing raw bytes
-beyond the configured value. Internal buffer capacity grows geometrically, so
-the option is not an exact total-memory cap. It does not bound aggregate source
-bytes or entries.
+`FusedJSON::Limits` applies the same resource policy to `String` and `IO`
+entry points. It can bound parser-consumed document bytes, each raw string or
+number token, values selected for typed decoding, the total value count,
+entries in each container, and distinct cached keys. It can also reject
+duplicate decoded keys. Skipped and unknown data remains subject to global
+document, token, value-count, entry, and duplicate checks.
+
+Duplicate rejection keeps one decoded key per distinct member in each open
+object. `max_container_entries` bounds each set, but nested sets add together
+and `max_cached_keys` applies only to the separate parser-wide intern pool.
+Callers that need a bounded duplicate tracker should also set a token limit.
 
 FusedJSON's decoded refill buffer is bounded by `buffer_size`, but reusable
 scratch may grow to the current token when no token limit is set; storage in a
 caller-supplied IO or encoding wrapper is outside that bound. A materialized
 tree, typed target, returned strings, cached keys, and typed raw values require
 memory proportional to their own size.
+
+Byte limits count parser-visible source spans. They do not cap Crystal heap,
+allocator slack, decompressor or transcoder buffers, raw compressed ingress,
+or values retained by the caller. A scalar is already scanned when `read(T)`
+selects it. Locating a retrospective typed-value failure for a streaming string
+or number may copy that current token into error-reporting scratch. Set
+`max_token_bytes` to bound both the initial scan and this copy.
+
+When no token or extended resource limit is enabled, the parser allocates no
+counter or duplicate-key state and uses its dedicated default scan paths. The
+normal nesting limit and all strict JSON checks remain active.
 
 After an event advances, streaming scratch is reused while the completed raw
 token is no larger than `max(2 * buffer_size, 64 KiB)` and replaced otherwise.

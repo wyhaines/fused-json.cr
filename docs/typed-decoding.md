@@ -28,12 +28,14 @@ The entry point is:
 ```text
 FusedJSON.from_json(source : String, type : T.class, *,
                     max_nesting : Int = 512,
-                    cache_keys : Bool = false) : T
+                    cache_keys : Bool = false,
+                    limits : Limits = Limits::DEFAULT) : T
 FusedJSON.from_json(source : IO, type : T.class, *,
                     buffer_size : Int = 32 * 1024,
                     max_nesting : Int = 512,
                     cache_keys : Bool = false,
-                    max_token_bytes : Int? = nil) : T
+                    max_token_bytes : Int? = nil,
+                    limits : Limits = Limits::DEFAULT) : T
 pull.read(type : T.class) : T
 pull.read_array(type : T.class, & : T ->) : Nil
 ```
@@ -87,6 +89,11 @@ isolated one-value document, preventing it from consuming a sibling. Object
 keys and end events are not values. Constructors that consume nothing or only
 part of the value are rejected.
 
+`max_typed_value_bytes` limits the selected raw JSON span. It includes
+container punctuation and internal whitespace but excludes surrounding
+whitespace and sibling lookahead. `read_array(T)` gives each element a fresh
+budget. The root passed to `from_json` is one selected value.
+
 The implementation uses internal `JSON::PullParser` compatibility adapters, so
 standard Crystal constructors, generated `JSON::Serializable` code, and
 converters that accept `JSON::PullParser` can consume native FusedJSON events.
@@ -102,7 +109,7 @@ statically known.
 | Alternatives | Nilable values, primitive unions, tested structured-union replay |
 | Other standard types | Enums |
 | `JSON::Serializable` | Required and default fields, nilable fields, renamed keys, converters, roots, presence tracking, ignored fields, discriminators |
-| Field policies | Default unknown-field skipping, `Strict`, `Unmapped`, duplicate-last |
+| Field policies | Default unknown-field skipping, `Strict`, `Unmapped`, duplicate-last or limits-based rejection |
 | Raw values | `String::RawConverter`, including nested arrays and objects |
 
 `FusedJSON.from_json` requires its input to contain exactly one value. Trailing
@@ -137,14 +144,18 @@ preserve a valid token outside that range. Direct and union `Float32`
 conversions intentionally follow their respective Crystal stdlib paths.
 `BigInt`, `BigFloat`, and `BigDecimal` consume the exact raw token rather than a
 prior `Int64` or `Float64` conversion. `cache_keys` remains local to one native
-reader and is useful for documents with repeated object keys.
+reader and is useful for documents with repeated object keys. With duplicate
+rejection off, structural skipping leaves keys inside the skipped value
+unmaterialized. Duplicate rejection is a separate per-object check, applies to
+unknown and skipped data, and must decode those keys. If caching is also on,
+the decoded keys enter the pool.
 
 Native syntax, type, and structural failures raise `FusedJSON::ParseError`;
-generated serializers may wrap them in `JSON::SerializableError`. Standard
-target constructors and custom converters can raise their documented
-conversion exceptions. Locations are one-based line and column values, while
-`ParseError#byte_offset` is zero-based. For a transcoding `IO`, byte offsets
-refer to decoded UTF-8 bytes.
+generated serializers may wrap them in `JSON::SerializableError` and retain
+the native error as the cause. Standard target constructors and custom
+converters can raise their documented conversion exceptions. Locations are
+one-based line and column values, while `ParseError#byte_offset` is zero-based.
+For a transcoding `IO`, byte offsets refer to decoded UTF-8 bytes.
 
 Typed cursor reads perform the native reader's normal one-event lookahead. A
 malformed or oversized following string or number can therefore fail a read
@@ -166,9 +177,16 @@ byte and 16 MiB. The input is borrowed and never closed. Decoding starts at its
 current position and may read ahead. `FusedJSON.from_json` strictly requires EOF
 after the target constructor consumes one value; a cursor read stops after its
 selected value and one-event lookahead. Positive short reads are supported; a
-zero-byte read is permanent EOF. `max_token_bytes` can bound each raw string or
-number token, including unknown fields that typed decoding skips. See
-[Streaming Input](streaming.md) for memory and encoding details.
+zero-byte read is permanent EOF.
+
+`FusedJSON::Limits` applies to typed decoding from `String` and `IO`.
+`max_token_bytes` bounds raw scalar scratch, including unknown fields that are
+skipped, while `max_typed_value_bytes` bounds the complete selected source
+span. A scalar is scanned before `read(T)` selects it, and a retrospective
+streaming string or number error may copy that token into location scratch.
+Set both limits when each allocation path must be bounded. These source-byte
+limits do not cap the heap used by the constructed `T`. See
+[Streaming Input](streaming.md) for ownership, memory, and encoding details.
 
 ## Deferred
 

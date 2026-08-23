@@ -3,13 +3,14 @@ module FusedJSON
   # public pull traversal remains range neutral until a numeric getter is used.
   private class DynamicStreamingPullParser < StreamingPullParser
     def initialize(input : IO, *, buffer_size : Int, max_nesting : Int,
-                   cache_keys : Bool, max_token_bytes : Int?)
+                   cache_keys : Bool, max_token_bytes : Int?, limits : Limits)
       super(
         input,
         buffer_size: buffer_size,
         max_nesting: max_nesting,
         cache_keys: cache_keys,
         max_token_bytes: max_token_bytes,
+        limits: limits,
         enforce_dynamic_numbers: true
       )
     end
@@ -24,13 +25,15 @@ module FusedJSON
 
     def initialize(input : IO, *, buffer_size : Int = StreamingPullParser::DEFAULT_BUFFER_SIZE,
                    max_nesting : Int = PullParser::MAX_NESTING, cache_keys : Bool = false,
-                   max_token_bytes : Int? = nil)
+                   max_token_bytes : Int? = nil,
+                   limits : Limits = Limits::DEFAULT)
       @pull = DynamicStreamingPullParser.new(
         input,
         buffer_size: buffer_size,
         max_nesting: max_nesting,
         cache_keys: cache_keys,
-        max_token_bytes: max_token_bytes
+        max_token_bytes: max_token_bytes,
+        limits: limits
       )
     end
 

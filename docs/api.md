@@ -1,7 +1,7 @@
 # Public API and Compatibility
 
 FusedJSON's supported pre-1.0 surface is the `FusedJSON` facade,
-`FusedJSON::ParseError`, `FusedJSON::PullParser`, and
+`FusedJSON::Limits`, `FusedJSON::ParseError`, `FusedJSON::PullParser`, and
 `FusedJSON::PullParser::Kind`. The shard name and require path are
 `fused_json`; the namespace is `FusedJSON`. Parser, adapter, scanner, and
 stream-builder classes not listed here are implementation details even if
@@ -19,10 +19,45 @@ must contain exactly one strict JSON document.
 | `cache_keys` | `String`, `IO` | `false` | `Bool` |
 | `buffer_size` | `IO` | `32 * 1024` | `1..16 MiB` |
 | `max_token_bytes` | `IO` | `nil` | `nil` or `1..Int32::MAX` |
+| `limits` | `String`, `IO` | `FusedJSON::Limits::DEFAULT` | `FusedJSON::Limits` |
 
-Options are keyword-only. Key caching is scoped to one parse. The token limit
-counts raw bytes for each string or number, including string quotes and escape
-spellings; it is not a document-size or result-size limit.
+Options are keyword-only. Existing `max_nesting` and streaming
+`max_token_bytes` calls remain valid. When one of those keywords and `limits`
+both constrain a resource, the smaller value wins. All supplied values are
+validated before an `IO` is read.
+
+`FusedJSON::Limits` is immutable and has these fields:
+
+| Field | Default | Meaning |
+| --- | --- | --- |
+| `max_nesting` | `512` | Container depth, in `1..512` |
+| `max_token_bytes` | `nil` | Raw bytes in one string or number token |
+| `max_document_bytes` | `nil` | Parser-consumed decoded UTF-8 bytes |
+| `max_typed_value_bytes` | `nil` | Raw span of one value selected for typed decoding |
+| `max_total_values` | `nil` | Root and each nested scalar, array, or object, once |
+| `max_container_entries` | `nil` | Elements or members in each container |
+| `max_cached_keys` | `nil` | Distinct decoded keys inserted into the local key pool |
+| `reject_duplicate_keys` | `false` | Reject a repeated decoded key within one object |
+
+New byte and count limits accept `0..Int64::MAX`; zero permits no matching
+byte, value, entry, or cached key. Token limits remain in
+`1..Int32::MAX`. String tokens include their quotes and escape spellings.
+Document bytes start at the beginning of a `String` or the current `IO`
+position and include whitespace, punctuation, keys, and trailing input. Bytes
+fetched into a buffer but not consumed are excluded. Values encountered while
+skipping or decoding unknown fields still count. Every array element and object
+member counts as one container entry, including duplicate members. The full
+contract is recorded in the
+[resource-limits decision](resource-limits-decision.md).
+
+Key caching is scoped to one parse. `max_cached_keys` counts actual pool
+insertions. With duplicate rejection off, an untyped pull `skip` does not
+materialize keys inside the skipped value and therefore does not use that
+budget. Duplicate rejection must decode keys even while skipping; when
+`cache_keys` is also true, those keys enter the pool and count. The duplicate
+sets remain independent of the pool and may retain the same decoded keys in
+every open object. The cache limit has no effect when `cache_keys` is false.
+Duplicate comparison is case-sensitive and does not normalize Unicode.
 
 ## Typed Pull Reads
 
@@ -37,6 +72,17 @@ value, so a custom constructor cannot inspect or consume its sibling. Returning
 without consuming the complete value is an error. Advancement still performs
 the pull reader's normal one-event lookahead, so a malformed or oversized next
 string or number can fail the current read before it returns.
+
+`max_typed_value_bytes` counts the selected value's raw span, including
+container punctuation and internal whitespace. It excludes surrounding
+whitespace and sibling lookahead. `read_array(T)` starts a new budget for each
+element. Structural and scalar reads do not select a typed value.
+
+The native reader scans a scalar event before `from_json` or `read(T)` starts
+its typed-value budget. The typed limit is then checked retrospectively before
+`T.new`. A syntax, document, or token failure encountered during that initial
+scan therefore wins before the typed-value check, even if the typed boundary
+would have been earlier.
 
 A failed typed read never returns a partial `T`, but it is not transactional:
 constructor side effects and bytes already consumed cannot be rolled back.
@@ -74,13 +120,29 @@ their existing `JSON::Any` numeric limits.
 
 ## Error Contract
 
-Invalid option ranges raise `ArgumentError` before an `IO` is read. Invalid
-JSON, nesting overflow, token-limit overflow, incompatible pull reads, and pull
-block contract violations raise `FusedJSON::ParseError`, a
-`JSON::ParseException`. It exposes a zero-based `byte_offset`; inherited line
-and column values are one-based. For transcoding IO, offsets count decoded
-UTF-8 bytes. IO failures propagate unchanged. Typed constructors and
-converters may raise or wrap their own documented exceptions.
+Invalid option ranges raise `ArgumentError` before an `IO` is read. Native JSON
+syntax, duplicate-key, limit, incompatible-read, and pull-block failures raise
+`FusedJSON::ParseError`, a `JSON::ParseException`. Generated
+`JSON::Serializable` code may wrap it in `JSON::SerializableError`, with the
+native error retained as the cause. Other typed constructors and converters may
+raise or wrap their own documented exceptions. IO failures propagate
+unchanged.
+
+`ParseError#byte_offset` is zero-based; inherited line and column values are
+one-based. For transcoding IO, offsets count decoded UTF-8 bytes.
+
+Document- and typed-value-byte errors point to the first forbidden byte.
+Token errors retain the token's opening offset. Value-count errors point to the
+first disallowed value. Entry, cache, and duplicate errors point to the opening
+of the extra element or offending key. These limits measure parser-visible
+source spans and counts, not Crystal heap usage.
+
+When document, typed-value, and token byte limits are active together, the
+first forbidden source boundary wins. At an equal boundary, document bytes
+take precedence over typed-value bytes, and either source-span limit takes
+precedence over token bytes. A limit at an already forbidden byte is reported
+before a syntax error at that byte. The retrospective scalar rule above still
+applies because its typed-value budget was not active during the initial scan.
 
 Exception classes and location semantics are API. Exact English error messages
 are diagnostics and may change.

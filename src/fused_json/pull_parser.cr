@@ -53,22 +53,39 @@ module FusedJSON
     @float_materialized : Bool
     @enforce_dynamic_numbers : Bool
 
-    def initialize(source : String, *, max_nesting : Int = MAX_NESTING, cache_keys : Bool = false)
-      initialize(source, max_nesting: max_nesting, cache_keys: cache_keys, enforce_dynamic_numbers: false)
-    end
-
-    private def initialize(source : String, *, max_nesting : Int, cache_keys : Bool, enforce_dynamic_numbers : Bool)
+    def initialize(source : String, *, max_nesting : Int = MAX_NESTING,
+                   cache_keys : Bool = false, limits : Limits = Limits::DEFAULT)
       initialize(
         source,
         max_nesting: max_nesting,
         cache_keys: cache_keys,
+        limits: limits,
+        enforce_dynamic_numbers: false
+      )
+    end
+
+    private def initialize(source : String, *, max_nesting : Int, cache_keys : Bool,
+                           limits : Limits, enforce_dynamic_numbers : Bool)
+      initialize(
+        source,
+        max_nesting: max_nesting,
+        cache_keys: cache_keys,
+        limits: limits,
         enforce_dynamic_numbers: enforce_dynamic_numbers,
         prime: true
       )
     end
 
-    protected def initialize(source : String, *, max_nesting : Int, cache_keys : Bool, enforce_dynamic_numbers : Bool, prime : Bool)
-      super(source, max_nesting: max_nesting, cache_keys: cache_keys)
+    protected def initialize(source : String, *, max_nesting : Int, cache_keys : Bool,
+                             limits : Limits, enforce_dynamic_numbers : Bool, prime : Bool,
+                             max_token_bytes : Int? = nil)
+      super(
+        source,
+        max_nesting: max_nesting,
+        cache_keys: cache_keys,
+        limits: limits,
+        max_token_bytes: max_token_bytes
+      )
       @frames = [] of Frame
       @kind = Kind::EOF
       @bool_value = false
@@ -90,12 +107,19 @@ module FusedJSON
       @int_materialized = false
       @float_materialized = false
       @enforce_dynamic_numbers = enforce_dynamic_numbers
-
       prime_reader if prime
     end
 
     protected def prime_reader : Nil
+      unless @limits_active
+        skip_whitespace_unlimited
+        raise_error("expected a JSON value") if eof?
+        emit_value_unlimited
+        return
+      end
+
       skip_whitespace
+      enforce_available_byte
       raise_error("expected a JSON value") if eof?
       emit_value
     end
@@ -274,6 +298,22 @@ module FusedJSON
     def skip_value : Nil
       raise_error("cannot skip an object key", @byte_offset) if @object_key
 
+      unless @limits_active
+        case @kind
+        when .null?, .bool?, .int?, .float?, .string?
+          advance_unlimited
+        when .begin_array?, .begin_object?
+          target_depth = @frames.size
+          while @frames.size >= target_depth
+            advance_unlimited
+          end
+          advance_unlimited
+        else
+          raise_error("expected a JSON value", @byte_offset)
+        end
+        return
+      end
+
       case @kind
       when .null?, .bool?, .int?, .float?, .string?
         advance
@@ -319,6 +359,54 @@ module FusedJSON
     private def advance : Nil
       release_token
 
+      if @limits_active
+        advance_limited
+        return
+      end
+
+      if @frames.empty?
+        finish_document_unlimited
+        return
+      end
+
+      case @frames.last.state
+      when .array_first_or_end?
+        next_array_value_unlimited(first: true)
+      when .array_comma_or_end?
+        next_array_value_unlimited(first: false)
+      when .object_first_key_or_end?
+        next_object_key_unlimited(first: true)
+      when .object_value?
+        next_object_value_unlimited
+      when .object_comma_or_end?
+        next_object_key_unlimited(first: false)
+      end
+    end
+
+    private def advance_unlimited : Nil
+      release_token
+
+      if @frames.empty?
+        finish_document_unlimited
+        return
+      end
+
+      case @frames.last.state
+      when .array_first_or_end?
+        next_array_value_unlimited(first: true)
+      when .array_comma_or_end?
+        next_array_value_unlimited(first: false)
+      when .object_first_key_or_end?
+        next_object_key_unlimited(first: true)
+      when .object_value?
+        next_object_value_unlimited
+      when .object_comma_or_end?
+        next_object_key_unlimited(first: false)
+      end
+    end
+
+    @[NoInline]
+    private def advance_limited : Nil
       if @frames.empty?
         finish_document
         return
@@ -338,8 +426,158 @@ module FusedJSON
       end
     end
 
+    private def finish_document_unlimited : Nil
+      skip_whitespace_unlimited
+      raise_error("unexpected trailing content") unless eof?
+      set_event_position
+      @event_context_id = 0_i64
+      @kind = Kind::EOF
+      @object_key = false
+      reset_string
+    end
+
+    private def next_array_value_unlimited(*, first : Bool) : Nil
+      skip_whitespace_unlimited
+
+      if first
+        if current_byte? == 0x5d_u8 # ]
+          emit_container_end_unlimited(Kind::EndArray)
+          return
+        end
+      else
+        case current_byte?
+        when 0x5d_u8 # ]
+          emit_container_end_unlimited(Kind::EndArray)
+          return
+        when 0x2c_u8 # ,
+          advance_byte_unlimited
+          skip_whitespace_unlimited
+          raise_error("trailing comma in array") if current_byte? == 0x5d_u8
+        else
+          raise_error("expected ',' or ']' in array")
+        end
+      end
+
+      set_top_state(FrameState::ArrayCommaOrEnd)
+      emit_value_unlimited
+    end
+
+    private def next_object_key_unlimited(*, first : Bool) : Nil
+      skip_whitespace_unlimited
+
+      if first
+        if current_byte? == 0x7d_u8 # }
+          emit_container_end_unlimited(Kind::EndObject)
+          return
+        end
+      else
+        case current_byte?
+        when 0x7d_u8 # }
+          emit_container_end_unlimited(Kind::EndObject)
+          return
+        when 0x2c_u8 # ,
+          advance_byte_unlimited
+          skip_whitespace_unlimited
+          raise_error("trailing comma in object") if current_byte? == 0x7d_u8
+        else
+          raise_error("expected ',' or '}' in object")
+        end
+      end
+
+      raise_error("expected a string object key") unless current_byte? == 0x22_u8
+      set_event_position
+      @event_context_id = @frames.last.id
+      start_string
+      @string_escaped = scan_string_unlimited
+      @string_finish = token_position
+      @kind = Kind::String
+      @object_key = true
+      set_top_state(FrameState::ObjectValue)
+    end
+
+    @[AlwaysInline]
+    private def next_object_value_unlimited : Nil
+      skip_whitespace_unlimited
+      raise_error("expected ':' after object key") unless consume_if_unlimited(0x3a_u8)
+      skip_whitespace_unlimited
+      set_top_state(FrameState::ObjectCommaOrEnd)
+      emit_value_unlimited
+    end
+
+    private def emit_value_unlimited : Nil
+      raise_error("expected a JSON value") if eof?
+
+      set_event_position
+      @event_context_id = @frames.last?.try(&.id) || 0_i64
+      @object_key = false
+      reset_string
+
+      case byte = current_byte
+      when 0x22_u8 # "
+        start_string
+        @string_escaped = scan_string_unlimited
+        @string_finish = token_position
+        @kind = Kind::String
+      when 0x5b_u8 # [
+        enter_container_unlimited(FrameState::ArrayFirstOrEnd, Kind::BeginArray)
+      when 0x7b_u8 # {
+        enter_container_unlimited(FrameState::ObjectFirstKeyOrEnd, Kind::BeginObject)
+      when 0x6e_u8 # n
+        consume_literal_unlimited("null")
+        @kind = Kind::Null
+      when 0x74_u8 # t
+        consume_literal_unlimited("true")
+        @bool_value = true
+        @kind = Kind::Bool
+      when 0x66_u8 # f
+        consume_literal_unlimited("false")
+        @bool_value = false
+        @kind = Kind::Bool
+      else
+        if byte == 0x2d_u8 || digit?(byte)
+          @number_token = scan_number_unlimited
+          if @number_token.floating?
+            @float_materialized = false
+            if @enforce_dynamic_numbers
+              @float_value = number_to_float64(@number_token)
+              @float_materialized = true
+            end
+            @kind = Kind::Float
+          else
+            @int_materialized = false
+            if @enforce_dynamic_numbers
+              @int_value = number_to_int64(@number_token)
+              @int_materialized = true
+            end
+            @kind = Kind::Int
+          end
+        else
+          raise_error("unexpected byte 0x#{byte.to_s(16)}")
+        end
+      end
+    end
+
+    private def enter_container_unlimited(state : FrameState, kind : Kind) : Nil
+      raise_error("nesting exceeds #{@max_nesting}") if @frames.size >= @max_nesting
+      advance_byte_unlimited
+      @next_frame_id += 1
+      @frames << Frame.new(state, @next_frame_id)
+      @kind = kind
+    end
+
+    private def emit_container_end_unlimited(kind : Kind) : Nil
+      set_event_position
+      @event_context_id = @frames.last.id
+      advance_byte_unlimited
+      @frames.pop
+      @kind = kind
+      @object_key = false
+      reset_string
+    end
+
     private def finish_document : Nil
       skip_whitespace
+      enforce_available_byte
       raise_error("unexpected trailing content") unless eof?
       set_event_position
       @event_context_id = 0_i64
@@ -350,6 +588,7 @@ module FusedJSON
 
     private def next_array_value(*, first : Bool) : Nil
       skip_whitespace
+      enforce_available_byte
 
       if first
         if current_byte? == 0x5d_u8 # ]
@@ -364,6 +603,7 @@ module FusedJSON
         when 0x2c_u8 # ,
           advance_byte
           skip_whitespace
+          enforce_available_byte
           raise_error("trailing comma in array") if current_byte? == 0x5d_u8
         else
           raise_error("expected ',' or ']' in array")
@@ -371,11 +611,13 @@ module FusedJSON
       end
 
       set_top_state(FrameState::ArrayCommaOrEnd)
+      record_container_entry
       emit_value
     end
 
     private def next_object_key(*, first : Bool) : Nil
       skip_whitespace
+      enforce_available_byte
 
       if first
         if current_byte? == 0x7d_u8 # }
@@ -390,6 +632,7 @@ module FusedJSON
         when 0x2c_u8 # ,
           advance_byte
           skip_whitespace
+          enforce_available_byte
           raise_error("trailing comma in object") if current_byte? == 0x7d_u8
         else
           raise_error("expected ',' or '}' in object")
@@ -397,6 +640,7 @@ module FusedJSON
       end
 
       raise_error("expected a string object key") unless current_byte? == 0x22_u8
+      record_container_entry
       set_event_position
       @event_context_id = @frames.last.id
       start_string
@@ -404,19 +648,24 @@ module FusedJSON
       @string_finish = token_position
       @kind = Kind::String
       @object_key = true
+      enforce_duplicate_key(string_value, @byte_offset) if duplicate_keys?
       set_top_state(FrameState::ObjectValue)
     end
 
     private def next_object_value : Nil
       skip_whitespace
+      enforce_available_byte
       raise_error("expected ':' after object key") unless consume_if(0x3a_u8)
       skip_whitespace
+      enforce_available_byte
       set_top_state(FrameState::ObjectCommaOrEnd)
       emit_value
     end
 
     private def emit_value : Nil
+      enforce_available_byte
       raise_error("expected a JSON value") if eof?
+      record_value
 
       set_event_position
       @event_context_id = @frames.last?.try(&.id) || 0_i64
@@ -471,6 +720,7 @@ module FusedJSON
     private def enter_container(state : FrameState, kind : Kind) : Nil
       raise_error("nesting exceeds #{@max_nesting}") if @frames.size >= @max_nesting
       advance_byte
+      enter_limit_container(object: kind.begin_object?)
       @next_frame_id += 1
       @frames << Frame.new(state, @next_frame_id)
       @kind = kind
@@ -478,8 +728,14 @@ module FusedJSON
 
     private def emit_container_end(kind : Kind) : Nil
       set_event_position
-      @event_context_id = @frames.last.id
+      frame_id = @frames.last.id
+      @event_context_id = frame_id
       advance_byte
+      leave_limit_container
+      if (state = @resource_limits) && state.selected_value_frame_id == frame_id
+        end_typed_value_limit
+        state.selected_value_frame_id = 0_i64
+      end
       @frames.pop
       @kind = kind
       @object_key = false
@@ -516,6 +772,17 @@ module FusedJSON
     private def set_event_position : Nil
       @byte_offset = current_offset
       record_event_position
+    end
+
+    protected def begin_current_typed_value_limit : Nil
+      return unless begin_typed_value_limit(@byte_offset)
+
+      if @kind.begin_array? || @kind.begin_object?
+        state = @resource_limits || raise "missing resource-limit state"
+        state.selected_value_frame_id = @frames.last.id
+      else
+        end_typed_value_limit
+      end
     end
 
     private def update_location(position : Int64) : Nil

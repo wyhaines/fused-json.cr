@@ -93,6 +93,7 @@ jobs:
       - name: Check API documentation
         run: |
           crystal docs --error-on-warnings --output=/tmp/fused-json-docs src/fused_json.cr
+          test -f /tmp/fused-json-docs/FusedJSON/Limits.html
           test -f /tmp/fused-json-docs/FusedJSON/ParseError.html
           test -f /tmp/fused-json-docs/FusedJSON/PullParser.html
           test ! -e /tmp/fused-json-docs/FusedJSON/Parser.html
@@ -121,6 +122,7 @@ jobs:
           crystal build --release --no-debug bench/tic_fixture.cr -o /tmp/fused-json-tic-fixture
           crystal build --release --no-debug bench/tic.cr -o /tmp/fused-json-tic-bench
           crystal build --release --no-debug bench/typed_cursor_cost.cr -o /tmp/fused-json-typed-cursor-cost
+          crystal build --release --no-debug -Dfused_json_limits_api bench/limits_overhead.cr -o /tmp/fused-json-limits-overhead
           crystal build --release --no-debug -Dfused_json_force_scalar_string_scan bench/parse.cr -o /tmp/fused-json-scalar-bench
 
       - name: Smoke test TiC benchmark tools

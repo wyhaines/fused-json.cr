@@ -27,18 +27,19 @@ module FusedJSON
     @token_uses_scratch : Bool
     @token : IO::Memory
     @scratch_retention_limit : Int32
-    @max_token_bytes : Int32?
 
     # `max_token_bytes` limits each raw string or number in the decoded stream.
     def initialize(input : IO, *, buffer_size : Int = DEFAULT_BUFFER_SIZE,
                    max_nesting : Int = MAX_NESTING, cache_keys : Bool = false,
-                   max_token_bytes : Int? = nil)
+                   max_token_bytes : Int? = nil,
+                   limits : Limits = Limits::DEFAULT)
       initialize(
         input,
         buffer_size: buffer_size,
         max_nesting: max_nesting,
         cache_keys: cache_keys,
         max_token_bytes: max_token_bytes,
+        limits: limits,
         enforce_dynamic_numbers: false
       )
     end
@@ -46,14 +47,11 @@ module FusedJSON
     protected def initialize(@input : IO, *, buffer_size : Int,
                              max_nesting : Int, cache_keys : Bool,
                              enforce_dynamic_numbers : Bool,
-                             max_token_bytes : Int? = nil)
+                             max_token_bytes : Int? = nil,
+                             limits : Limits = Limits::DEFAULT)
       unless buffer_size > 0 && buffer_size <= MAX_BUFFER_SIZE
         raise ArgumentError.new("buffer_size must be between 1 and #{MAX_BUFFER_SIZE}")
       end
-      if (limit = max_token_bytes) && !(limit > 0 && limit <= Int32::MAX)
-        raise ArgumentError.new("max_token_bytes must be between 1 and #{Int32::MAX}")
-      end
-
       @input_buffer = Bytes.new(buffer_size.to_i32)
       @input_position = 0
       @input_size = 0
@@ -72,12 +70,12 @@ module FusedJSON
       @token_uses_scratch = false
       @token = IO::Memory.new(Math.min(buffer_size.to_i32, 256))
       @scratch_retention_limit = Math.max(@input_buffer.size * 2, MIN_SCRATCH_RETENTION)
-      @max_token_bytes = max_token_bytes.try(&.to_i32)
-
       super(
         "",
         max_nesting: max_nesting,
         cache_keys: cache_keys,
+        limits: limits,
+        max_token_bytes: max_token_bytes,
         enforce_dynamic_numbers: enforce_dynamic_numbers,
         prime: false
       )
@@ -97,6 +95,26 @@ module FusedJSON
       consume_ascii(byte)
     end
 
+    protected def advance_byte_unlimited : Nil
+      byte = current_byte
+      consume_ascii_unlimited(byte)
+    end
+
+    @[AlwaysInline]
+    protected def enforce_available_byte : Nil
+      state = @resource_limits || return
+      limit = state.byte_limit || return
+      return if @stream_offset < limit
+
+      if @stream_offset > limit
+        raise_stream_byte_limit(state, limit, @stream_line, @stream_column)
+      end
+      if @input_position >= @input_size
+        return unless refill
+      end
+      raise_stream_byte_limit(state, limit, @stream_line, @stream_column)
+    end
+
     protected def prepare_string_token : Nil
       begin_token
     end
@@ -114,6 +132,8 @@ module FusedJSON
     protected def release_token : Nil
       @token_active = false
       @token_length = 0
+      return unless @token_uses_scratch
+
       @token_uses_scratch = false
       if @token.bytesize > @scratch_retention_limit
         @token = IO::Memory.new(Math.min(@input_buffer.size, 256))
@@ -143,7 +163,44 @@ module FusedJSON
       true
     end
 
+    @[AlwaysInline]
+    protected def consume_if_unlimited(byte : UInt8) : Bool
+      return false unless current_byte? == byte
+      consume_ascii_unlimited(byte)
+      true
+    end
+
     protected def skip_whitespace : Nil
+      if @resource_limits.try(&.byte_limit)
+        skip_whitespace_with_byte_limit
+        return
+      end
+
+      loop do
+        if @input_position >= @input_size
+          return unless refill
+        end
+
+        while @input_position < @input_size
+          byte = @input_buffer[@input_position]
+          case byte
+          when 0x20_u8, 0x09_u8, 0x0d_u8
+            @input_position += 1
+            @stream_offset += 1
+            @stream_column += 1
+          when 0x0a_u8
+            @input_position += 1
+            @stream_offset += 1
+            @stream_line += 1
+            @stream_column = 1_i64
+          else
+            return
+          end
+        end
+      end
+    end
+
+    protected def skip_whitespace_unlimited : Nil
       loop do
         if @input_position >= @input_size
           return unless refill
@@ -170,8 +227,16 @@ module FusedJSON
 
     protected def consume_literal(literal : String) : Nil
       literal.each_byte do |expected|
+        enforce_available_byte
         raise_error("invalid literal") unless current_byte? == expected
         consume_ascii(expected)
+      end
+    end
+
+    protected def consume_literal_unlimited(literal : String) : Nil
+      literal.each_byte do |expected|
+        raise_error("invalid literal") unless current_byte? == expected
+        consume_ascii_unlimited(expected)
       end
     end
 
@@ -180,9 +245,11 @@ module FusedJSON
       escaped = false
 
       loop do
+        enforce_available_byte
         if @input_position >= @input_size
           raise_error("unterminated string") unless refill
         end
+        enforce_stream_token_byte
 
         byte = @input_buffer[@input_position]
         case byte
@@ -206,10 +273,41 @@ module FusedJSON
       end
     end
 
+    protected def scan_string_unlimited : Bool
+      consume_token_ascii_unlimited(0x22_u8) # opening quote
+      escaped = false
+
+      loop do
+        if @input_position >= @input_size
+          raise_error("unterminated string") unless refill
+        end
+
+        byte = @input_buffer[@input_position]
+        case byte
+        when 0x22_u8 # "
+          consume_token_ascii_unlimited(byte)
+          finish_token
+          return escaped
+        when 0x5c_u8 # \
+          escaped = true
+          scan_escape_unlimited
+        else
+          raise_error("unescaped control byte in string") if byte < 0x20_u8
+          if byte < 0x80_u8
+            start = @input_position
+            @input_position = ASCIIStringScanner.find_special(@input_buffer, @input_position, @input_size)
+            advance_ascii_span_unlimited(@input_position - start)
+          else
+            scan_utf8_sequence_unlimited
+          end
+        end
+      end
+    end
+
     protected def materialize_string(start : Int32, finish : Int32, escaped : Bool, *, key : Bool) : String
       bytes = token_bytes
-      if !escaped && key && (pool = @key_pool)
-        return pool.get(bytes.to_unsafe + 1, bytes.size - 2)
+      if !escaped && key && @key_pool
+        return cache_key(bytes.to_unsafe + 1, bytes.size - 2, @token_offset)
       end
 
       value = if escaped
@@ -218,16 +316,18 @@ module FusedJSON
                 String.new(bytes.to_unsafe + 1, bytes.size - 2)
               end
 
-      key && (pool = @key_pool) ? pool.get(value) : value
+      key && @key_pool ? cache_key(value, @token_offset) : value
     end
 
     protected def scan_number : NumberToken
       begin_token
       negative = consume_token_if(0x2d_u8)
+      enforce_available_byte
       raise_error("expected digit after '-'") if eof?
 
       if current_byte == 0x30_u8
         consume_token_ascii(0x30_u8)
+        enforce_available_byte
         raise_error("leading zero in number") if (byte = current_byte?) && digit?(byte)
       elsif nonzero_digit?(current_byte)
         consume_token_digits
@@ -241,13 +341,48 @@ module FusedJSON
         raise_error("expected digit after decimal point") unless consume_token_digits
       end
 
+      enforce_available_byte
       if (byte = current_byte?) && (byte == 0x65_u8 || byte == 0x45_u8) # e/E
         floating = true
         consume_token_ascii(byte)
+        enforce_available_byte
         if (sign = current_byte?) && (sign == 0x2b_u8 || sign == 0x2d_u8)
           consume_token_ascii(sign)
         end
         raise_error("expected digit in exponent") unless consume_token_digits
+      end
+
+      finish_token
+      NumberToken.new(0, @token_length, negative, floating)
+    end
+
+    protected def scan_number_unlimited : NumberToken
+      begin_token
+      negative = consume_token_if_unlimited(0x2d_u8)
+      raise_error("expected digit after '-'") if eof?
+
+      if current_byte == 0x30_u8
+        consume_token_ascii_unlimited(0x30_u8)
+        raise_error("leading zero in number") if (byte = current_byte?) && digit?(byte)
+      elsif nonzero_digit?(current_byte)
+        consume_token_digits_unlimited
+      else
+        raise_error("invalid number")
+      end
+
+      floating = false
+      if consume_token_if_unlimited(0x2e_u8) # .
+        floating = true
+        raise_error("expected digit after decimal point") unless consume_token_digits_unlimited
+      end
+
+      if (byte = current_byte?) && (byte == 0x65_u8 || byte == 0x45_u8) # e/E
+        floating = true
+        consume_token_ascii_unlimited(byte)
+        if (sign = current_byte?) && (sign == 0x2b_u8 || sign == 0x2d_u8)
+          consume_token_ascii_unlimited(sign)
+        end
+        raise_error("expected digit in exponent") unless consume_token_digits_unlimited
       end
 
       finish_token
@@ -319,7 +454,21 @@ module FusedJSON
       @token_uses_scratch = false
     end
 
+    @[AlwaysInline]
     private def consume_ascii(byte : UInt8) : Nil
+      enforce_stream_byte
+      @input_position += 1
+      @stream_offset += 1
+      if byte == 0x0a_u8
+        @stream_line += 1
+        @stream_column = 1_i64
+      else
+        @stream_column += 1
+      end
+    end
+
+    @[AlwaysInline]
+    private def consume_ascii_unlimited(byte : UInt8) : Nil
       @input_position += 1
       @stream_offset += 1
       if byte == 0x0a_u8
@@ -331,23 +480,53 @@ module FusedJSON
     end
 
     private def consume_token_ascii(byte : UInt8) : Nil
-      consume_ascii(byte)
+      enforce_stream_byte
+      enforce_stream_token_byte
+      @input_position += 1
+      @stream_offset += 1
+      if byte == 0x0a_u8
+        @stream_line += 1
+        @stream_column = 1_i64
+      else
+        @stream_column += 1
+      end
     end
 
+    @[AlwaysInline]
     private def consume_token_raw(byte : UInt8) : Nil
+      enforce_stream_byte
+      enforce_stream_token_byte
+      @input_position += 1
+      @stream_offset += 1
+    end
+
+    private def consume_token_ascii_unlimited(byte : UInt8) : Nil
+      consume_ascii_unlimited(byte)
+    end
+
+    @[AlwaysInline]
+    private def consume_token_raw_unlimited(byte : UInt8) : Nil
       @input_position += 1
       @stream_offset += 1
     end
 
     private def consume_token_if(byte : UInt8) : Bool
+      enforce_available_byte
       return false unless current_byte? == byte
       consume_token_ascii(byte)
+      true
+    end
+
+    private def consume_token_if_unlimited(byte : UInt8) : Bool
+      return false unless current_byte? == byte
+      consume_token_ascii_unlimited(byte)
       true
     end
 
     private def consume_token_digits : Bool
       consumed = false
       loop do
+        enforce_available_byte
         if @input_position >= @input_size
           return consumed unless refill
         end
@@ -363,7 +542,48 @@ module FusedJSON
       end
     end
 
+    private def consume_token_digits_unlimited : Bool
+      consumed = false
+      loop do
+        if @input_position >= @input_size
+          return consumed unless refill
+        end
+
+        start = @input_position
+        while @input_position < @input_size && digit?(@input_buffer[@input_position])
+          @input_position += 1
+        end
+        count = @input_position - start
+        advance_ascii_span_unlimited(count)
+        consumed = true if count > 0
+        return consumed if @input_position < @input_size
+      end
+    end
+
+    @[AlwaysInline]
     private def advance_ascii_span(count : Int32) : Nil
+      state = @resource_limits
+      byte_limit = state.try(&.byte_limit)
+      byte_distance = byte_limit.try { |limit| limit - @stream_offset }
+      token_limit = max_token_bytes
+      token_distance = token_limit.try do |limit|
+        limit.to_i64 - (@stream_offset - @token_offset)
+      end
+
+      if state && byte_limit && byte_distance && byte_distance < count &&
+         (!token_distance || byte_distance <= token_distance)
+        column = @stream_column + Math.max(byte_distance, 0_i64)
+        raise_stream_byte_limit(state, byte_limit, @stream_line, column)
+      end
+      if token_limit && token_distance && token_distance < count
+        raise_error("token exceeds max_token_bytes of #{token_limit}", @token_offset)
+      end
+      @stream_offset += count
+      @stream_column += count
+    end
+
+    @[AlwaysInline]
+    private def advance_ascii_span_unlimited(count : Int32) : Nil
       @stream_offset += count
       @stream_column += count
     end
@@ -371,7 +591,9 @@ module FusedJSON
     private def scan_escape : Nil
       slash_offset = @stream_offset
       consume_token_ascii(0x5c_u8)
+      enforce_available_byte
       byte = current_byte? || raise_error("unterminated string escape", slash_offset)
+      enforce_stream_token_byte
 
       case byte
       when 0x22_u8, 0x5c_u8, 0x2f_u8, 0x62_u8, 0x66_u8, 0x6e_u8, 0x72_u8, 0x74_u8
@@ -390,13 +612,56 @@ module FusedJSON
       end
     end
 
+    private def scan_escape_unlimited : Nil
+      slash_offset = @stream_offset
+      consume_token_ascii_unlimited(0x5c_u8)
+      byte = current_byte? || raise_error("unterminated string escape", slash_offset)
+
+      case byte
+      when 0x22_u8, 0x5c_u8, 0x2f_u8, 0x62_u8, 0x66_u8, 0x6e_u8, 0x72_u8, 0x74_u8
+        consume_token_ascii_unlimited(byte)
+      when 0x75_u8 # u
+        consume_token_ascii_unlimited(byte)
+        codepoint = scan_hex4_unlimited
+        if 0xd800 <= codepoint <= 0xdbff
+          low = scan_low_surrogate_unlimited
+          raise_error("invalid low surrogate") unless 0xdc00 <= low <= 0xdfff
+        elsif 0xdc00 <= codepoint <= 0xdfff
+          raise_error("unexpected low surrogate")
+        end
+      else
+        raise_error("invalid string escape", slash_offset)
+      end
+    end
+
     private def scan_hex4 : Int32
+      start_offset = @stream_offset
+      bytes = uninitialized UInt8[4]
+      4.times do |offset|
+        enforce_available_byte
+        byte = current_byte? || raise_error("incomplete unicode escape", start_offset)
+        enforce_stream_token_byte
+        bytes[offset] = byte
+        consume_token_ascii(byte)
+      end
+
+      value = 0
+      4.times do |offset|
+        byte = bytes[offset]
+        digit = hex_value(byte)
+        raise_error("invalid hex digit in unicode escape", start_offset + offset) if digit < 0
+        value = (value << 4) | digit
+      end
+      value
+    end
+
+    private def scan_hex4_unlimited : Int32
       start_offset = @stream_offset
       bytes = uninitialized UInt8[4]
       4.times do |offset|
         byte = current_byte? || raise_error("incomplete unicode escape", start_offset)
         bytes[offset] = byte
-        consume_token_ascii(byte)
+        consume_token_ascii_unlimited(byte)
       end
 
       value = 0
@@ -413,9 +678,34 @@ module FusedJSON
       start_offset = @stream_offset
       bytes = uninitialized UInt8[6]
       6.times do |offset|
+        enforce_available_byte
         byte = current_byte? || raise_error("high surrogate must be followed by a low surrogate", start_offset)
+        enforce_stream_token_byte
         bytes[offset] = byte
         consume_token_ascii(byte)
+      end
+
+      unless bytes[0] == 0x5c_u8 && bytes[1] == 0x75_u8
+        raise_error("high surrogate must be followed by a low surrogate", start_offset)
+      end
+
+      value = 0
+      4.times do |offset|
+        byte = bytes[2 + offset]
+        digit = hex_value(byte)
+        raise_error("invalid hex digit in unicode escape", start_offset + 2 + offset) if digit < 0
+        value = (value << 4) | digit
+      end
+      value
+    end
+
+    private def scan_low_surrogate_unlimited : Int32
+      start_offset = @stream_offset
+      bytes = uninitialized UInt8[6]
+      6.times do |offset|
+        byte = current_byte? || raise_error("high surrogate must be followed by a low surrogate", start_offset)
+        bytes[offset] = byte
+        consume_token_ascii_unlimited(byte)
       end
 
       unless bytes[0] == 0x5c_u8 && bytes[1] == 0x75_u8
@@ -470,15 +760,66 @@ module FusedJSON
       end
     end
 
+    private def scan_utf8_sequence_unlimited : Nil
+      first = current_byte
+      case first
+      when 0xc2_u8..0xdf_u8
+        consume_utf8_lead_unlimited(first)
+        consume_utf8_continuation_unlimited(0x80_u8, 0xbf_u8)
+      when 0xe0_u8
+        consume_utf8_lead_unlimited(first)
+        consume_utf8_continuation_unlimited(0xa0_u8, 0xbf_u8)
+        consume_utf8_continuation_unlimited(0x80_u8, 0xbf_u8)
+      when 0xe1_u8..0xec_u8, 0xee_u8..0xef_u8
+        consume_utf8_lead_unlimited(first)
+        consume_utf8_continuation_unlimited(0x80_u8, 0xbf_u8)
+        consume_utf8_continuation_unlimited(0x80_u8, 0xbf_u8)
+      when 0xed_u8
+        consume_utf8_lead_unlimited(first)
+        consume_utf8_continuation_unlimited(0x80_u8, 0x9f_u8)
+        consume_utf8_continuation_unlimited(0x80_u8, 0xbf_u8)
+      when 0xf0_u8
+        consume_utf8_lead_unlimited(first)
+        consume_utf8_continuation_unlimited(0x90_u8, 0xbf_u8)
+        consume_utf8_continuation_unlimited(0x80_u8, 0xbf_u8)
+        consume_utf8_continuation_unlimited(0x80_u8, 0xbf_u8)
+      when 0xf1_u8..0xf3_u8
+        consume_utf8_lead_unlimited(first)
+        consume_utf8_continuation_unlimited(0x80_u8, 0xbf_u8)
+        consume_utf8_continuation_unlimited(0x80_u8, 0xbf_u8)
+        consume_utf8_continuation_unlimited(0x80_u8, 0xbf_u8)
+      when 0xf4_u8
+        consume_utf8_lead_unlimited(first)
+        consume_utf8_continuation_unlimited(0x80_u8, 0x8f_u8)
+        consume_utf8_continuation_unlimited(0x80_u8, 0xbf_u8)
+        consume_utf8_continuation_unlimited(0x80_u8, 0xbf_u8)
+      else
+        raise_error("invalid UTF-8 in string")
+      end
+    end
+
     private def consume_utf8_lead(byte : UInt8) : Nil
       consume_token_raw(byte)
       @stream_column += 1
     end
 
+    private def consume_utf8_lead_unlimited(byte : UInt8) : Nil
+      consume_token_raw_unlimited(byte)
+      @stream_column += 1
+    end
+
     private def consume_utf8_continuation(minimum : UInt8, maximum : UInt8) : Nil
+      enforce_available_byte
       byte = current_byte? || raise_error("incomplete UTF-8 sequence")
+      enforce_stream_token_byte
       raise_error("invalid UTF-8 in string") unless minimum <= byte <= maximum
       consume_token_raw(byte)
+    end
+
+    private def consume_utf8_continuation_unlimited(minimum : UInt8, maximum : UInt8) : Nil
+      byte = current_byte? || raise_error("incomplete UTF-8 sequence")
+      raise_error("invalid UTF-8 in string") unless minimum <= byte <= maximum
+      consume_token_raw_unlimited(byte)
     end
 
     private def decode_escaped_string(bytes : Bytes) : String
@@ -547,6 +888,10 @@ module FusedJSON
       return {@stream_line, @stream_column} if position == @stream_offset
       return {@event_line, @event_column} if position == @byte_offset
 
+      if (@kind.null? || @kind.bool?) && @byte_offset < position < @stream_offset
+        return {@event_line, @event_column + position - @byte_offset}
+      end
+
       if @token_active && @token_offset <= position <= @stream_offset
         line = @token_line
         column = @token_column
@@ -594,7 +939,7 @@ module FusedJSON
     private def flush_token_span : Nil
       count = @input_position - @token_buffer_start
       if count > 0
-        if count >= Int32::MAX - @token.bytesize
+        if count > Int32::MAX - @token.bytesize
           raise_error("token exceeds maximum supported size", @token_offset)
         end
         enforce_token_size(@token.bytesize + count)
@@ -605,9 +950,53 @@ module FusedJSON
     end
 
     private def enforce_token_size(size : Int32) : Nil
-      if (limit = @max_token_bytes) && size > limit
+      if (limit = max_token_bytes) && size > limit
         raise_error("token exceeds max_token_bytes of #{limit}", @token_offset)
       end
+    end
+
+    private def skip_whitespace_with_byte_limit : Nil
+      loop do
+        byte = current_byte? || return
+        case byte
+        when 0x20_u8, 0x09_u8, 0x0a_u8, 0x0d_u8
+          consume_ascii(byte)
+        else
+          return
+        end
+      end
+    end
+
+    @[AlwaysInline]
+    private def enforce_stream_byte : Nil
+      state = @resource_limits || return
+      limit = state.byte_limit || return
+      if @stream_offset >= limit
+        raise_stream_byte_limit(state, limit, @stream_line, @stream_column)
+      end
+    end
+
+    @[AlwaysInline]
+    private def enforce_stream_token_byte : Nil
+      limit = max_token_bytes || return
+      if @stream_offset - @token_offset >= limit
+        raise_error("token exceeds max_token_bytes of #{limit}", @token_offset)
+      end
+    end
+
+    private def raise_stream_byte_limit(state : ResourceLimitState, position : Int64,
+                                        line : Int64, column : Int64) : NoReturn
+      message = case state.byte_kind
+                when .document?
+                  limit = state.max_document_bytes || raise "missing document byte limit"
+                  "document exceeds max_document_bytes of #{limit}"
+                when .typed_value?
+                  limit = state.max_typed_value_bytes || raise "missing typed-value byte limit"
+                  "typed value exceeds max_typed_value_bytes of #{limit}"
+                else
+                  raise "unknown byte limit kind"
+                end
+      raise ParseError.new(message, position, line, column)
     end
 
     private def token_bytes : Bytes
@@ -651,13 +1040,15 @@ module FusedJSON
     # number in the decoded stream.
     def self.new(source : IO, *, buffer_size : Int = 32 * 1024,
                  max_nesting : Int = MAX_NESTING, cache_keys : Bool = false,
-                 max_token_bytes : Int? = nil)
+                 max_token_bytes : Int? = nil,
+                 limits : Limits = Limits::DEFAULT)
       StreamingPullParser.new(
         source,
         buffer_size: buffer_size,
         max_nesting: max_nesting,
         cache_keys: cache_keys,
-        max_token_bytes: max_token_bytes
+        max_token_bytes: max_token_bytes,
+        limits: limits
       )
     end
   end
