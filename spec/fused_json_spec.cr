@@ -96,5 +96,36 @@ describe FusedJSON do
       expect_raises(FusedJSON::ParseError) { FusedJSON.load("9223372036854775808") }
       expect_raises(FusedJSON::ParseError) { FusedJSON.load("-9223372036854775809") }
     end
+
+    it "parses floating-point numbers with integer parts wider than Int64" do
+      sources = [
+        "9223372036854775808.0",
+        "-9223372036854775809e0",
+        "99999999999999999999e-10",
+      ]
+      limits = FusedJSON::Limits.new(max_total_values: 1)
+
+      sources.each do |source|
+        expected = JSON.parse(source)
+        FusedJSON.load(source).should eq(expected)
+        FusedJSON.load(source, limits: limits).should eq(expected)
+      end
+    end
+
+    it "reports the same range error for integers longer than 19 digits" do
+      source = "[99999999999999999999]"
+      limits = FusedJSON::Limits.new(max_total_values: 2)
+
+      default_error = expect_raises(FusedJSON::ParseError, "integer is outside Int64 range") do
+        FusedJSON.load(source)
+      end
+      limited_error = expect_raises(FusedJSON::ParseError, "integer is outside Int64 range") do
+        FusedJSON.load(source, limits: limits)
+      end
+
+      default_error.byte_offset.should eq(1)
+      default_error.line_number.should eq(limited_error.line_number)
+      default_error.column_number.should eq(limited_error.column_number)
+    end
   end
 end
