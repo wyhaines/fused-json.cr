@@ -330,7 +330,7 @@ module FusedJSON
       end
 
       token = NumberToken.new(start, @pos, negative, floating)
-      token.floating? ? number_to_float64(token) : number_to_int64(token)
+      token.floating? ? number_to_float64(token) : number_to_int64_inline(token)
     end
 
     protected def number_to_float64(token : NumberToken) : Float64
@@ -339,6 +339,11 @@ module FusedJSON
     end
 
     protected def number_to_int64(token : NumberToken) : Int64
+      number_to_int64_inline(token)
+    end
+
+    @[AlwaysInline]
+    private def number_to_int64_inline(token : NumberToken) : Int64
       limit = token.negative ? 9_223_372_036_854_775_808_u64 : 9_223_372_036_854_775_807_u64
       value = 0_u64
       index = token.negative ? token.start + 1 : token.start
