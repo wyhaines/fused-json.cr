@@ -1,6 +1,6 @@
 # Resource limits API decision
 
-Status: accepted for large-document Milestone 5.
+Status: accepted and implemented for large-document Milestone 5.
 
 ## Public API
 
@@ -100,5 +100,17 @@ retrospective streaming string or number failure may copy the current token
 into error-reporting scratch; callers must also set `max_token_bytes` to bound
 the scan and this copy. Container typed values are checked incrementally, and
 their scope closes before sibling lookahead. Disabled extended limits allocate
-no counter or duplicate-key state, and their release-build overhead must be
-measured against the Milestone 4 baseline before closeout.
+no counter or duplicate-key state.
+
+## Verification
+
+Boundary coverage exercises every limit on String and IO inputs, including
+skipped and typed values, overlapping limits, duplicate keys, tiny buffers, and
+legacy-keyword merging. The separate large-offset check verifies an exact
+`Int64` error position after byte `2^32` without constructing a 4 GiB String.
+
+The controlled default-path comparison against Milestone 4 and the paired
+default/explicit-empty comparison passed every throughput, bootstrap, and
+managed-allocation gate. The accepted receipts, exact runners, and all
+unsuccessful attempts are retained in the
+[Milestone 5 benchmark results](milestone-5-benchmark-results.md).

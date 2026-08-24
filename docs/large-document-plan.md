@@ -1,8 +1,8 @@
 # Large-document typed streaming implementation plan
 
-Status: in progress. Milestones 1 through 4 are implemented. Milestone 5 code
-and correctness checks are complete; baseline performance acceptance is
-pending. This plan implements the requirements in
+Status: in progress. Milestones 1 through 5 are implemented. Milestone 6,
+controlled performance and scale validation, is next. This plan implements the
+requirements in the
 [Large-document typed streaming specification](large-document-processing.md).
 
 ## Working rules
@@ -142,7 +142,7 @@ one complete next token before yielding, as specified. Truncation, trailing
 garbage, invalid UTF-8, and a bad gzip trailer are all detected on a complete
 traversal. IO ownership remains unchanged.
 
-## Milestone 5: Resource limits (performance acceptance pending)
+## Milestone 5: Resource limits (implemented)
 
 The accepted [resource-limits decision](resource-limits-decision.md) defines
 one immutable limits object for the existing nesting and token controls plus
@@ -176,7 +176,12 @@ The large-offset check is separate from the fast spec suite:
 $ crystal run --release --no-debug scripts/check_large_offset.cr
 ```
 
-## Milestone 6: Performance and scale validation
+The default-path and explicit-empty campaigns passed every throughput,
+bootstrap, and managed-allocation gate. Accepted receipts and all unsuccessful
+attempts are recorded in the
+[Milestone 5 benchmark results](milestone-5-benchmark-results.md).
+
+## Milestone 6: Performance and scale validation (next)
 
 Use isolated release builds and a quiet, CPU-pinned host. Predeclare at least
 20 paired blocks per profile. Each block contains one fresh FusedJSON process

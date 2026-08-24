@@ -20,9 +20,10 @@ $ crystal build --release --no-debug -Dfused_json_limits_api \
 Prefer a quiet host for in-process microbenchmarks. When that is unavailable,
 freeze campaign-specific admission and invalidation rules before collecting
 results. Pin one CPU and set `GC_NPROCS=1` and `GC_MARKERS=1` so Boehm GC does
-not place helper threads on that CPU. Allow at least one second of warmup and
-take multiple sustained samples in independent processes. Alternate comparison
-order by setting `FUSED_JSON_BENCH_REVERSE=1` on every other sample. Report
+not place helper threads on that CPU. Unless a frozen campaign below specifies
+otherwise, allow at least one second of warmup and take multiple sustained
+samples in independent processes. Alternate comparison order by setting
+`FUSED_JSON_BENCH_REVERSE=1` on every other sample. Report
 medians, MiB/s, relative standard deviation, and managed bytes per operation;
 use a separate process-level RSS tool for peak memory. The one-shot TiC modes
 intentionally have no internal warmup and rely on a separately warmed page
@@ -143,6 +144,10 @@ candidate-default median as the baseline. Record CPU 3 `scaling_cur_freq` as
 diagnostic metadata only; it is not an admission, invalidation, exclusion,
 normalization, or adjustment rule. Record every paired receipt, the complete
 prescheduled order, bootstrap seed, analysis output, and pass/fail result.
+
+The accepted campaigns, exact runners, and complete record of performance
+failures and environmentally invalid attempts are retained in the
+[Milestone 5 benchmark results](milestone-5-benchmark-results.md).
 
 Every published result must identify the FusedJSON commit, Crystal version and
 LLVM, CPU and target, exact corpus path and size, command, environment options,

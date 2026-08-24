@@ -177,20 +177,32 @@ CPU-pinned `--release --no-debug` measurements on a Ryzen 9 7940HS with Crystal 
 
 At `9f614df`, five-process medians on the same host put direct typed decoding at 1.129x Crystal's typed decoder on the Twitter corpus, or 1.209x with local key caching. Cached typed decoding used 0.468x its managed allocation. Pull-to-tree ran at 0.532x to 0.871x the fused `load` path, while validating root skips used only 380 to 852 managed B/op. Three-process streaming medians put event drain at 0.602x to 0.748x the in-memory pull reader. These API-specific tradeoffs, RSD values, corpus sizes, and reproduction commands are recorded in the [reference results](docs/benchmark-results.md).
 
+Milestone 5's accepted controlled campaigns found no material cost from disabled
+resource limits or from passing an explicit empty `Limits` value. Every
+throughput, paired-bootstrap, and managed-allocation gate passed; the
+[complete results and unsuccessful attempts](docs/milestone-5-benchmark-results.md)
+are retained for review.
+
 `bench/parse.cr` verifies complete result equality before timing and reports MiB/s, relative standard deviation, and managed bytes per operation. Repeat the executable in independent processes before drawing conclusions on another machine.
 
 ## Roadmap
 
-Version 0.1.0 contains the core dynamic, pull, typed, and streaming parsers. Current priorities are:
+Version 0.1.0 contains the core dynamic, pull, typed, and streaming parsers.
+Large-document Milestones 1 through 5 add raw-number access, typed cursor and
+array reads, TiC workflows, and one resource policy across all parsing APIs.
+Milestone 5's disabled-policy overhead gates passed on every parser path.
+Current priorities are:
 
-- Block-based `PullParser#read_array(T)` iteration now lets applications process named and nested arrays in very large documents without building the complete collection in memory. The [large-document specification](docs/large-document-processing.md), [implementation plan](docs/large-document-plan.md), and TiC benchmarks define the remaining scale-validation work. A separate reader will later handle NDJSON or repeated JSON documents and reuse its buffers between records. `load` and `parse` remain eager, strict, single-document operations.
+- Run two controlled TiC throughput campaigns and validate bounded process RSS
+  at 256 MiB, 1 GiB, and greater than 4 GiB. The
+  [large-document specification](docs/large-document-processing.md),
+  [implementation plan](docs/large-document-plan.md), and TiC benchmarks define
+  the workloads and gates. Source-byte limits are not Crystal heap limits;
+  returned values and caller-owned buffers retain their own memory costs.
+- Add a separate reader for NDJSON or repeated JSON documents, with buffer
+  reuse between records. `load` and `parse` will remain eager, strict,
+  single-document operations.
 - An opt-in dynamic value type that can hold integers beyond `Int64`, exact decimals, or the original number spelling. The existing `JSON::Any` API will keep its Crystal-compatible numeric behavior. Explicit typed decoding already supports `BigInt`, `BigFloat`, and `BigDecimal` after loading `big/json`.
-- `FusedJSON::Limits` now provides one resource policy across all parsing APIs,
-  including duplicate-key rejection. The next large-document work is the
-  controlled throughput and multi-size RSS validation described in the
-  [implementation plan](docs/large-document-plan.md). Source-byte limits are
-  not Crystal heap limits; returned values and caller-owned buffers still use
-  memory according to their own representations.
 - Fewer allocations in dynamic and typed decoding. Streaming tree construction will build values directly from `IO` instead of routing them through pull events. Reproducible release benchmarks will cover stable Crystal on x86-64, then expand to ARM64 when suitable runners are available.
 - Expanded fuzz testing and broader platform coverage, beginning with ARM64 and macOS. The word scanner will be tested on real 32-bit and big-endian hardware when practical CI runners are available. The compiler-private float hook will either be replaced or moved behind a stable upstream API, while the tested public fallback remains available.
 

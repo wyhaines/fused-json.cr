@@ -1,0 +1,4224 @@
+{
+  "artifact": "fused-json-milestone-5-api-paired-campaign",
+  "version": 1,
+  "campaign": "api-paired",
+  "id": "m5-default-vs-explicit-empty-paired-process-v1",
+  "valid": false,
+  "passed": false,
+  "invalid_reason": {
+    "at": "2026-08-24T09:45:15.258Z",
+    "kind": "temperature",
+    "detail": "97.5C"
+  },
+  "completed_at": "2026-08-24T09:45:17.269Z",
+  "admission_end": {
+    "at": "2026-08-24T09:44:35.181Z",
+    "monotonic_seconds": 62.317555095,
+    "phase": "admission",
+    "gap_seconds": 2.0099902620000094,
+    "load1": 0.4,
+    "load5": 0.65,
+    "runnable": 2,
+    "tasks": 4291,
+    "tctl_c": 54,
+    "cpu_busy_percent": {
+      "2": 4,
+      "3": 1.492537313432836
+    },
+    "benchmark_cpu_scaling_cur_freq_khz": 402786,
+    "scaling_cur_freq_read_error": null,
+    "scaling_cur_freq_acceptance_gate": false,
+    "read_error": null
+  },
+  "first_observation_delay_seconds": 0.0014921519999973043,
+  "final_environment_sample": {
+    "at": "2026-08-24T09:45:17.267Z",
+    "monotonic_seconds": 104.40370752300001,
+    "phase": "campaign-end",
+    "gap_seconds": 0.0006611770000120032,
+    "load1": 0.49,
+    "load5": 0.64,
+    "runnable": 1,
+    "tasks": 4298,
+    "tctl_c": 79.625,
+    "cpu_busy_percent": {
+      "2": 0,
+      "3": null
+    },
+    "benchmark_cpu_scaling_cur_freq_khz": 402786,
+    "scaling_cur_freq_read_error": null,
+    "scaling_cur_freq_acceptance_gate": false,
+    "read_error": null
+  },
+  "manifest": {
+    "artifact": "fused-json-milestone-5-api-paired-campaign",
+    "version": 1,
+    "campaign": "api-paired",
+    "id": "m5-default-vs-explicit-empty-paired-process-v1",
+    "created_at": "2026-08-24T09:43:32.886Z",
+    "candidate_commit": "812616652cbf05470f963e4238260e9ca5d9d38a",
+    "binaries": {
+      "limits_api": {
+        "path": "/tmp/fused-json-limits-v8-m5-api-paired",
+        "sha256": "36b36fdd7c5627626127c8f75b8bde4df33f87562a9eb2c52ee3971876c1d2e6",
+        "bytes": 1086536
+      }
+    },
+    "host": {
+      "hostname": "pop-os",
+      "platform": "Linux 7.0.11-76070011-generic x64",
+      "cpu_model": "AMD Ryzen 9 7940HS w/ Radeon 780M Graphics"
+    },
+    "cpus": {
+      "runner": "0",
+      "runner_affinity": "0",
+      "runner_siblings": "0-1",
+      "benchmark": "3",
+      "benchmark_sibling": "2",
+      "benchmark_siblings": "2-3"
+    },
+    "tctl_path": "/sys/class/hwmon/hwmon10/temp1_input",
+    "cpu_frequency": {
+      "scaling_cur_freq_path": "/sys/devices/system/cpu/cpu3/cpufreq/scaling_cur_freq",
+      "scaling_driver": "amd-pstate-epp",
+      "scaling_governor": "powersave",
+      "energy_performance_preference": "balance_performance",
+      "scaling_min_freq_khz": 402786,
+      "scaling_max_freq_khz": 5263061,
+      "sample_interval_seconds": 2,
+      "policy": "diagnostic-only: scaling_cur_freq is sampled but never gates, excludes, or normalizes an observation"
+    },
+    "fixture": {
+      "records": 10000,
+      "buffer_size": 32768,
+      "warmup_seconds": 0.5,
+      "calculation_seconds": 1.5,
+      "allocation_iterations": 20
+    },
+    "bootstrap": {
+      "seed": 20260822,
+      "resamples": 10000,
+      "lower_index": 500
+    },
+    "admission": {
+      "seconds": 60,
+      "sample_interval_seconds": 2,
+      "admission_c": 60,
+      "observation_start_c": 60,
+      "invalid_c": 95,
+      "admission_load1": 2.5,
+      "admission_load5": 2.5,
+      "invalid_load1": 4,
+      "admission_busy_percent": 10,
+      "invalid_sibling_busy_percent": 20,
+      "max_sample_gap_seconds": 5,
+      "max_observation_cooldown_seconds": 180
+    },
+    "thermal_rationale": "predeclared before formal observations after a full-parameter paired smoke rose from 59.125C to 93.625C; runtime invalidation remains 95C",
+    "comparison": {
+      "numerator": "explicit-empty",
+      "denominator": "default",
+      "gates": {
+        "median": 0.99,
+        "geometric_mean": 0.99,
+        "bootstrap_lower": 0.98
+      }
+    },
+    "schedule_design": {
+      "version": 1,
+      "independent_unit": "one fresh child process containing one paired default/explicit-empty observation",
+      "pairs_per_workload": 20,
+      "total_processes": 160,
+      "within_process_measurement": "approximately 100 ms batches in repeating ABBA cycles derived from the requested initial order",
+      "workload_rotation": "workload_index=(slot+round)%workload_count",
+      "initial_order_counterbalance": "phase=(floor(round/2)+floor(round/workload_count))%2; first_side_first=(slot+phase)%2==0; 10 AB and 10 BA processes per workload",
+      "repeated_workload_slot_order": "alternating",
+      "frequency_policy": "diagnostic samples only; no observation is excluded, gated, or normalized by frequency"
+    },
+    "benchmark_contract": {
+      "status": "canonical paired binary validated against the version-1 receipt contract and frozen by commit and SHA-256",
+      "arguments": [
+        "--configuration=paired",
+        "--paired-order=default,explicit-empty|explicit-empty,default",
+        "--pair-id=SCHEDULE_ENTRY_ID"
+      ],
+      "receipt": "fused-json-limits-overhead-paired version 1",
+      "measurement_unit": "one child emits one common-process paired receipt"
+    },
+    "design_caveats": [
+      "The paired benchmark source is frozen at candidate commit 812616652cbf05470f963e4238260e9ca5d9d38a and the runner verifies its release binary hash before and after the campaign.",
+      "ABBA batch cycles reduce between-process state noise but can introduce cache, allocator, and GC carryover; balanced initial order mitigates rather than eliminates it.",
+      "Only the 20 fresh-process ratios per workload are independent statistical units; interleaved batches within a child are not independent samples.",
+      "The GNU task CPU-share audit covers the whole paired child and cannot identify an interruption confined to one configuration.",
+      "A full-parameter smoke rose from 59.125C to 93.625C, so the formal policy is frozen at 60C admission/start, 180s cooldown, and the unchanged 95C runtime invalidation threshold.",
+      "scaling_cur_freq is a coarse instantaneous sysfs diagnostic, not an APERF/MPERF effective-clock measurement, and never affects validity or acceptance.",
+      "The Tctl hwmon index can change across boots; the runner resolves the path by its Tctl label at campaign start."
+    ],
+    "task_execution_audit": {
+      "schema": "fused-json-task-audit-v1",
+      "wrapper": {
+        "path": "/usr/bin/time",
+        "realpath": "/usr/bin/time",
+        "sha256": "7310b9b4c51a8f4d26c1af0da250f03a49ec8a8141033123e79196ad18f6c81b",
+        "bytes": 27160
+      },
+      "format": "fused-json-task-audit-v1\t%U\t%S\t%e\t%P\t%c\t%w\t%F\t%R\t%M\t%x",
+      "scope": "whole taskset child, including common setup, both interleaved measurements, allocation samples, and paired receipt emission",
+      "validity": {
+        "metric": "GNU time %P (task user+system CPU time divided by task wall time)",
+        "minimum_reported_cpu_percent": 99,
+        "maximum_reported_non_cpu_percent": 1,
+        "rationale": "with all child threads pinned to one logical CPU, a 99% reported task CPU share bounds visible scheduler/preemption loss to about one percent; both sides share the same audited child process",
+        "context_switch_policy": "voluntary and involuntary counts are recorded for diagnosis but are not gated because switch counts do not measure descheduled duration"
+      }
+    },
+    "child_environment": {
+      "PATH": "/usr/bin:/bin",
+      "LANG": "C",
+      "LC_ALL": "C",
+      "TZ": "UTC",
+      "GC_NPROCS": "1",
+      "GC_MARKERS": "1",
+      "CRYSTAL_WORKERS": "1",
+      "OMP_NUM_THREADS": "1",
+      "FUSED_JSON_BENCH_CPU": "3"
+    },
+    "runner": {
+      "node": "v24.13.0",
+      "argv": [
+        "/media/wyhaines/home/wyhaines/.nvm/versions/node/v24.13.0/bin/node",
+        "/tmp/fused-json-m5-api-paired-8126166.mjs",
+        "--output=/tmp/fused-json-m5-formal-8126166-api-paired-1"
+      ],
+      "file": {
+        "path": "/tmp/fused-json-m5-api-paired-8126166.mjs",
+        "realpath": "/tmp/fused-json-m5-api-paired-8126166.mjs",
+        "sha256": "e607596746c6be05d06c7cfd416035595bc59b556b57babf1b46a9961e9b7652",
+        "bytes": 52244
+      }
+    }
+  },
+  "schedule": [
+    {
+      "index": 0,
+      "pair_id": "m5-api-paired-v1-000-00-0-string-dynamic-default-first",
+      "round": 0,
+      "slot": 0,
+      "workload": "string-dynamic",
+      "order": [
+        "default",
+        "explicit-empty"
+      ]
+    },
+    {
+      "index": 1,
+      "pair_id": "m5-api-paired-v1-001-00-1-io-dynamic-explicit-empty-first",
+      "round": 0,
+      "slot": 1,
+      "workload": "io-dynamic",
+      "order": [
+        "explicit-empty",
+        "default"
+      ]
+    },
+    {
+      "index": 2,
+      "pair_id": "m5-api-paired-v1-002-00-2-string-pull-default-first",
+      "round": 0,
+      "slot": 2,
+      "workload": "string-pull",
+      "order": [
+        "default",
+        "explicit-empty"
+      ]
+    },
+    {
+      "index": 3,
+      "pair_id": "m5-api-paired-v1-003-00-3-string-skip-explicit-empty-first",
+      "round": 0,
+      "slot": 3,
+      "workload": "string-skip",
+      "order": [
+        "explicit-empty",
+        "default"
+      ]
+    },
+    {
+      "index": 4,
+      "pair_id": "m5-api-paired-v1-004-00-4-io-pull-default-first",
+      "round": 0,
+      "slot": 4,
+      "workload": "io-pull",
+      "order": [
+        "default",
+        "explicit-empty"
+      ]
+    },
+    {
+      "index": 5,
+      "pair_id": "m5-api-paired-v1-005-00-5-io-skip-explicit-empty-first",
+      "round": 0,
+      "slot": 5,
+      "workload": "io-skip",
+      "order": [
+        "explicit-empty",
+        "default"
+      ]
+    },
+    {
+      "index": 6,
+      "pair_id": "m5-api-paired-v1-006-00-6-string-typed-default-first",
+      "round": 0,
+      "slot": 6,
+      "workload": "string-typed",
+      "order": [
+        "default",
+        "explicit-empty"
+      ]
+    },
+    {
+      "index": 7,
+      "pair_id": "m5-api-paired-v1-007-00-7-io-typed-explicit-empty-first",
+      "round": 0,
+      "slot": 7,
+      "workload": "io-typed",
+      "order": [
+        "explicit-empty",
+        "default"
+      ]
+    },
+    {
+      "index": 8,
+      "pair_id": "m5-api-paired-v1-008-01-0-io-dynamic-default-first",
+      "round": 1,
+      "slot": 0,
+      "workload": "io-dynamic",
+      "order": [
+        "default",
+        "explicit-empty"
+      ]
+    },
+    {
+      "index": 9,
+      "pair_id": "m5-api-paired-v1-009-01-1-string-pull-explicit-empty-first",
+      "round": 1,
+      "slot": 1,
+      "workload": "string-pull",
+      "order": [
+        "explicit-empty",
+        "default"
+      ]
+    },
+    {
+      "index": 10,
+      "pair_id": "m5-api-paired-v1-010-01-2-string-skip-default-first",
+      "round": 1,
+      "slot": 2,
+      "workload": "string-skip",
+      "order": [
+        "default",
+        "explicit-empty"
+      ]
+    },
+    {
+      "index": 11,
+      "pair_id": "m5-api-paired-v1-011-01-3-io-pull-explicit-empty-first",
+      "round": 1,
+      "slot": 3,
+      "workload": "io-pull",
+      "order": [
+        "explicit-empty",
+        "default"
+      ]
+    },
+    {
+      "index": 12,
+      "pair_id": "m5-api-paired-v1-012-01-4-io-skip-default-first",
+      "round": 1,
+      "slot": 4,
+      "workload": "io-skip",
+      "order": [
+        "default",
+        "explicit-empty"
+      ]
+    },
+    {
+      "index": 13,
+      "pair_id": "m5-api-paired-v1-013-01-5-string-typed-explicit-empty-first",
+      "round": 1,
+      "slot": 5,
+      "workload": "string-typed",
+      "order": [
+        "explicit-empty",
+        "default"
+      ]
+    },
+    {
+      "index": 14,
+      "pair_id": "m5-api-paired-v1-014-01-6-io-typed-default-first",
+      "round": 1,
+      "slot": 6,
+      "workload": "io-typed",
+      "order": [
+        "default",
+        "explicit-empty"
+      ]
+    },
+    {
+      "index": 15,
+      "pair_id": "m5-api-paired-v1-015-01-7-string-dynamic-explicit-empty-first",
+      "round": 1,
+      "slot": 7,
+      "workload": "string-dynamic",
+      "order": [
+        "explicit-empty",
+        "default"
+      ]
+    },
+    {
+      "index": 16,
+      "pair_id": "m5-api-paired-v1-016-02-0-string-pull-explicit-empty-first",
+      "round": 2,
+      "slot": 0,
+      "workload": "string-pull",
+      "order": [
+        "explicit-empty",
+        "default"
+      ]
+    },
+    {
+      "index": 17,
+      "pair_id": "m5-api-paired-v1-017-02-1-string-skip-default-first",
+      "round": 2,
+      "slot": 1,
+      "workload": "string-skip",
+      "order": [
+        "default",
+        "explicit-empty"
+      ]
+    },
+    {
+      "index": 18,
+      "pair_id": "m5-api-paired-v1-018-02-2-io-pull-explicit-empty-first",
+      "round": 2,
+      "slot": 2,
+      "workload": "io-pull",
+      "order": [
+        "explicit-empty",
+        "default"
+      ]
+    },
+    {
+      "index": 19,
+      "pair_id": "m5-api-paired-v1-019-02-3-io-skip-default-first",
+      "round": 2,
+      "slot": 3,
+      "workload": "io-skip",
+      "order": [
+        "default",
+        "explicit-empty"
+      ]
+    },
+    {
+      "index": 20,
+      "pair_id": "m5-api-paired-v1-020-02-4-string-typed-explicit-empty-first",
+      "round": 2,
+      "slot": 4,
+      "workload": "string-typed",
+      "order": [
+        "explicit-empty",
+        "default"
+      ]
+    },
+    {
+      "index": 21,
+      "pair_id": "m5-api-paired-v1-021-02-5-io-typed-default-first",
+      "round": 2,
+      "slot": 5,
+      "workload": "io-typed",
+      "order": [
+        "default",
+        "explicit-empty"
+      ]
+    },
+    {
+      "index": 22,
+      "pair_id": "m5-api-paired-v1-022-02-6-string-dynamic-explicit-empty-first",
+      "round": 2,
+      "slot": 6,
+      "workload": "string-dynamic",
+      "order": [
+        "explicit-empty",
+        "default"
+      ]
+    },
+    {
+      "index": 23,
+      "pair_id": "m5-api-paired-v1-023-02-7-io-dynamic-default-first",
+      "round": 2,
+      "slot": 7,
+      "workload": "io-dynamic",
+      "order": [
+        "default",
+        "explicit-empty"
+      ]
+    },
+    {
+      "index": 24,
+      "pair_id": "m5-api-paired-v1-024-03-0-string-skip-explicit-empty-first",
+      "round": 3,
+      "slot": 0,
+      "workload": "string-skip",
+      "order": [
+        "explicit-empty",
+        "default"
+      ]
+    },
+    {
+      "index": 25,
+      "pair_id": "m5-api-paired-v1-025-03-1-io-pull-default-first",
+      "round": 3,
+      "slot": 1,
+      "workload": "io-pull",
+      "order": [
+        "default",
+        "explicit-empty"
+      ]
+    },
+    {
+      "index": 26,
+      "pair_id": "m5-api-paired-v1-026-03-2-io-skip-explicit-empty-first",
+      "round": 3,
+      "slot": 2,
+      "workload": "io-skip",
+      "order": [
+        "explicit-empty",
+        "default"
+      ]
+    },
+    {
+      "index": 27,
+      "pair_id": "m5-api-paired-v1-027-03-3-string-typed-default-first",
+      "round": 3,
+      "slot": 3,
+      "workload": "string-typed",
+      "order": [
+        "default",
+        "explicit-empty"
+      ]
+    },
+    {
+      "index": 28,
+      "pair_id": "m5-api-paired-v1-028-03-4-io-typed-explicit-empty-first",
+      "round": 3,
+      "slot": 4,
+      "workload": "io-typed",
+      "order": [
+        "explicit-empty",
+        "default"
+      ]
+    },
+    {
+      "index": 29,
+      "pair_id": "m5-api-paired-v1-029-03-5-string-dynamic-default-first",
+      "round": 3,
+      "slot": 5,
+      "workload": "string-dynamic",
+      "order": [
+        "default",
+        "explicit-empty"
+      ]
+    },
+    {
+      "index": 30,
+      "pair_id": "m5-api-paired-v1-030-03-6-io-dynamic-explicit-empty-first",
+      "round": 3,
+      "slot": 6,
+      "workload": "io-dynamic",
+      "order": [
+        "explicit-empty",
+        "default"
+      ]
+    },
+    {
+      "index": 31,
+      "pair_id": "m5-api-paired-v1-031-03-7-string-pull-default-first",
+      "round": 3,
+      "slot": 7,
+      "workload": "string-pull",
+      "order": [
+        "default",
+        "explicit-empty"
+      ]
+    },
+    {
+      "index": 32,
+      "pair_id": "m5-api-paired-v1-032-04-0-io-pull-default-first",
+      "round": 4,
+      "slot": 0,
+      "workload": "io-pull",
+      "order": [
+        "default",
+        "explicit-empty"
+      ]
+    },
+    {
+      "index": 33,
+      "pair_id": "m5-api-paired-v1-033-04-1-io-skip-explicit-empty-first",
+      "round": 4,
+      "slot": 1,
+      "workload": "io-skip",
+      "order": [
+        "explicit-empty",
+        "default"
+      ]
+    },
+    {
+      "index": 34,
+      "pair_id": "m5-api-paired-v1-034-04-2-string-typed-default-first",
+      "round": 4,
+      "slot": 2,
+      "workload": "string-typed",
+      "order": [
+        "default",
+        "explicit-empty"
+      ]
+    },
+    {
+      "index": 35,
+      "pair_id": "m5-api-paired-v1-035-04-3-io-typed-explicit-empty-first",
+      "round": 4,
+      "slot": 3,
+      "workload": "io-typed",
+      "order": [
+        "explicit-empty",
+        "default"
+      ]
+    },
+    {
+      "index": 36,
+      "pair_id": "m5-api-paired-v1-036-04-4-string-dynamic-default-first",
+      "round": 4,
+      "slot": 4,
+      "workload": "string-dynamic",
+      "order": [
+        "default",
+        "explicit-empty"
+      ]
+    },
+    {
+      "index": 37,
+      "pair_id": "m5-api-paired-v1-037-04-5-io-dynamic-explicit-empty-first",
+      "round": 4,
+      "slot": 5,
+      "workload": "io-dynamic",
+      "order": [
+        "explicit-empty",
+        "default"
+      ]
+    },
+    {
+      "index": 38,
+      "pair_id": "m5-api-paired-v1-038-04-6-string-pull-default-first",
+      "round": 4,
+      "slot": 6,
+      "workload": "string-pull",
+      "order": [
+        "default",
+        "explicit-empty"
+      ]
+    },
+    {
+      "index": 39,
+      "pair_id": "m5-api-paired-v1-039-04-7-string-skip-explicit-empty-first",
+      "round": 4,
+      "slot": 7,
+      "workload": "string-skip",
+      "order": [
+        "explicit-empty",
+        "default"
+      ]
+    },
+    {
+      "index": 40,
+      "pair_id": "m5-api-paired-v1-040-05-0-io-skip-default-first",
+      "round": 5,
+      "slot": 0,
+      "workload": "io-skip",
+      "order": [
+        "default",
+        "explicit-empty"
+      ]
+    },
+    {
+      "index": 41,
+      "pair_id": "m5-api-paired-v1-041-05-1-string-typed-explicit-empty-first",
+      "round": 5,
+      "slot": 1,
+      "workload": "string-typed",
+      "order": [
+        "explicit-empty",
+        "default"
+      ]
+    },
+    {
+      "index": 42,
+      "pair_id": "m5-api-paired-v1-042-05-2-io-typed-default-first",
+      "round": 5,
+      "slot": 2,
+      "workload": "io-typed",
+      "order": [
+        "default",
+        "explicit-empty"
+      ]
+    },
+    {
+      "index": 43,
+      "pair_id": "m5-api-paired-v1-043-05-3-string-dynamic-explicit-empty-first",
+      "round": 5,
+      "slot": 3,
+      "workload": "string-dynamic",
+      "order": [
+        "explicit-empty",
+        "default"
+      ]
+    },
+    {
+      "index": 44,
+      "pair_id": "m5-api-paired-v1-044-05-4-io-dynamic-default-first",
+      "round": 5,
+      "slot": 4,
+      "workload": "io-dynamic",
+      "order": [
+        "default",
+        "explicit-empty"
+      ]
+    },
+    {
+      "index": 45,
+      "pair_id": "m5-api-paired-v1-045-05-5-string-pull-explicit-empty-first",
+      "round": 5,
+      "slot": 5,
+      "workload": "string-pull",
+      "order": [
+        "explicit-empty",
+        "default"
+      ]
+    },
+    {
+      "index": 46,
+      "pair_id": "m5-api-paired-v1-046-05-6-string-skip-default-first",
+      "round": 5,
+      "slot": 6,
+      "workload": "string-skip",
+      "order": [
+        "default",
+        "explicit-empty"
+      ]
+    },
+    {
+      "index": 47,
+      "pair_id": "m5-api-paired-v1-047-05-7-io-pull-explicit-empty-first",
+      "round": 5,
+      "slot": 7,
+      "workload": "io-pull",
+      "order": [
+        "explicit-empty",
+        "default"
+      ]
+    },
+    {
+      "index": 48,
+      "pair_id": "m5-api-paired-v1-048-06-0-string-typed-explicit-empty-first",
+      "round": 6,
+      "slot": 0,
+      "workload": "string-typed",
+      "order": [
+        "explicit-empty",
+        "default"
+      ]
+    },
+    {
+      "index": 49,
+      "pair_id": "m5-api-paired-v1-049-06-1-io-typed-default-first",
+      "round": 6,
+      "slot": 1,
+      "workload": "io-typed",
+      "order": [
+        "default",
+        "explicit-empty"
+      ]
+    },
+    {
+      "index": 50,
+      "pair_id": "m5-api-paired-v1-050-06-2-string-dynamic-explicit-empty-first",
+      "round": 6,
+      "slot": 2,
+      "workload": "string-dynamic",
+      "order": [
+        "explicit-empty",
+        "default"
+      ]
+    },
+    {
+      "index": 51,
+      "pair_id": "m5-api-paired-v1-051-06-3-io-dynamic-default-first",
+      "round": 6,
+      "slot": 3,
+      "workload": "io-dynamic",
+      "order": [
+        "default",
+        "explicit-empty"
+      ]
+    },
+    {
+      "index": 52,
+      "pair_id": "m5-api-paired-v1-052-06-4-string-pull-explicit-empty-first",
+      "round": 6,
+      "slot": 4,
+      "workload": "string-pull",
+      "order": [
+        "explicit-empty",
+        "default"
+      ]
+    },
+    {
+      "index": 53,
+      "pair_id": "m5-api-paired-v1-053-06-5-string-skip-default-first",
+      "round": 6,
+      "slot": 5,
+      "workload": "string-skip",
+      "order": [
+        "default",
+        "explicit-empty"
+      ]
+    },
+    {
+      "index": 54,
+      "pair_id": "m5-api-paired-v1-054-06-6-io-pull-explicit-empty-first",
+      "round": 6,
+      "slot": 6,
+      "workload": "io-pull",
+      "order": [
+        "explicit-empty",
+        "default"
+      ]
+    },
+    {
+      "index": 55,
+      "pair_id": "m5-api-paired-v1-055-06-7-io-skip-default-first",
+      "round": 6,
+      "slot": 7,
+      "workload": "io-skip",
+      "order": [
+        "default",
+        "explicit-empty"
+      ]
+    },
+    {
+      "index": 56,
+      "pair_id": "m5-api-paired-v1-056-07-0-io-typed-explicit-empty-first",
+      "round": 7,
+      "slot": 0,
+      "workload": "io-typed",
+      "order": [
+        "explicit-empty",
+        "default"
+      ]
+    },
+    {
+      "index": 57,
+      "pair_id": "m5-api-paired-v1-057-07-1-string-dynamic-default-first",
+      "round": 7,
+      "slot": 1,
+      "workload": "string-dynamic",
+      "order": [
+        "default",
+        "explicit-empty"
+      ]
+    },
+    {
+      "index": 58,
+      "pair_id": "m5-api-paired-v1-058-07-2-io-dynamic-explicit-empty-first",
+      "round": 7,
+      "slot": 2,
+      "workload": "io-dynamic",
+      "order": [
+        "explicit-empty",
+        "default"
+      ]
+    },
+    {
+      "index": 59,
+      "pair_id": "m5-api-paired-v1-059-07-3-string-pull-default-first",
+      "round": 7,
+      "slot": 3,
+      "workload": "string-pull",
+      "order": [
+        "default",
+        "explicit-empty"
+      ]
+    },
+    {
+      "index": 60,
+      "pair_id": "m5-api-paired-v1-060-07-4-string-skip-explicit-empty-first",
+      "round": 7,
+      "slot": 4,
+      "workload": "string-skip",
+      "order": [
+        "explicit-empty",
+        "default"
+      ]
+    },
+    {
+      "index": 61,
+      "pair_id": "m5-api-paired-v1-061-07-5-io-pull-default-first",
+      "round": 7,
+      "slot": 5,
+      "workload": "io-pull",
+      "order": [
+        "default",
+        "explicit-empty"
+      ]
+    },
+    {
+      "index": 62,
+      "pair_id": "m5-api-paired-v1-062-07-6-io-skip-explicit-empty-first",
+      "round": 7,
+      "slot": 6,
+      "workload": "io-skip",
+      "order": [
+        "explicit-empty",
+        "default"
+      ]
+    },
+    {
+      "index": 63,
+      "pair_id": "m5-api-paired-v1-063-07-7-string-typed-default-first",
+      "round": 7,
+      "slot": 7,
+      "workload": "string-typed",
+      "order": [
+        "default",
+        "explicit-empty"
+      ]
+    },
+    {
+      "index": 64,
+      "pair_id": "m5-api-paired-v1-064-08-0-string-dynamic-explicit-empty-first",
+      "round": 8,
+      "slot": 0,
+      "workload": "string-dynamic",
+      "order": [
+        "explicit-empty",
+        "default"
+      ]
+    },
+    {
+      "index": 65,
+      "pair_id": "m5-api-paired-v1-065-08-1-io-dynamic-default-first",
+      "round": 8,
+      "slot": 1,
+      "workload": "io-dynamic",
+      "order": [
+        "default",
+        "explicit-empty"
+      ]
+    },
+    {
+      "index": 66,
+      "pair_id": "m5-api-paired-v1-066-08-2-string-pull-explicit-empty-first",
+      "round": 8,
+      "slot": 2,
+      "workload": "string-pull",
+      "order": [
+        "explicit-empty",
+        "default"
+      ]
+    },
+    {
+      "index": 67,
+      "pair_id": "m5-api-paired-v1-067-08-3-string-skip-default-first",
+      "round": 8,
+      "slot": 3,
+      "workload": "string-skip",
+      "order": [
+        "default",
+        "explicit-empty"
+      ]
+    },
+    {
+      "index": 68,
+      "pair_id": "m5-api-paired-v1-068-08-4-io-pull-explicit-empty-first",
+      "round": 8,
+      "slot": 4,
+      "workload": "io-pull",
+      "order": [
+        "explicit-empty",
+        "default"
+      ]
+    },
+    {
+      "index": 69,
+      "pair_id": "m5-api-paired-v1-069-08-5-io-skip-default-first",
+      "round": 8,
+      "slot": 5,
+      "workload": "io-skip",
+      "order": [
+        "default",
+        "explicit-empty"
+      ]
+    },
+    {
+      "index": 70,
+      "pair_id": "m5-api-paired-v1-070-08-6-string-typed-explicit-empty-first",
+      "round": 8,
+      "slot": 6,
+      "workload": "string-typed",
+      "order": [
+        "explicit-empty",
+        "default"
+      ]
+    },
+    {
+      "index": 71,
+      "pair_id": "m5-api-paired-v1-071-08-7-io-typed-default-first",
+      "round": 8,
+      "slot": 7,
+      "workload": "io-typed",
+      "order": [
+        "default",
+        "explicit-empty"
+      ]
+    },
+    {
+      "index": 72,
+      "pair_id": "m5-api-paired-v1-072-09-0-io-dynamic-explicit-empty-first",
+      "round": 9,
+      "slot": 0,
+      "workload": "io-dynamic",
+      "order": [
+        "explicit-empty",
+        "default"
+      ]
+    },
+    {
+      "index": 73,
+      "pair_id": "m5-api-paired-v1-073-09-1-string-pull-default-first",
+      "round": 9,
+      "slot": 1,
+      "workload": "string-pull",
+      "order": [
+        "default",
+        "explicit-empty"
+      ]
+    },
+    {
+      "index": 74,
+      "pair_id": "m5-api-paired-v1-074-09-2-string-skip-explicit-empty-first",
+      "round": 9,
+      "slot": 2,
+      "workload": "string-skip",
+      "order": [
+        "explicit-empty",
+        "default"
+      ]
+    },
+    {
+      "index": 75,
+      "pair_id": "m5-api-paired-v1-075-09-3-io-pull-default-first",
+      "round": 9,
+      "slot": 3,
+      "workload": "io-pull",
+      "order": [
+        "default",
+        "explicit-empty"
+      ]
+    },
+    {
+      "index": 76,
+      "pair_id": "m5-api-paired-v1-076-09-4-io-skip-explicit-empty-first",
+      "round": 9,
+      "slot": 4,
+      "workload": "io-skip",
+      "order": [
+        "explicit-empty",
+        "default"
+      ]
+    },
+    {
+      "index": 77,
+      "pair_id": "m5-api-paired-v1-077-09-5-string-typed-default-first",
+      "round": 9,
+      "slot": 5,
+      "workload": "string-typed",
+      "order": [
+        "default",
+        "explicit-empty"
+      ]
+    },
+    {
+      "index": 78,
+      "pair_id": "m5-api-paired-v1-078-09-6-io-typed-explicit-empty-first",
+      "round": 9,
+      "slot": 6,
+      "workload": "io-typed",
+      "order": [
+        "explicit-empty",
+        "default"
+      ]
+    },
+    {
+      "index": 79,
+      "pair_id": "m5-api-paired-v1-079-09-7-string-dynamic-default-first",
+      "round": 9,
+      "slot": 7,
+      "workload": "string-dynamic",
+      "order": [
+        "default",
+        "explicit-empty"
+      ]
+    },
+    {
+      "index": 80,
+      "pair_id": "m5-api-paired-v1-080-10-0-string-pull-default-first",
+      "round": 10,
+      "slot": 0,
+      "workload": "string-pull",
+      "order": [
+        "default",
+        "explicit-empty"
+      ]
+    },
+    {
+      "index": 81,
+      "pair_id": "m5-api-paired-v1-081-10-1-string-skip-explicit-empty-first",
+      "round": 10,
+      "slot": 1,
+      "workload": "string-skip",
+      "order": [
+        "explicit-empty",
+        "default"
+      ]
+    },
+    {
+      "index": 82,
+      "pair_id": "m5-api-paired-v1-082-10-2-io-pull-default-first",
+      "round": 10,
+      "slot": 2,
+      "workload": "io-pull",
+      "order": [
+        "default",
+        "explicit-empty"
+      ]
+    },
+    {
+      "index": 83,
+      "pair_id": "m5-api-paired-v1-083-10-3-io-skip-explicit-empty-first",
+      "round": 10,
+      "slot": 3,
+      "workload": "io-skip",
+      "order": [
+        "explicit-empty",
+        "default"
+      ]
+    },
+    {
+      "index": 84,
+      "pair_id": "m5-api-paired-v1-084-10-4-string-typed-default-first",
+      "round": 10,
+      "slot": 4,
+      "workload": "string-typed",
+      "order": [
+        "default",
+        "explicit-empty"
+      ]
+    },
+    {
+      "index": 85,
+      "pair_id": "m5-api-paired-v1-085-10-5-io-typed-explicit-empty-first",
+      "round": 10,
+      "slot": 5,
+      "workload": "io-typed",
+      "order": [
+        "explicit-empty",
+        "default"
+      ]
+    },
+    {
+      "index": 86,
+      "pair_id": "m5-api-paired-v1-086-10-6-string-dynamic-default-first",
+      "round": 10,
+      "slot": 6,
+      "workload": "string-dynamic",
+      "order": [
+        "default",
+        "explicit-empty"
+      ]
+    },
+    {
+      "index": 87,
+      "pair_id": "m5-api-paired-v1-087-10-7-io-dynamic-explicit-empty-first",
+      "round": 10,
+      "slot": 7,
+      "workload": "io-dynamic",
+      "order": [
+        "explicit-empty",
+        "default"
+      ]
+    },
+    {
+      "index": 88,
+      "pair_id": "m5-api-paired-v1-088-11-0-string-skip-default-first",
+      "round": 11,
+      "slot": 0,
+      "workload": "string-skip",
+      "order": [
+        "default",
+        "explicit-empty"
+      ]
+    },
+    {
+      "index": 89,
+      "pair_id": "m5-api-paired-v1-089-11-1-io-pull-explicit-empty-first",
+      "round": 11,
+      "slot": 1,
+      "workload": "io-pull",
+      "order": [
+        "explicit-empty",
+        "default"
+      ]
+    },
+    {
+      "index": 90,
+      "pair_id": "m5-api-paired-v1-090-11-2-io-skip-default-first",
+      "round": 11,
+      "slot": 2,
+      "workload": "io-skip",
+      "order": [
+        "default",
+        "explicit-empty"
+      ]
+    },
+    {
+      "index": 91,
+      "pair_id": "m5-api-paired-v1-091-11-3-string-typed-explicit-empty-first",
+      "round": 11,
+      "slot": 3,
+      "workload": "string-typed",
+      "order": [
+        "explicit-empty",
+        "default"
+      ]
+    },
+    {
+      "index": 92,
+      "pair_id": "m5-api-paired-v1-092-11-4-io-typed-default-first",
+      "round": 11,
+      "slot": 4,
+      "workload": "io-typed",
+      "order": [
+        "default",
+        "explicit-empty"
+      ]
+    },
+    {
+      "index": 93,
+      "pair_id": "m5-api-paired-v1-093-11-5-string-dynamic-explicit-empty-first",
+      "round": 11,
+      "slot": 5,
+      "workload": "string-dynamic",
+      "order": [
+        "explicit-empty",
+        "default"
+      ]
+    },
+    {
+      "index": 94,
+      "pair_id": "m5-api-paired-v1-094-11-6-io-dynamic-default-first",
+      "round": 11,
+      "slot": 6,
+      "workload": "io-dynamic",
+      "order": [
+        "default",
+        "explicit-empty"
+      ]
+    },
+    {
+      "index": 95,
+      "pair_id": "m5-api-paired-v1-095-11-7-string-pull-explicit-empty-first",
+      "round": 11,
+      "slot": 7,
+      "workload": "string-pull",
+      "order": [
+        "explicit-empty",
+        "default"
+      ]
+    },
+    {
+      "index": 96,
+      "pair_id": "m5-api-paired-v1-096-12-0-io-pull-explicit-empty-first",
+      "round": 12,
+      "slot": 0,
+      "workload": "io-pull",
+      "order": [
+        "explicit-empty",
+        "default"
+      ]
+    },
+    {
+      "index": 97,
+      "pair_id": "m5-api-paired-v1-097-12-1-io-skip-default-first",
+      "round": 12,
+      "slot": 1,
+      "workload": "io-skip",
+      "order": [
+        "default",
+        "explicit-empty"
+      ]
+    },
+    {
+      "index": 98,
+      "pair_id": "m5-api-paired-v1-098-12-2-string-typed-explicit-empty-first",
+      "round": 12,
+      "slot": 2,
+      "workload": "string-typed",
+      "order": [
+        "explicit-empty",
+        "default"
+      ]
+    },
+    {
+      "index": 99,
+      "pair_id": "m5-api-paired-v1-099-12-3-io-typed-default-first",
+      "round": 12,
+      "slot": 3,
+      "workload": "io-typed",
+      "order": [
+        "default",
+        "explicit-empty"
+      ]
+    },
+    {
+      "index": 100,
+      "pair_id": "m5-api-paired-v1-100-12-4-string-dynamic-explicit-empty-first",
+      "round": 12,
+      "slot": 4,
+      "workload": "string-dynamic",
+      "order": [
+        "explicit-empty",
+        "default"
+      ]
+    },
+    {
+      "index": 101,
+      "pair_id": "m5-api-paired-v1-101-12-5-io-dynamic-default-first",
+      "round": 12,
+      "slot": 5,
+      "workload": "io-dynamic",
+      "order": [
+        "default",
+        "explicit-empty"
+      ]
+    },
+    {
+      "index": 102,
+      "pair_id": "m5-api-paired-v1-102-12-6-string-pull-explicit-empty-first",
+      "round": 12,
+      "slot": 6,
+      "workload": "string-pull",
+      "order": [
+        "explicit-empty",
+        "default"
+      ]
+    },
+    {
+      "index": 103,
+      "pair_id": "m5-api-paired-v1-103-12-7-string-skip-default-first",
+      "round": 12,
+      "slot": 7,
+      "workload": "string-skip",
+      "order": [
+        "default",
+        "explicit-empty"
+      ]
+    },
+    {
+      "index": 104,
+      "pair_id": "m5-api-paired-v1-104-13-0-io-skip-explicit-empty-first",
+      "round": 13,
+      "slot": 0,
+      "workload": "io-skip",
+      "order": [
+        "explicit-empty",
+        "default"
+      ]
+    },
+    {
+      "index": 105,
+      "pair_id": "m5-api-paired-v1-105-13-1-string-typed-default-first",
+      "round": 13,
+      "slot": 1,
+      "workload": "string-typed",
+      "order": [
+        "default",
+        "explicit-empty"
+      ]
+    },
+    {
+      "index": 106,
+      "pair_id": "m5-api-paired-v1-106-13-2-io-typed-explicit-empty-first",
+      "round": 13,
+      "slot": 2,
+      "workload": "io-typed",
+      "order": [
+        "explicit-empty",
+        "default"
+      ]
+    },
+    {
+      "index": 107,
+      "pair_id": "m5-api-paired-v1-107-13-3-string-dynamic-default-first",
+      "round": 13,
+      "slot": 3,
+      "workload": "string-dynamic",
+      "order": [
+        "default",
+        "explicit-empty"
+      ]
+    },
+    {
+      "index": 108,
+      "pair_id": "m5-api-paired-v1-108-13-4-io-dynamic-explicit-empty-first",
+      "round": 13,
+      "slot": 4,
+      "workload": "io-dynamic",
+      "order": [
+        "explicit-empty",
+        "default"
+      ]
+    },
+    {
+      "index": 109,
+      "pair_id": "m5-api-paired-v1-109-13-5-string-pull-default-first",
+      "round": 13,
+      "slot": 5,
+      "workload": "string-pull",
+      "order": [
+        "default",
+        "explicit-empty"
+      ]
+    },
+    {
+      "index": 110,
+      "pair_id": "m5-api-paired-v1-110-13-6-string-skip-explicit-empty-first",
+      "round": 13,
+      "slot": 6,
+      "workload": "string-skip",
+      "order": [
+        "explicit-empty",
+        "default"
+      ]
+    },
+    {
+      "index": 111,
+      "pair_id": "m5-api-paired-v1-111-13-7-io-pull-default-first",
+      "round": 13,
+      "slot": 7,
+      "workload": "io-pull",
+      "order": [
+        "default",
+        "explicit-empty"
+      ]
+    },
+    {
+      "index": 112,
+      "pair_id": "m5-api-paired-v1-112-14-0-string-typed-default-first",
+      "round": 14,
+      "slot": 0,
+      "workload": "string-typed",
+      "order": [
+        "default",
+        "explicit-empty"
+      ]
+    },
+    {
+      "index": 113,
+      "pair_id": "m5-api-paired-v1-113-14-1-io-typed-explicit-empty-first",
+      "round": 14,
+      "slot": 1,
+      "workload": "io-typed",
+      "order": [
+        "explicit-empty",
+        "default"
+      ]
+    },
+    {
+      "index": 114,
+      "pair_id": "m5-api-paired-v1-114-14-2-string-dynamic-default-first",
+      "round": 14,
+      "slot": 2,
+      "workload": "string-dynamic",
+      "order": [
+        "default",
+        "explicit-empty"
+      ]
+    },
+    {
+      "index": 115,
+      "pair_id": "m5-api-paired-v1-115-14-3-io-dynamic-explicit-empty-first",
+      "round": 14,
+      "slot": 3,
+      "workload": "io-dynamic",
+      "order": [
+        "explicit-empty",
+        "default"
+      ]
+    },
+    {
+      "index": 116,
+      "pair_id": "m5-api-paired-v1-116-14-4-string-pull-default-first",
+      "round": 14,
+      "slot": 4,
+      "workload": "string-pull",
+      "order": [
+        "default",
+        "explicit-empty"
+      ]
+    },
+    {
+      "index": 117,
+      "pair_id": "m5-api-paired-v1-117-14-5-string-skip-explicit-empty-first",
+      "round": 14,
+      "slot": 5,
+      "workload": "string-skip",
+      "order": [
+        "explicit-empty",
+        "default"
+      ]
+    },
+    {
+      "index": 118,
+      "pair_id": "m5-api-paired-v1-118-14-6-io-pull-default-first",
+      "round": 14,
+      "slot": 6,
+      "workload": "io-pull",
+      "order": [
+        "default",
+        "explicit-empty"
+      ]
+    },
+    {
+      "index": 119,
+      "pair_id": "m5-api-paired-v1-119-14-7-io-skip-explicit-empty-first",
+      "round": 14,
+      "slot": 7,
+      "workload": "io-skip",
+      "order": [
+        "explicit-empty",
+        "default"
+      ]
+    },
+    {
+      "index": 120,
+      "pair_id": "m5-api-paired-v1-120-15-0-io-typed-default-first",
+      "round": 15,
+      "slot": 0,
+      "workload": "io-typed",
+      "order": [
+        "default",
+        "explicit-empty"
+      ]
+    },
+    {
+      "index": 121,
+      "pair_id": "m5-api-paired-v1-121-15-1-string-dynamic-explicit-empty-first",
+      "round": 15,
+      "slot": 1,
+      "workload": "string-dynamic",
+      "order": [
+        "explicit-empty",
+        "default"
+      ]
+    },
+    {
+      "index": 122,
+      "pair_id": "m5-api-paired-v1-122-15-2-io-dynamic-default-first",
+      "round": 15,
+      "slot": 2,
+      "workload": "io-dynamic",
+      "order": [
+        "default",
+        "explicit-empty"
+      ]
+    },
+    {
+      "index": 123,
+      "pair_id": "m5-api-paired-v1-123-15-3-string-pull-explicit-empty-first",
+      "round": 15,
+      "slot": 3,
+      "workload": "string-pull",
+      "order": [
+        "explicit-empty",
+        "default"
+      ]
+    },
+    {
+      "index": 124,
+      "pair_id": "m5-api-paired-v1-124-15-4-string-skip-default-first",
+      "round": 15,
+      "slot": 4,
+      "workload": "string-skip",
+      "order": [
+        "default",
+        "explicit-empty"
+      ]
+    },
+    {
+      "index": 125,
+      "pair_id": "m5-api-paired-v1-125-15-5-io-pull-explicit-empty-first",
+      "round": 15,
+      "slot": 5,
+      "workload": "io-pull",
+      "order": [
+        "explicit-empty",
+        "default"
+      ]
+    },
+    {
+      "index": 126,
+      "pair_id": "m5-api-paired-v1-126-15-6-io-skip-default-first",
+      "round": 15,
+      "slot": 6,
+      "workload": "io-skip",
+      "order": [
+        "default",
+        "explicit-empty"
+      ]
+    },
+    {
+      "index": 127,
+      "pair_id": "m5-api-paired-v1-127-15-7-string-typed-explicit-empty-first",
+      "round": 15,
+      "slot": 7,
+      "workload": "string-typed",
+      "order": [
+        "explicit-empty",
+        "default"
+      ]
+    },
+    {
+      "index": 128,
+      "pair_id": "m5-api-paired-v1-128-16-0-string-dynamic-default-first",
+      "round": 16,
+      "slot": 0,
+      "workload": "string-dynamic",
+      "order": [
+        "default",
+        "explicit-empty"
+      ]
+    },
+    {
+      "index": 129,
+      "pair_id": "m5-api-paired-v1-129-16-1-io-dynamic-explicit-empty-first",
+      "round": 16,
+      "slot": 1,
+      "workload": "io-dynamic",
+      "order": [
+        "explicit-empty",
+        "default"
+      ]
+    },
+    {
+      "index": 130,
+      "pair_id": "m5-api-paired-v1-130-16-2-string-pull-default-first",
+      "round": 16,
+      "slot": 2,
+      "workload": "string-pull",
+      "order": [
+        "default",
+        "explicit-empty"
+      ]
+    },
+    {
+      "index": 131,
+      "pair_id": "m5-api-paired-v1-131-16-3-string-skip-explicit-empty-first",
+      "round": 16,
+      "slot": 3,
+      "workload": "string-skip",
+      "order": [
+        "explicit-empty",
+        "default"
+      ]
+    },
+    {
+      "index": 132,
+      "pair_id": "m5-api-paired-v1-132-16-4-io-pull-default-first",
+      "round": 16,
+      "slot": 4,
+      "workload": "io-pull",
+      "order": [
+        "default",
+        "explicit-empty"
+      ]
+    },
+    {
+      "index": 133,
+      "pair_id": "m5-api-paired-v1-133-16-5-io-skip-explicit-empty-first",
+      "round": 16,
+      "slot": 5,
+      "workload": "io-skip",
+      "order": [
+        "explicit-empty",
+        "default"
+      ]
+    },
+    {
+      "index": 134,
+      "pair_id": "m5-api-paired-v1-134-16-6-string-typed-default-first",
+      "round": 16,
+      "slot": 6,
+      "workload": "string-typed",
+      "order": [
+        "default",
+        "explicit-empty"
+      ]
+    },
+    {
+      "index": 135,
+      "pair_id": "m5-api-paired-v1-135-16-7-io-typed-explicit-empty-first",
+      "round": 16,
+      "slot": 7,
+      "workload": "io-typed",
+      "order": [
+        "explicit-empty",
+        "default"
+      ]
+    },
+    {
+      "index": 136,
+      "pair_id": "m5-api-paired-v1-136-17-0-io-dynamic-default-first",
+      "round": 17,
+      "slot": 0,
+      "workload": "io-dynamic",
+      "order": [
+        "default",
+        "explicit-empty"
+      ]
+    },
+    {
+      "index": 137,
+      "pair_id": "m5-api-paired-v1-137-17-1-string-pull-explicit-empty-first",
+      "round": 17,
+      "slot": 1,
+      "workload": "string-pull",
+      "order": [
+        "explicit-empty",
+        "default"
+      ]
+    },
+    {
+      "index": 138,
+      "pair_id": "m5-api-paired-v1-138-17-2-string-skip-default-first",
+      "round": 17,
+      "slot": 2,
+      "workload": "string-skip",
+      "order": [
+        "default",
+        "explicit-empty"
+      ]
+    },
+    {
+      "index": 139,
+      "pair_id": "m5-api-paired-v1-139-17-3-io-pull-explicit-empty-first",
+      "round": 17,
+      "slot": 3,
+      "workload": "io-pull",
+      "order": [
+        "explicit-empty",
+        "default"
+      ]
+    },
+    {
+      "index": 140,
+      "pair_id": "m5-api-paired-v1-140-17-4-io-skip-default-first",
+      "round": 17,
+      "slot": 4,
+      "workload": "io-skip",
+      "order": [
+        "default",
+        "explicit-empty"
+      ]
+    },
+    {
+      "index": 141,
+      "pair_id": "m5-api-paired-v1-141-17-5-string-typed-explicit-empty-first",
+      "round": 17,
+      "slot": 5,
+      "workload": "string-typed",
+      "order": [
+        "explicit-empty",
+        "default"
+      ]
+    },
+    {
+      "index": 142,
+      "pair_id": "m5-api-paired-v1-142-17-6-io-typed-default-first",
+      "round": 17,
+      "slot": 6,
+      "workload": "io-typed",
+      "order": [
+        "default",
+        "explicit-empty"
+      ]
+    },
+    {
+      "index": 143,
+      "pair_id": "m5-api-paired-v1-143-17-7-string-dynamic-explicit-empty-first",
+      "round": 17,
+      "slot": 7,
+      "workload": "string-dynamic",
+      "order": [
+        "explicit-empty",
+        "default"
+      ]
+    },
+    {
+      "index": 144,
+      "pair_id": "m5-api-paired-v1-144-18-0-string-pull-explicit-empty-first",
+      "round": 18,
+      "slot": 0,
+      "workload": "string-pull",
+      "order": [
+        "explicit-empty",
+        "default"
+      ]
+    },
+    {
+      "index": 145,
+      "pair_id": "m5-api-paired-v1-145-18-1-string-skip-default-first",
+      "round": 18,
+      "slot": 1,
+      "workload": "string-skip",
+      "order": [
+        "default",
+        "explicit-empty"
+      ]
+    },
+    {
+      "index": 146,
+      "pair_id": "m5-api-paired-v1-146-18-2-io-pull-explicit-empty-first",
+      "round": 18,
+      "slot": 2,
+      "workload": "io-pull",
+      "order": [
+        "explicit-empty",
+        "default"
+      ]
+    },
+    {
+      "index": 147,
+      "pair_id": "m5-api-paired-v1-147-18-3-io-skip-default-first",
+      "round": 18,
+      "slot": 3,
+      "workload": "io-skip",
+      "order": [
+        "default",
+        "explicit-empty"
+      ]
+    },
+    {
+      "index": 148,
+      "pair_id": "m5-api-paired-v1-148-18-4-string-typed-explicit-empty-first",
+      "round": 18,
+      "slot": 4,
+      "workload": "string-typed",
+      "order": [
+        "explicit-empty",
+        "default"
+      ]
+    },
+    {
+      "index": 149,
+      "pair_id": "m5-api-paired-v1-149-18-5-io-typed-default-first",
+      "round": 18,
+      "slot": 5,
+      "workload": "io-typed",
+      "order": [
+        "default",
+        "explicit-empty"
+      ]
+    },
+    {
+      "index": 150,
+      "pair_id": "m5-api-paired-v1-150-18-6-string-dynamic-explicit-empty-first",
+      "round": 18,
+      "slot": 6,
+      "workload": "string-dynamic",
+      "order": [
+        "explicit-empty",
+        "default"
+      ]
+    },
+    {
+      "index": 151,
+      "pair_id": "m5-api-paired-v1-151-18-7-io-dynamic-default-first",
+      "round": 18,
+      "slot": 7,
+      "workload": "io-dynamic",
+      "order": [
+        "default",
+        "explicit-empty"
+      ]
+    },
+    {
+      "index": 152,
+      "pair_id": "m5-api-paired-v1-152-19-0-string-skip-explicit-empty-first",
+      "round": 19,
+      "slot": 0,
+      "workload": "string-skip",
+      "order": [
+        "explicit-empty",
+        "default"
+      ]
+    },
+    {
+      "index": 153,
+      "pair_id": "m5-api-paired-v1-153-19-1-io-pull-default-first",
+      "round": 19,
+      "slot": 1,
+      "workload": "io-pull",
+      "order": [
+        "default",
+        "explicit-empty"
+      ]
+    },
+    {
+      "index": 154,
+      "pair_id": "m5-api-paired-v1-154-19-2-io-skip-explicit-empty-first",
+      "round": 19,
+      "slot": 2,
+      "workload": "io-skip",
+      "order": [
+        "explicit-empty",
+        "default"
+      ]
+    },
+    {
+      "index": 155,
+      "pair_id": "m5-api-paired-v1-155-19-3-string-typed-default-first",
+      "round": 19,
+      "slot": 3,
+      "workload": "string-typed",
+      "order": [
+        "default",
+        "explicit-empty"
+      ]
+    },
+    {
+      "index": 156,
+      "pair_id": "m5-api-paired-v1-156-19-4-io-typed-explicit-empty-first",
+      "round": 19,
+      "slot": 4,
+      "workload": "io-typed",
+      "order": [
+        "explicit-empty",
+        "default"
+      ]
+    },
+    {
+      "index": 157,
+      "pair_id": "m5-api-paired-v1-157-19-5-string-dynamic-default-first",
+      "round": 19,
+      "slot": 5,
+      "workload": "string-dynamic",
+      "order": [
+        "default",
+        "explicit-empty"
+      ]
+    },
+    {
+      "index": 158,
+      "pair_id": "m5-api-paired-v1-158-19-6-io-dynamic-explicit-empty-first",
+      "round": 19,
+      "slot": 6,
+      "workload": "io-dynamic",
+      "order": [
+        "explicit-empty",
+        "default"
+      ]
+    },
+    {
+      "index": 159,
+      "pair_id": "m5-api-paired-v1-159-19-7-string-pull-default-first",
+      "round": 19,
+      "slot": 7,
+      "workload": "string-pull",
+      "order": [
+        "default",
+        "explicit-empty"
+      ]
+    }
+  ],
+  "pairs": [
+    {
+      "index": 0,
+      "pair_id": "m5-api-paired-v1-000-00-0-string-dynamic-default-first",
+      "round": 0,
+      "slot": 0,
+      "workload": "string-dynamic",
+      "order": [
+        "default",
+        "explicit-empty"
+      ],
+      "observation": {
+        "metadata": {
+          "entry": {
+            "index": 0,
+            "pair_id": "m5-api-paired-v1-000-00-0-string-dynamic-default-first",
+            "round": 0,
+            "slot": 0,
+            "workload": "string-dynamic"
+          },
+          "requested_initial_order": [
+            "default",
+            "explicit-empty"
+          ],
+          "command": [
+            "/usr/bin/time",
+            "--quiet",
+            "--output",
+            "/tmp/fused-json-m5-formal-8126166-api-paired-1/observations/000-00-string-dynamic-default-first.task-audit.tsv",
+            "--format",
+            "fused-json-task-audit-v1\t%U\t%S\t%e\t%P\t%c\t%w\t%F\t%R\t%M\t%x",
+            "/usr/bin/taskset",
+            "-c",
+            "3",
+            "/tmp/fused-json-limits-v8-m5-api-paired",
+            "--workload=string-dynamic",
+            "--configuration=paired",
+            "--paired-order=default,explicit-empty",
+            "--pair-id=m5-api-paired-v1-000-00-0-string-dynamic-default-first",
+            "--records=10000",
+            "--buffer-size=32768",
+            "--warmup=0.5",
+            "--time=1.5",
+            "--allocations=20",
+            "--commit=812616652cbf05470f963e4238260e9ca5d9d38a"
+          ],
+          "benchmark_command": [
+            "/usr/bin/taskset",
+            "-c",
+            "3",
+            "/tmp/fused-json-limits-v8-m5-api-paired",
+            "--workload=string-dynamic",
+            "--configuration=paired",
+            "--paired-order=default,explicit-empty",
+            "--pair-id=m5-api-paired-v1-000-00-0-string-dynamic-default-first",
+            "--records=10000",
+            "--buffer-size=32768",
+            "--warmup=0.5",
+            "--time=1.5",
+            "--allocations=20",
+            "--commit=812616652cbf05470f963e4238260e9ca5d9d38a"
+          ],
+          "binary_sha256": "36b36fdd7c5627626127c8f75b8bde4df33f87562a9eb2c52ee3971876c1d2e6",
+          "started_at": "2026-08-24T09:44:35.182Z",
+          "started_monotonic_seconds": 62.319047247,
+          "start_environment_sample": {
+            "at": "2026-08-24T09:44:35.181Z",
+            "monotonic_seconds": 62.317555095,
+            "phase": "admission",
+            "gap_seconds": 2.0099902620000094,
+            "load1": 0.4,
+            "load5": 0.65,
+            "runnable": 2,
+            "tasks": 4291,
+            "tctl_c": 54,
+            "cpu_busy_percent": {
+              "2": 4,
+              "3": 1.492537313432836
+            },
+            "benchmark_cpu_scaling_cur_freq_khz": 402786,
+            "scaling_cur_freq_read_error": null,
+            "scaling_cur_freq_acceptance_gate": false,
+            "read_error": null
+          },
+          "finished_at": "2026-08-24T09:44:40.150Z",
+          "finished_monotonic_seconds": 67.286952637,
+          "finish_environment_sample": {
+            "at": "2026-08-24T09:44:39.192Z",
+            "monotonic_seconds": 66.328971002,
+            "phase": "campaign",
+            "gap_seconds": 2.0074503179999965,
+            "load1": 0.53,
+            "load5": 0.67,
+            "runnable": 2,
+            "tasks": 4295,
+            "tctl_c": 86.75,
+            "cpu_busy_percent": {
+              "2": 0.4975124378109453,
+              "3": 100
+            },
+            "benchmark_cpu_scaling_cur_freq_khz": 4665711,
+            "scaling_cur_freq_read_error": null,
+            "scaling_cur_freq_acceptance_gate": false,
+            "read_error": null
+          },
+          "elapsed_seconds": 4.9679053899999985,
+          "exit_code": 0,
+          "signal": null,
+          "spawn_error": null,
+          "task_execution_audit_file": "000-00-string-dynamic-default-first.task-audit.tsv",
+          "task_execution_audit": {
+            "schema": "fused-json-task-audit-v1",
+            "user_cpu_seconds": 4.91,
+            "system_cpu_seconds": 0.05,
+            "task_cpu_seconds": 4.96,
+            "elapsed_wall_seconds": 4.96,
+            "cpu_time_over_wall_from_rounded_seconds": 1,
+            "reported_cpu_percent": 99,
+            "reported_cpu_share": 0.99,
+            "involuntary_context_switches": 1684,
+            "voluntary_context_switches": 1653,
+            "total_context_switches": 3337,
+            "major_page_faults": 0,
+            "minor_page_faults": 10772,
+            "maximum_resident_kibibytes": 38088,
+            "exit_status": 0
+          },
+          "task_execution_audit_error": null
+        },
+        "receipt": {
+          "receipt": "fused-json-limits-overhead-paired",
+          "version": 1,
+          "recorded_at": "2026-08-24T09:44:40Z",
+          "workload": "string-dynamic",
+          "pair_id": "m5-api-paired-v1-000-00-0-string-dynamic-default-first",
+          "process_pid": 11,
+          "pairing_key": "v3:string-dynamic:31e154cfc7f22f2539deb278d7ff38544cd21132b8f5bb360180bf1e4a434953",
+          "paired_protocol": {
+            "version": 1,
+            "common_process": true,
+            "interleaved_batches": true,
+            "batch_pattern": "ABBA",
+            "requested_initial_order": [
+              "default",
+              "explicit-empty"
+            ],
+            "observed_initial_order": [
+              "default",
+              "explicit-empty"
+            ],
+            "allocation_order": [
+              "default",
+              "explicit-empty",
+              "explicit-empty",
+              "default"
+            ],
+            "allocation_samples_per_configuration": 2,
+            "measurement_order": [
+              "default",
+              "explicit-empty",
+              "explicit-empty",
+              "default",
+              "default",
+              "explicit-empty",
+              "explicit-empty",
+              "default",
+              "default",
+              "explicit-empty",
+              "explicit-empty",
+              "default",
+              "default",
+              "explicit-empty",
+              "explicit-empty",
+              "default",
+              "default",
+              "explicit-empty",
+              "explicit-empty",
+              "default",
+              "default",
+              "explicit-empty",
+              "explicit-empty",
+              "default",
+              "default",
+              "explicit-empty",
+              "explicit-empty",
+              "default",
+              "default",
+              "explicit-empty",
+              "explicit-empty",
+              "default"
+            ]
+          },
+          "measurements": {
+            "default": {
+              "configuration": "default",
+              "call_style": "limits keyword omitted",
+              "measurement": {
+                "estimator": "total-iterations-over-total-elapsed-v1",
+                "iterations_per_second": 122.90522156733377,
+                "relative_stddev_percent": 1.8516825051561896,
+                "iterations": 192,
+                "batches": 16,
+                "elapsed_seconds": 1.562179357,
+                "mib_per_second": 213.48326234976136,
+                "managed_bytes_per_operation": 16699068,
+                "managed_bytes_per_input_byte": 9.16851126911357,
+                "warmup_seconds": 0.5,
+                "calculation_seconds": 1.5,
+                "allocation_iterations": 20
+              }
+            },
+            "explicit-empty": {
+              "configuration": "explicit-empty",
+              "call_style": "limits: FusedJSON::Limits.new",
+              "measurement": {
+                "estimator": "total-iterations-over-total-elapsed-v1",
+                "iterations_per_second": 123.2818512581696,
+                "relative_stddev_percent": 1.7285127384378023,
+                "iterations": 192,
+                "batches": 16,
+                "elapsed_seconds": 1.557406853,
+                "mib_per_second": 214.13745860010832,
+                "managed_bytes_per_operation": 16698912,
+                "managed_bytes_per_input_byte": 9.168425618360008,
+                "warmup_seconds": 0.5,
+                "calculation_seconds": 1.5,
+                "allocation_iterations": 20
+              }
+            }
+          },
+          "fixture": {
+            "format": "fused-json-limits-overhead",
+            "version": 1,
+            "records": 10000,
+            "bytes": 1821350,
+            "sha256": "31e154cfc7f22f2539deb278d7ff38544cd21132b8f5bb360180bf1e4a434953",
+            "semantic_sha256": "31e154cfc7f22f2539deb278d7ff38544cd21132b8f5bb360180bf1e4a434953"
+          },
+          "semantic_verification": {
+            "status": "verified",
+            "observer": "sha256-json-any-to-json-v1",
+            "count": 1,
+            "checksum": "0x0000000000000000",
+            "default_string_io_pull_parity": true,
+            "default_string_io_skip_parity": true
+          },
+          "disabled_limits": {
+            "max_nesting": 512,
+            "max_token_bytes": null,
+            "max_document_bytes": null,
+            "max_typed_value_bytes": null,
+            "max_total_values": null,
+            "max_container_entries": null,
+            "max_cached_keys": null,
+            "reject_duplicate_keys": false
+          },
+          "parser_options": {
+            "cache_keys": false,
+            "transport": "String",
+            "buffer_size": null
+          },
+          "build": {
+            "fused_json_version": "0.1.0",
+            "fused_json_commit": "812616652cbf05470f963e4238260e9ca5d9d38a",
+            "crystal_version": "1.22.0-dev",
+            "crystal_build_commit": "6c6a5e988",
+            "llvm_version": "21.1.8",
+            "target": "x86_64-pc-linux-gnu",
+            "release": true,
+            "limits_api": true
+          },
+          "host": {
+            "os": "Linux 7.0.11-76070011-generic x86_64 GNU/Linux",
+            "cpu_model": "AMD Ryzen 9 7940HS w/ Radeon 780M Graphics",
+            "cpu_count": 16,
+            "cpu_affinity": "3"
+          },
+          "environment": {
+            "CRYSTAL_WORKERS": "1",
+            "FUSED_JSON_BENCH_ALLOCATIONS": null,
+            "FUSED_JSON_BENCH_COMMIT": null,
+            "FUSED_JSON_BENCH_CPU": "3",
+            "FUSED_JSON_BENCH_TIME": null,
+            "FUSED_JSON_BENCH_WARMUP": null,
+            "FUSED_JSON_LIMITS_BUFFER": null,
+            "FUSED_JSON_LIMITS_RECORDS": null,
+            "GC_FREE_SPACE_DIVISOR": null,
+            "GC_MARKERS": "1",
+            "GC_NPROCS": "1",
+            "GC_UNMAP_THRESHOLD": null,
+            "MALLOC_CONF": null,
+            "OMP_NUM_THREADS": "1"
+          },
+          "arguments": [
+            "--workload=string-dynamic",
+            "--configuration=paired",
+            "--paired-order=default,explicit-empty",
+            "--pair-id=m5-api-paired-v1-000-00-0-string-dynamic-default-first",
+            "--records=10000",
+            "--buffer-size=32768",
+            "--warmup=0.5",
+            "--time=1.5",
+            "--allocations=20",
+            "--commit=812616652cbf05470f963e4238260e9ca5d9d38a"
+          ]
+        }
+      }
+    },
+    {
+      "index": 1,
+      "pair_id": "m5-api-paired-v1-001-00-1-io-dynamic-explicit-empty-first",
+      "round": 0,
+      "slot": 1,
+      "workload": "io-dynamic",
+      "order": [
+        "explicit-empty",
+        "default"
+      ],
+      "observation": {
+        "metadata": {
+          "entry": {
+            "index": 1,
+            "pair_id": "m5-api-paired-v1-001-00-1-io-dynamic-explicit-empty-first",
+            "round": 0,
+            "slot": 1,
+            "workload": "io-dynamic"
+          },
+          "requested_initial_order": [
+            "explicit-empty",
+            "default"
+          ],
+          "command": [
+            "/usr/bin/time",
+            "--quiet",
+            "--output",
+            "/tmp/fused-json-m5-formal-8126166-api-paired-1/observations/001-00-io-dynamic-explicit-empty-first.task-audit.tsv",
+            "--format",
+            "fused-json-task-audit-v1\t%U\t%S\t%e\t%P\t%c\t%w\t%F\t%R\t%M\t%x",
+            "/usr/bin/taskset",
+            "-c",
+            "3",
+            "/tmp/fused-json-limits-v8-m5-api-paired",
+            "--workload=io-dynamic",
+            "--configuration=paired",
+            "--paired-order=explicit-empty,default",
+            "--pair-id=m5-api-paired-v1-001-00-1-io-dynamic-explicit-empty-first",
+            "--records=10000",
+            "--buffer-size=32768",
+            "--warmup=0.5",
+            "--time=1.5",
+            "--allocations=20",
+            "--commit=812616652cbf05470f963e4238260e9ca5d9d38a"
+          ],
+          "benchmark_command": [
+            "/usr/bin/taskset",
+            "-c",
+            "3",
+            "/tmp/fused-json-limits-v8-m5-api-paired",
+            "--workload=io-dynamic",
+            "--configuration=paired",
+            "--paired-order=explicit-empty,default",
+            "--pair-id=m5-api-paired-v1-001-00-1-io-dynamic-explicit-empty-first",
+            "--records=10000",
+            "--buffer-size=32768",
+            "--warmup=0.5",
+            "--time=1.5",
+            "--allocations=20",
+            "--commit=812616652cbf05470f963e4238260e9ca5d9d38a"
+          ],
+          "binary_sha256": "36b36fdd7c5627626127c8f75b8bde4df33f87562a9eb2c52ee3971876c1d2e6",
+          "started_at": "2026-08-24T09:44:45.281Z",
+          "started_monotonic_seconds": 72.418132241,
+          "start_environment_sample": {
+            "at": "2026-08-24T09:44:45.195Z",
+            "monotonic_seconds": 72.33111002599999,
+            "phase": "campaign",
+            "gap_seconds": 2.000271553999994,
+            "load1": 0.48,
+            "load5": 0.66,
+            "runnable": 2,
+            "tasks": 4291,
+            "tctl_c": 59.125,
+            "cpu_busy_percent": {
+              "2": 2.512562814070352,
+              "3": 0.5
+            },
+            "benchmark_cpu_scaling_cur_freq_khz": 402786,
+            "scaling_cur_freq_read_error": null,
+            "scaling_cur_freq_acceptance_gate": false,
+            "read_error": null
+          },
+          "finished_at": "2026-08-24T09:44:51.084Z",
+          "finished_monotonic_seconds": 78.22117429,
+          "finish_environment_sample": {
+            "at": "2026-08-24T09:44:49.213Z",
+            "monotonic_seconds": 76.350034082,
+            "phase": "campaign",
+            "gap_seconds": 2.010536032999994,
+            "load1": 0.52,
+            "load5": 0.66,
+            "runnable": 2,
+            "tasks": 4294,
+            "tctl_c": 91.125,
+            "cpu_busy_percent": {
+              "2": 0.9950248756218906,
+              "3": 100
+            },
+            "benchmark_cpu_scaling_cur_freq_khz": 4640711,
+            "scaling_cur_freq_read_error": null,
+            "scaling_cur_freq_acceptance_gate": false,
+            "read_error": null
+          },
+          "elapsed_seconds": 5.803042048999998,
+          "exit_code": 0,
+          "signal": null,
+          "spawn_error": null,
+          "task_execution_audit_file": "001-00-io-dynamic-explicit-empty-first.task-audit.tsv",
+          "task_execution_audit": {
+            "schema": "fused-json-task-audit-v1",
+            "user_cpu_seconds": 5.75,
+            "system_cpu_seconds": 0.04,
+            "task_cpu_seconds": 5.79,
+            "elapsed_wall_seconds": 5.8,
+            "cpu_time_over_wall_from_rounded_seconds": 0.9982758620689656,
+            "reported_cpu_percent": 99,
+            "reported_cpu_share": 0.99,
+            "involuntary_context_switches": 1391,
+            "voluntary_context_switches": 1358,
+            "total_context_switches": 2749,
+            "major_page_faults": 0,
+            "minor_page_faults": 10033,
+            "maximum_resident_kibibytes": 38148,
+            "exit_status": 0
+          },
+          "task_execution_audit_error": null
+        },
+        "receipt": {
+          "receipt": "fused-json-limits-overhead-paired",
+          "version": 1,
+          "recorded_at": "2026-08-24T09:44:51Z",
+          "workload": "io-dynamic",
+          "pair_id": "m5-api-paired-v1-001-00-1-io-dynamic-explicit-empty-first",
+          "process_pid": 15,
+          "pairing_key": "v3:io-dynamic:31e154cfc7f22f2539deb278d7ff38544cd21132b8f5bb360180bf1e4a434953",
+          "paired_protocol": {
+            "version": 1,
+            "common_process": true,
+            "interleaved_batches": true,
+            "batch_pattern": "ABBA",
+            "requested_initial_order": [
+              "explicit-empty",
+              "default"
+            ],
+            "observed_initial_order": [
+              "explicit-empty",
+              "default"
+            ],
+            "allocation_order": [
+              "explicit-empty",
+              "default",
+              "default",
+              "explicit-empty"
+            ],
+            "allocation_samples_per_configuration": 2,
+            "measurement_order": [
+              "explicit-empty",
+              "default",
+              "default",
+              "explicit-empty",
+              "explicit-empty",
+              "default",
+              "default",
+              "explicit-empty",
+              "explicit-empty",
+              "default",
+              "default",
+              "explicit-empty",
+              "explicit-empty",
+              "default",
+              "default",
+              "explicit-empty",
+              "explicit-empty",
+              "default",
+              "default",
+              "explicit-empty",
+              "explicit-empty",
+              "default",
+              "default",
+              "explicit-empty",
+              "explicit-empty",
+              "default",
+              "default",
+              "explicit-empty",
+              "explicit-empty",
+              "default",
+              "default",
+              "explicit-empty",
+              "explicit-empty",
+              "default",
+              "default",
+              "explicit-empty"
+            ]
+          },
+          "measurements": {
+            "explicit-empty": {
+              "configuration": "explicit-empty",
+              "call_style": "limits: FusedJSON::Limits.new",
+              "measurement": {
+                "estimator": "total-iterations-over-total-elapsed-v1",
+                "iterations_per_second": 69.37527869866425,
+                "relative_stddev_percent": 0.7195638678795135,
+                "iterations": 126,
+                "batches": 18,
+                "elapsed_seconds": 1.81620892,
+                "mib_per_second": 120.50310502797329,
+                "managed_bytes_per_operation": 16732574,
+                "managed_bytes_per_input_byte": 9.186907513657452,
+                "warmup_seconds": 0.5,
+                "calculation_seconds": 1.5,
+                "allocation_iterations": 20
+              }
+            },
+            "default": {
+              "configuration": "default",
+              "call_style": "limits keyword omitted",
+              "measurement": {
+                "estimator": "total-iterations-over-total-elapsed-v1",
+                "iterations_per_second": 69.04768261684907,
+                "relative_stddev_percent": 2.524201047678848,
+                "iterations": 108,
+                "batches": 18,
+                "elapsed_seconds": 1.564136491,
+                "mib_per_second": 119.93407891673857,
+                "managed_bytes_per_operation": 16732722,
+                "managed_bytes_per_input_byte": 9.186988772064677,
+                "warmup_seconds": 0.5,
+                "calculation_seconds": 1.5,
+                "allocation_iterations": 20
+              }
+            }
+          },
+          "fixture": {
+            "format": "fused-json-limits-overhead",
+            "version": 1,
+            "records": 10000,
+            "bytes": 1821350,
+            "sha256": "31e154cfc7f22f2539deb278d7ff38544cd21132b8f5bb360180bf1e4a434953",
+            "semantic_sha256": "31e154cfc7f22f2539deb278d7ff38544cd21132b8f5bb360180bf1e4a434953"
+          },
+          "semantic_verification": {
+            "status": "verified",
+            "observer": "sha256-json-any-to-json-v1",
+            "count": 1,
+            "checksum": "0x0000000000000000",
+            "default_string_io_pull_parity": true,
+            "default_string_io_skip_parity": true
+          },
+          "disabled_limits": {
+            "max_nesting": 512,
+            "max_token_bytes": null,
+            "max_document_bytes": null,
+            "max_typed_value_bytes": null,
+            "max_total_values": null,
+            "max_container_entries": null,
+            "max_cached_keys": null,
+            "reject_duplicate_keys": false
+          },
+          "parser_options": {
+            "cache_keys": false,
+            "transport": "IO::Memory",
+            "buffer_size": 32768
+          },
+          "build": {
+            "fused_json_version": "0.1.0",
+            "fused_json_commit": "812616652cbf05470f963e4238260e9ca5d9d38a",
+            "crystal_version": "1.22.0-dev",
+            "crystal_build_commit": "6c6a5e988",
+            "llvm_version": "21.1.8",
+            "target": "x86_64-pc-linux-gnu",
+            "release": true,
+            "limits_api": true
+          },
+          "host": {
+            "os": "Linux 7.0.11-76070011-generic x86_64 GNU/Linux",
+            "cpu_model": "AMD Ryzen 9 7940HS w/ Radeon 780M Graphics",
+            "cpu_count": 16,
+            "cpu_affinity": "3"
+          },
+          "environment": {
+            "CRYSTAL_WORKERS": "1",
+            "FUSED_JSON_BENCH_ALLOCATIONS": null,
+            "FUSED_JSON_BENCH_COMMIT": null,
+            "FUSED_JSON_BENCH_CPU": "3",
+            "FUSED_JSON_BENCH_TIME": null,
+            "FUSED_JSON_BENCH_WARMUP": null,
+            "FUSED_JSON_LIMITS_BUFFER": null,
+            "FUSED_JSON_LIMITS_RECORDS": null,
+            "GC_FREE_SPACE_DIVISOR": null,
+            "GC_MARKERS": "1",
+            "GC_NPROCS": "1",
+            "GC_UNMAP_THRESHOLD": null,
+            "MALLOC_CONF": null,
+            "OMP_NUM_THREADS": "1"
+          },
+          "arguments": [
+            "--workload=io-dynamic",
+            "--configuration=paired",
+            "--paired-order=explicit-empty,default",
+            "--pair-id=m5-api-paired-v1-001-00-1-io-dynamic-explicit-empty-first",
+            "--records=10000",
+            "--buffer-size=32768",
+            "--warmup=0.5",
+            "--time=1.5",
+            "--allocations=20",
+            "--commit=812616652cbf05470f963e4238260e9ca5d9d38a"
+          ]
+        }
+      }
+    },
+    {
+      "index": 2,
+      "pair_id": "m5-api-paired-v1-002-00-2-string-pull-default-first",
+      "round": 0,
+      "slot": 2,
+      "workload": "string-pull",
+      "order": [
+        "default",
+        "explicit-empty"
+      ],
+      "observation": {
+        "metadata": {
+          "entry": {
+            "index": 2,
+            "pair_id": "m5-api-paired-v1-002-00-2-string-pull-default-first",
+            "round": 0,
+            "slot": 2,
+            "workload": "string-pull"
+          },
+          "requested_initial_order": [
+            "default",
+            "explicit-empty"
+          ],
+          "command": [
+            "/usr/bin/time",
+            "--quiet",
+            "--output",
+            "/tmp/fused-json-m5-formal-8126166-api-paired-1/observations/002-00-string-pull-default-first.task-audit.tsv",
+            "--format",
+            "fused-json-task-audit-v1\t%U\t%S\t%e\t%P\t%c\t%w\t%F\t%R\t%M\t%x",
+            "/usr/bin/taskset",
+            "-c",
+            "3",
+            "/tmp/fused-json-limits-v8-m5-api-paired",
+            "--workload=string-pull",
+            "--configuration=paired",
+            "--paired-order=default,explicit-empty",
+            "--pair-id=m5-api-paired-v1-002-00-2-string-pull-default-first",
+            "--records=10000",
+            "--buffer-size=32768",
+            "--warmup=0.5",
+            "--time=1.5",
+            "--allocations=20",
+            "--commit=812616652cbf05470f963e4238260e9ca5d9d38a"
+          ],
+          "benchmark_command": [
+            "/usr/bin/taskset",
+            "-c",
+            "3",
+            "/tmp/fused-json-limits-v8-m5-api-paired",
+            "--workload=string-pull",
+            "--configuration=paired",
+            "--paired-order=default,explicit-empty",
+            "--pair-id=m5-api-paired-v1-002-00-2-string-pull-default-first",
+            "--records=10000",
+            "--buffer-size=32768",
+            "--warmup=0.5",
+            "--time=1.5",
+            "--allocations=20",
+            "--commit=812616652cbf05470f963e4238260e9ca5d9d38a"
+          ],
+          "binary_sha256": "36b36fdd7c5627626127c8f75b8bde4df33f87562a9eb2c52ee3971876c1d2e6",
+          "started_at": "2026-08-24T09:44:57.226Z",
+          "started_monotonic_seconds": 84.363319083,
+          "start_environment_sample": {
+            "at": "2026-08-24T09:44:57.218Z",
+            "monotonic_seconds": 84.354454616,
+            "phase": "campaign",
+            "gap_seconds": 2.0013977830000016,
+            "load1": 0.48,
+            "load5": 0.65,
+            "runnable": 1,
+            "tasks": 4303,
+            "tctl_c": 58.125,
+            "cpu_busy_percent": {
+              "2": 2.5,
+              "3": 0.9950248756218906
+            },
+            "benchmark_cpu_scaling_cur_freq_khz": 1350228,
+            "scaling_cur_freq_read_error": null,
+            "scaling_cur_freq_acceptance_gate": false,
+            "read_error": null
+          },
+          "finished_at": "2026-08-24T09:45:01.911Z",
+          "finished_monotonic_seconds": 89.047611131,
+          "finish_environment_sample": {
+            "at": "2026-08-24T09:45:01.235Z",
+            "monotonic_seconds": 88.37148240399999,
+            "phase": "campaign",
+            "gap_seconds": 2.009984851999988,
+            "load1": 0.52,
+            "load5": 0.66,
+            "runnable": 2,
+            "tasks": 4300,
+            "tctl_c": 94.125,
+            "cpu_busy_percent": {
+              "2": 0,
+              "3": 100
+            },
+            "benchmark_cpu_scaling_cur_freq_khz": 4615716,
+            "scaling_cur_freq_read_error": null,
+            "scaling_cur_freq_acceptance_gate": false,
+            "read_error": null
+          },
+          "elapsed_seconds": 4.684292048000003,
+          "exit_code": 0,
+          "signal": null,
+          "spawn_error": null,
+          "task_execution_audit_file": "002-00-string-pull-default-first.task-audit.tsv",
+          "task_execution_audit": {
+            "schema": "fused-json-task-audit-v1",
+            "user_cpu_seconds": 4.64,
+            "system_cpu_seconds": 0.03,
+            "task_cpu_seconds": 4.67,
+            "elapsed_wall_seconds": 4.68,
+            "cpu_time_over_wall_from_rounded_seconds": 0.9978632478632479,
+            "reported_cpu_percent": 100,
+            "reported_cpu_share": 1,
+            "involuntary_context_switches": 966,
+            "voluntary_context_switches": 951,
+            "total_context_switches": 1917,
+            "major_page_faults": 0,
+            "minor_page_faults": 8698,
+            "maximum_resident_kibibytes": 34816,
+            "exit_status": 0
+          },
+          "task_execution_audit_error": null
+        },
+        "receipt": {
+          "receipt": "fused-json-limits-overhead-paired",
+          "version": 1,
+          "recorded_at": "2026-08-24T09:45:01Z",
+          "workload": "string-pull",
+          "pair_id": "m5-api-paired-v1-002-00-2-string-pull-default-first",
+          "process_pid": 19,
+          "pairing_key": "v3:string-pull:31e154cfc7f22f2539deb278d7ff38544cd21132b8f5bb360180bf1e4a434953",
+          "paired_protocol": {
+            "version": 1,
+            "common_process": true,
+            "interleaved_batches": true,
+            "batch_pattern": "ABBA",
+            "requested_initial_order": [
+              "default",
+              "explicit-empty"
+            ],
+            "observed_initial_order": [
+              "default",
+              "explicit-empty"
+            ],
+            "allocation_order": [
+              "default",
+              "explicit-empty",
+              "explicit-empty",
+              "default"
+            ],
+            "allocation_samples_per_configuration": 2,
+            "measurement_order": [
+              "default",
+              "explicit-empty",
+              "explicit-empty",
+              "default",
+              "default",
+              "explicit-empty",
+              "explicit-empty",
+              "default",
+              "default",
+              "explicit-empty",
+              "explicit-empty",
+              "default",
+              "default",
+              "explicit-empty",
+              "explicit-empty",
+              "default",
+              "default",
+              "explicit-empty",
+              "explicit-empty",
+              "default",
+              "default",
+              "explicit-empty",
+              "explicit-empty",
+              "default",
+              "default",
+              "explicit-empty",
+              "explicit-empty",
+              "default",
+              "default",
+              "explicit-empty",
+              "explicit-empty",
+              "default"
+            ]
+          },
+          "measurements": {
+            "default": {
+              "configuration": "default",
+              "call_style": "limits keyword omitted",
+              "measurement": {
+                "estimator": "total-iterations-over-total-elapsed-v1",
+                "iterations_per_second": 180.2759401565078,
+                "relative_stddev_percent": 0.6969650668738341,
+                "iterations": 288,
+                "batches": 16,
+                "elapsed_seconds": 1.597550953,
+                "mib_per_second": 313.1347499886088,
+                "managed_bytes_per_operation": 4960507,
+                "managed_bytes_per_input_byte": 2.7235330935844293,
+                "warmup_seconds": 0.5,
+                "calculation_seconds": 1.5,
+                "allocation_iterations": 20
+              }
+            },
+            "explicit-empty": {
+              "configuration": "explicit-empty",
+              "call_style": "limits: FusedJSON::Limits.new",
+              "measurement": {
+                "estimator": "total-iterations-over-total-elapsed-v1",
+                "iterations_per_second": 180.50732830918218,
+                "relative_stddev_percent": 0.717646071524559,
+                "iterations": 272,
+                "batches": 16,
+                "elapsed_seconds": 1.506864029,
+                "mib_per_second": 313.5366653594293,
+                "managed_bytes_per_operation": 4960330,
+                "managed_bytes_per_input_byte": 2.723435912921734,
+                "warmup_seconds": 0.5,
+                "calculation_seconds": 1.5,
+                "allocation_iterations": 20
+              }
+            }
+          },
+          "fixture": {
+            "format": "fused-json-limits-overhead",
+            "version": 1,
+            "records": 10000,
+            "bytes": 1821350,
+            "sha256": "31e154cfc7f22f2539deb278d7ff38544cd21132b8f5bb360180bf1e4a434953",
+            "semantic_sha256": "31e154cfc7f22f2539deb278d7ff38544cd21132b8f5bb360180bf1e4a434953"
+          },
+          "semantic_verification": {
+            "status": "verified",
+            "observer": "fnv1a64-pull-events-v1",
+            "count": 330012,
+            "checksum": "0x7cc3399aaa43c4fa",
+            "default_string_io_pull_parity": true,
+            "default_string_io_skip_parity": true
+          },
+          "disabled_limits": {
+            "max_nesting": 512,
+            "max_token_bytes": null,
+            "max_document_bytes": null,
+            "max_typed_value_bytes": null,
+            "max_total_values": null,
+            "max_container_entries": null,
+            "max_cached_keys": null,
+            "reject_duplicate_keys": false
+          },
+          "parser_options": {
+            "cache_keys": false,
+            "transport": "String",
+            "buffer_size": null
+          },
+          "build": {
+            "fused_json_version": "0.1.0",
+            "fused_json_commit": "812616652cbf05470f963e4238260e9ca5d9d38a",
+            "crystal_version": "1.22.0-dev",
+            "crystal_build_commit": "6c6a5e988",
+            "llvm_version": "21.1.8",
+            "target": "x86_64-pc-linux-gnu",
+            "release": true,
+            "limits_api": true
+          },
+          "host": {
+            "os": "Linux 7.0.11-76070011-generic x86_64 GNU/Linux",
+            "cpu_model": "AMD Ryzen 9 7940HS w/ Radeon 780M Graphics",
+            "cpu_count": 16,
+            "cpu_affinity": "3"
+          },
+          "environment": {
+            "CRYSTAL_WORKERS": "1",
+            "FUSED_JSON_BENCH_ALLOCATIONS": null,
+            "FUSED_JSON_BENCH_COMMIT": null,
+            "FUSED_JSON_BENCH_CPU": "3",
+            "FUSED_JSON_BENCH_TIME": null,
+            "FUSED_JSON_BENCH_WARMUP": null,
+            "FUSED_JSON_LIMITS_BUFFER": null,
+            "FUSED_JSON_LIMITS_RECORDS": null,
+            "GC_FREE_SPACE_DIVISOR": null,
+            "GC_MARKERS": "1",
+            "GC_NPROCS": "1",
+            "GC_UNMAP_THRESHOLD": null,
+            "MALLOC_CONF": null,
+            "OMP_NUM_THREADS": "1"
+          },
+          "arguments": [
+            "--workload=string-pull",
+            "--configuration=paired",
+            "--paired-order=default,explicit-empty",
+            "--pair-id=m5-api-paired-v1-002-00-2-string-pull-default-first",
+            "--records=10000",
+            "--buffer-size=32768",
+            "--warmup=0.5",
+            "--time=1.5",
+            "--allocations=20",
+            "--commit=812616652cbf05470f963e4238260e9ca5d9d38a"
+          ]
+        }
+      }
+    },
+    {
+      "index": 3,
+      "pair_id": "m5-api-paired-v1-003-00-3-string-skip-explicit-empty-first",
+      "round": 0,
+      "slot": 3,
+      "workload": "string-skip",
+      "order": [
+        "explicit-empty",
+        "default"
+      ],
+      "observation": {
+        "metadata": {
+          "entry": {
+            "index": 3,
+            "pair_id": "m5-api-paired-v1-003-00-3-string-skip-explicit-empty-first",
+            "round": 0,
+            "slot": 3,
+            "workload": "string-skip"
+          },
+          "requested_initial_order": [
+            "explicit-empty",
+            "default"
+          ],
+          "command": [
+            "/usr/bin/time",
+            "--quiet",
+            "--output",
+            "/tmp/fused-json-m5-formal-8126166-api-paired-1/observations/003-00-string-skip-explicit-empty-first.task-audit.tsv",
+            "--format",
+            "fused-json-task-audit-v1\t%U\t%S\t%e\t%P\t%c\t%w\t%F\t%R\t%M\t%x",
+            "/usr/bin/taskset",
+            "-c",
+            "3",
+            "/tmp/fused-json-limits-v8-m5-api-paired",
+            "--workload=string-skip",
+            "--configuration=paired",
+            "--paired-order=explicit-empty,default",
+            "--pair-id=m5-api-paired-v1-003-00-3-string-skip-explicit-empty-first",
+            "--records=10000",
+            "--buffer-size=32768",
+            "--warmup=0.5",
+            "--time=1.5",
+            "--allocations=20",
+            "--commit=812616652cbf05470f963e4238260e9ca5d9d38a"
+          ],
+          "benchmark_command": [
+            "/usr/bin/taskset",
+            "-c",
+            "3",
+            "/tmp/fused-json-limits-v8-m5-api-paired",
+            "--workload=string-skip",
+            "--configuration=paired",
+            "--paired-order=explicit-empty,default",
+            "--pair-id=m5-api-paired-v1-003-00-3-string-skip-explicit-empty-first",
+            "--records=10000",
+            "--buffer-size=32768",
+            "--warmup=0.5",
+            "--time=1.5",
+            "--allocations=20",
+            "--commit=812616652cbf05470f963e4238260e9ca5d9d38a"
+          ],
+          "binary_sha256": "36b36fdd7c5627626127c8f75b8bde4df33f87562a9eb2c52ee3971876c1d2e6",
+          "started_at": "2026-08-24T09:45:11.266Z",
+          "started_monotonic_seconds": 98.40358668399999,
+          "start_environment_sample": {
+            "at": "2026-08-24T09:45:11.240Z",
+            "monotonic_seconds": 98.376510019,
+            "phase": "campaign",
+            "gap_seconds": 2.000983747999996,
+            "load1": 0.44,
+            "load5": 0.64,
+            "runnable": 2,
+            "tasks": 4295,
+            "tctl_c": 59,
+            "cpu_busy_percent": {
+              "2": 2.0100502512562812,
+              "3": 0
+            },
+            "benchmark_cpu_scaling_cur_freq_khz": 402786,
+            "scaling_cur_freq_read_error": null,
+            "scaling_cur_freq_acceptance_gate": false,
+            "read_error": null
+          },
+          "finished_at": "2026-08-24T09:45:15.819Z",
+          "finished_monotonic_seconds": 102.956370437,
+          "finish_environment_sample": {
+            "at": "2026-08-24T09:45:15.258Z",
+            "monotonic_seconds": 102.394820276,
+            "phase": "campaign",
+            "gap_seconds": 2.009304888999992,
+            "load1": 0.49,
+            "load5": 0.64,
+            "runnable": 5,
+            "tasks": 4301,
+            "tctl_c": 97.5,
+            "cpu_busy_percent": {
+              "2": 0,
+              "3": 100
+            },
+            "benchmark_cpu_scaling_cur_freq_khz": 4590821,
+            "scaling_cur_freq_read_error": null,
+            "scaling_cur_freq_acceptance_gate": false,
+            "read_error": null
+          },
+          "elapsed_seconds": 4.552783753000014,
+          "exit_code": 0,
+          "signal": null,
+          "spawn_error": null,
+          "task_execution_audit_file": "003-00-string-skip-explicit-empty-first.task-audit.tsv",
+          "task_execution_audit": {
+            "schema": "fused-json-task-audit-v1",
+            "user_cpu_seconds": 4.53,
+            "system_cpu_seconds": 0.01,
+            "task_cpu_seconds": 4.54,
+            "elapsed_wall_seconds": 4.54,
+            "cpu_time_over_wall_from_rounded_seconds": 1,
+            "reported_cpu_percent": 99,
+            "reported_cpu_share": 0.99,
+            "involuntary_context_switches": 544,
+            "voluntary_context_switches": 511,
+            "total_context_switches": 1055,
+            "major_page_faults": 0,
+            "minor_page_faults": 7986,
+            "maximum_resident_kibibytes": 33376,
+            "exit_status": 0
+          },
+          "task_execution_audit_error": null
+        },
+        "receipt": {
+          "receipt": "fused-json-limits-overhead-paired",
+          "version": 1,
+          "recorded_at": "2026-08-24T09:45:15Z",
+          "workload": "string-skip",
+          "pair_id": "m5-api-paired-v1-003-00-3-string-skip-explicit-empty-first",
+          "process_pid": 23,
+          "pairing_key": "v3:string-skip:31e154cfc7f22f2539deb278d7ff38544cd21132b8f5bb360180bf1e4a434953",
+          "paired_protocol": {
+            "version": 1,
+            "common_process": true,
+            "interleaved_batches": true,
+            "batch_pattern": "ABBA",
+            "requested_initial_order": [
+              "explicit-empty",
+              "default"
+            ],
+            "observed_initial_order": [
+              "explicit-empty",
+              "default"
+            ],
+            "allocation_order": [
+              "explicit-empty",
+              "default",
+              "default",
+              "explicit-empty"
+            ],
+            "allocation_samples_per_configuration": 2,
+            "measurement_order": [
+              "explicit-empty",
+              "default",
+              "default",
+              "explicit-empty",
+              "explicit-empty",
+              "default",
+              "default",
+              "explicit-empty",
+              "explicit-empty",
+              "default",
+              "default",
+              "explicit-empty",
+              "explicit-empty",
+              "default",
+              "default",
+              "explicit-empty",
+              "explicit-empty",
+              "default",
+              "default",
+              "explicit-empty",
+              "explicit-empty",
+              "default",
+              "default",
+              "explicit-empty",
+              "explicit-empty",
+              "default",
+              "default",
+              "explicit-empty",
+              "explicit-empty",
+              "default",
+              "default",
+              "explicit-empty"
+            ]
+          },
+          "measurements": {
+            "explicit-empty": {
+              "configuration": "explicit-empty",
+              "call_style": "limits: FusedJSON::Limits.new",
+              "measurement": {
+                "estimator": "total-iterations-over-total-elapsed-v1",
+                "iterations_per_second": 342.36294927621157,
+                "relative_stddev_percent": 0.46480862013271085,
+                "iterations": 544,
+                "batches": 16,
+                "elapsed_seconds": 1.588956986,
+                "mib_per_second": 594.6757866518287,
+                "managed_bytes_per_operation": 312,
+                "managed_bytes_per_input_byte": 0.00017130150712383672,
+                "warmup_seconds": 0.5,
+                "calculation_seconds": 1.5,
+                "allocation_iterations": 20
+              }
+            },
+            "default": {
+              "configuration": "default",
+              "call_style": "limits keyword omitted",
+              "measurement": {
+                "estimator": "total-iterations-over-total-elapsed-v1",
+                "iterations_per_second": 343.7255043253226,
+                "relative_stddev_percent": 0.28496497329454135,
+                "iterations": 544,
+                "batches": 16,
+                "elapsed_seconds": 1.582658235,
+                "mib_per_second": 597.0425103215468,
+                "managed_bytes_per_operation": 406,
+                "managed_bytes_per_input_byte": 0.00022291157657781317,
+                "warmup_seconds": 0.5,
+                "calculation_seconds": 1.5,
+                "allocation_iterations": 20
+              }
+            }
+          },
+          "fixture": {
+            "format": "fused-json-limits-overhead",
+            "version": 1,
+            "records": 10000,
+            "bytes": 1821350,
+            "sha256": "31e154cfc7f22f2539deb278d7ff38544cd21132b8f5bb360180bf1e4a434953",
+            "semantic_sha256": "31e154cfc7f22f2539deb278d7ff38544cd21132b8f5bb360180bf1e4a434953"
+          },
+          "semantic_verification": {
+            "status": "verified",
+            "observer": "complete-root-byte-offset-v1",
+            "count": 1,
+            "checksum": "0x00000000001bcaa6",
+            "default_string_io_pull_parity": true,
+            "default_string_io_skip_parity": true
+          },
+          "disabled_limits": {
+            "max_nesting": 512,
+            "max_token_bytes": null,
+            "max_document_bytes": null,
+            "max_typed_value_bytes": null,
+            "max_total_values": null,
+            "max_container_entries": null,
+            "max_cached_keys": null,
+            "reject_duplicate_keys": false
+          },
+          "parser_options": {
+            "cache_keys": false,
+            "transport": "String",
+            "buffer_size": null
+          },
+          "build": {
+            "fused_json_version": "0.1.0",
+            "fused_json_commit": "812616652cbf05470f963e4238260e9ca5d9d38a",
+            "crystal_version": "1.22.0-dev",
+            "crystal_build_commit": "6c6a5e988",
+            "llvm_version": "21.1.8",
+            "target": "x86_64-pc-linux-gnu",
+            "release": true,
+            "limits_api": true
+          },
+          "host": {
+            "os": "Linux 7.0.11-76070011-generic x86_64 GNU/Linux",
+            "cpu_model": "AMD Ryzen 9 7940HS w/ Radeon 780M Graphics",
+            "cpu_count": 16,
+            "cpu_affinity": "3"
+          },
+          "environment": {
+            "CRYSTAL_WORKERS": "1",
+            "FUSED_JSON_BENCH_ALLOCATIONS": null,
+            "FUSED_JSON_BENCH_COMMIT": null,
+            "FUSED_JSON_BENCH_CPU": "3",
+            "FUSED_JSON_BENCH_TIME": null,
+            "FUSED_JSON_BENCH_WARMUP": null,
+            "FUSED_JSON_LIMITS_BUFFER": null,
+            "FUSED_JSON_LIMITS_RECORDS": null,
+            "GC_FREE_SPACE_DIVISOR": null,
+            "GC_MARKERS": "1",
+            "GC_NPROCS": "1",
+            "GC_UNMAP_THRESHOLD": null,
+            "MALLOC_CONF": null,
+            "OMP_NUM_THREADS": "1"
+          },
+          "arguments": [
+            "--workload=string-skip",
+            "--configuration=paired",
+            "--paired-order=explicit-empty,default",
+            "--pair-id=m5-api-paired-v1-003-00-3-string-skip-explicit-empty-first",
+            "--records=10000",
+            "--buffer-size=32768",
+            "--warmup=0.5",
+            "--time=1.5",
+            "--allocations=20",
+            "--commit=812616652cbf05470f963e4238260e9ca5d9d38a"
+          ]
+        }
+      }
+    }
+  ],
+  "environment_log": [
+    {
+      "at": "2026-08-24T09:43:32.889Z",
+      "monotonic_seconds": 0.025473165000000002,
+      "phase": "admission",
+      "gap_seconds": null,
+      "load1": 0.68,
+      "load5": 0.75,
+      "runnable": 2,
+      "tasks": 4304,
+      "tctl_c": 57,
+      "cpu_busy_percent": null,
+      "benchmark_cpu_scaling_cur_freq_khz": 402786,
+      "scaling_cur_freq_read_error": null,
+      "scaling_cur_freq_acceptance_gate": false,
+      "read_error": null
+    },
+    {
+      "at": "2026-08-24T09:43:34.894Z",
+      "monotonic_seconds": 2.030242556,
+      "phase": "admission",
+      "gap_seconds": 2.004769391,
+      "load1": 0.71,
+      "load5": 0.75,
+      "runnable": 3,
+      "tasks": 4303,
+      "tctl_c": 56.375,
+      "cpu_busy_percent": {
+        "2": 3.5353535353535355,
+        "3": 0.4975124378109453
+      },
+      "benchmark_cpu_scaling_cur_freq_khz": 402786,
+      "scaling_cur_freq_read_error": null,
+      "scaling_cur_freq_acceptance_gate": false,
+      "read_error": null
+    },
+    {
+      "at": "2026-08-24T09:43:36.905Z",
+      "monotonic_seconds": 4.041436068,
+      "phase": "admission",
+      "gap_seconds": 2.011193512,
+      "load1": 0.71,
+      "load5": 0.75,
+      "runnable": 1,
+      "tasks": 4303,
+      "tctl_c": 55.125,
+      "cpu_busy_percent": {
+        "2": 2,
+        "3": 0.4975124378109453
+      },
+      "benchmark_cpu_scaling_cur_freq_khz": 1468041,
+      "scaling_cur_freq_read_error": null,
+      "scaling_cur_freq_acceptance_gate": false,
+      "read_error": null
+    },
+    {
+      "at": "2026-08-24T09:43:38.914Z",
+      "monotonic_seconds": 6.050429282,
+      "phase": "admission",
+      "gap_seconds": 2.0089932139999993,
+      "load1": 0.65,
+      "load5": 0.74,
+      "runnable": 2,
+      "tasks": 4303,
+      "tctl_c": 54.625,
+      "cpu_busy_percent": {
+        "2": 1.5,
+        "3": 0.5
+      },
+      "benchmark_cpu_scaling_cur_freq_khz": 402786,
+      "scaling_cur_freq_read_error": null,
+      "scaling_cur_freq_acceptance_gate": false,
+      "read_error": null
+    },
+    {
+      "at": "2026-08-24T09:43:40.925Z",
+      "monotonic_seconds": 8.061388088,
+      "phase": "admission",
+      "gap_seconds": 2.0109588059999997,
+      "load1": 0.65,
+      "load5": 0.74,
+      "runnable": 1,
+      "tasks": 4310,
+      "tctl_c": 54.625,
+      "cpu_busy_percent": {
+        "2": 2.985074626865672,
+        "3": 0.4975124378109453
+      },
+      "benchmark_cpu_scaling_cur_freq_khz": 402786,
+      "scaling_cur_freq_read_error": null,
+      "scaling_cur_freq_acceptance_gate": false,
+      "read_error": null
+    },
+    {
+      "at": "2026-08-24T09:43:42.935Z",
+      "monotonic_seconds": 10.071595928,
+      "phase": "admission",
+      "gap_seconds": 2.0102078400000014,
+      "load1": 0.65,
+      "load5": 0.74,
+      "runnable": 2,
+      "tasks": 4298,
+      "tctl_c": 54.5,
+      "cpu_busy_percent": {
+        "2": 2.525252525252525,
+        "3": 0
+      },
+      "benchmark_cpu_scaling_cur_freq_khz": 402786,
+      "scaling_cur_freq_read_error": null,
+      "scaling_cur_freq_acceptance_gate": false,
+      "read_error": null
+    },
+    {
+      "at": "2026-08-24T09:43:44.946Z",
+      "monotonic_seconds": 12.082459405,
+      "phase": "admission",
+      "gap_seconds": 2.010863476999999,
+      "load1": 0.6,
+      "load5": 0.73,
+      "runnable": 1,
+      "tasks": 4302,
+      "tctl_c": 56.5,
+      "cpu_busy_percent": {
+        "2": 3.5,
+        "3": 0.4975124378109453
+      },
+      "benchmark_cpu_scaling_cur_freq_khz": 402786,
+      "scaling_cur_freq_read_error": null,
+      "scaling_cur_freq_acceptance_gate": false,
+      "read_error": null
+    },
+    {
+      "at": "2026-08-24T09:43:46.957Z",
+      "monotonic_seconds": 14.093745441,
+      "phase": "admission",
+      "gap_seconds": 2.0112860359999996,
+      "load1": 0.6,
+      "load5": 0.73,
+      "runnable": 2,
+      "tasks": 4303,
+      "tctl_c": 55.75,
+      "cpu_busy_percent": {
+        "2": 1.5151515151515151,
+        "3": 0
+      },
+      "benchmark_cpu_scaling_cur_freq_khz": 402786,
+      "scaling_cur_freq_read_error": null,
+      "scaling_cur_freq_acceptance_gate": false,
+      "read_error": null
+    },
+    {
+      "at": "2026-08-24T09:43:48.968Z",
+      "monotonic_seconds": 16.104953551,
+      "phase": "admission",
+      "gap_seconds": 2.011208110000002,
+      "load1": 0.55,
+      "load5": 0.72,
+      "runnable": 1,
+      "tasks": 4303,
+      "tctl_c": 54.75,
+      "cpu_busy_percent": {
+        "2": 2,
+        "3": 0.5
+      },
+      "benchmark_cpu_scaling_cur_freq_khz": 402786,
+      "scaling_cur_freq_read_error": null,
+      "scaling_cur_freq_acceptance_gate": false,
+      "read_error": null
+    },
+    {
+      "at": "2026-08-24T09:43:50.971Z",
+      "monotonic_seconds": 18.108141203,
+      "phase": "admission",
+      "gap_seconds": 2.0031876519999976,
+      "load1": 0.55,
+      "load5": 0.72,
+      "runnable": 2,
+      "tasks": 4311,
+      "tctl_c": 57.125,
+      "cpu_busy_percent": {
+        "2": 3.0303030303030303,
+        "3": 0.9950248756218906
+      },
+      "benchmark_cpu_scaling_cur_freq_khz": 402786,
+      "scaling_cur_freq_read_error": null,
+      "scaling_cur_freq_acceptance_gate": false,
+      "read_error": null
+    },
+    {
+      "at": "2026-08-24T09:43:52.983Z",
+      "monotonic_seconds": 20.119275375,
+      "phase": "admission",
+      "gap_seconds": 2.011134172000002,
+      "load1": 0.55,
+      "load5": 0.72,
+      "runnable": 3,
+      "tasks": 4311,
+      "tctl_c": 55.25,
+      "cpu_busy_percent": {
+        "2": 1.9900497512437811,
+        "3": 0
+      },
+      "benchmark_cpu_scaling_cur_freq_khz": 402786,
+      "scaling_cur_freq_read_error": null,
+      "scaling_cur_freq_acceptance_gate": false,
+      "read_error": null
+    },
+    {
+      "at": "2026-08-24T09:43:54.990Z",
+      "monotonic_seconds": 22.126629613000002,
+      "phase": "admission",
+      "gap_seconds": 2.0073542380000013,
+      "load1": 0.51,
+      "load5": 0.7,
+      "runnable": 3,
+      "tasks": 4311,
+      "tctl_c": 54.5,
+      "cpu_busy_percent": {
+        "2": 1.5151515151515151,
+        "3": 0.4975124378109453
+      },
+      "benchmark_cpu_scaling_cur_freq_khz": 402786,
+      "scaling_cur_freq_read_error": null,
+      "scaling_cur_freq_acceptance_gate": false,
+      "read_error": null
+    },
+    {
+      "at": "2026-08-24T09:43:57.000Z",
+      "monotonic_seconds": 24.136491724,
+      "phase": "admission",
+      "gap_seconds": 2.009862110999997,
+      "load1": 0.51,
+      "load5": 0.7,
+      "runnable": 1,
+      "tasks": 4310,
+      "tctl_c": 54.125,
+      "cpu_busy_percent": {
+        "2": 3.0150753768844223,
+        "3": 0.9900990099009901
+      },
+      "benchmark_cpu_scaling_cur_freq_khz": 1953513,
+      "scaling_cur_freq_read_error": null,
+      "scaling_cur_freq_acceptance_gate": false,
+      "read_error": null
+    },
+    {
+      "at": "2026-08-24T09:43:59.009Z",
+      "monotonic_seconds": 26.145550161,
+      "phase": "admission",
+      "gap_seconds": 2.009058437,
+      "load1": 0.47,
+      "load5": 0.69,
+      "runnable": 1,
+      "tasks": 4310,
+      "tctl_c": 53.875,
+      "cpu_busy_percent": {
+        "2": 1.5075376884422111,
+        "3": 0
+      },
+      "benchmark_cpu_scaling_cur_freq_khz": 402786,
+      "scaling_cur_freq_read_error": null,
+      "scaling_cur_freq_acceptance_gate": false,
+      "read_error": null
+    },
+    {
+      "at": "2026-08-24T09:44:01.019Z",
+      "monotonic_seconds": 28.155493695,
+      "phase": "admission",
+      "gap_seconds": 2.0099435340000014,
+      "load1": 0.47,
+      "load5": 0.69,
+      "runnable": 1,
+      "tasks": 4299,
+      "tctl_c": 54.125,
+      "cpu_busy_percent": {
+        "2": 2,
+        "3": 0.5
+      },
+      "benchmark_cpu_scaling_cur_freq_khz": 402786,
+      "scaling_cur_freq_read_error": null,
+      "scaling_cur_freq_acceptance_gate": false,
+      "read_error": null
+    },
+    {
+      "at": "2026-08-24T09:44:03.029Z",
+      "monotonic_seconds": 30.165484048,
+      "phase": "admission",
+      "gap_seconds": 2.009990352999999,
+      "load1": 0.47,
+      "load5": 0.69,
+      "runnable": 2,
+      "tasks": 4300,
+      "tctl_c": 54.375,
+      "cpu_busy_percent": {
+        "2": 2.0100502512562812,
+        "3": 0.4975124378109453
+      },
+      "benchmark_cpu_scaling_cur_freq_khz": 402786,
+      "scaling_cur_freq_read_error": null,
+      "scaling_cur_freq_acceptance_gate": false,
+      "read_error": null
+    },
+    {
+      "at": "2026-08-24T09:44:05.039Z",
+      "monotonic_seconds": 32.176077962,
+      "phase": "admission",
+      "gap_seconds": 2.010593914000001,
+      "load1": 0.43,
+      "load5": 0.68,
+      "runnable": 1,
+      "tasks": 4299,
+      "tctl_c": 56.875,
+      "cpu_busy_percent": {
+        "2": 4.5,
+        "3": 1.492537313432836
+      },
+      "benchmark_cpu_scaling_cur_freq_khz": 402786,
+      "scaling_cur_freq_read_error": null,
+      "scaling_cur_freq_acceptance_gate": false,
+      "read_error": null
+    },
+    {
+      "at": "2026-08-24T09:44:07.049Z",
+      "monotonic_seconds": 34.185455897,
+      "phase": "admission",
+      "gap_seconds": 2.0093779349999963,
+      "load1": 0.43,
+      "load5": 0.68,
+      "runnable": 3,
+      "tasks": 4299,
+      "tctl_c": 55.25,
+      "cpu_busy_percent": {
+        "2": 2.0100502512562812,
+        "3": 0.9950248756218906
+      },
+      "benchmark_cpu_scaling_cur_freq_khz": 402786,
+      "scaling_cur_freq_read_error": null,
+      "scaling_cur_freq_acceptance_gate": false,
+      "read_error": null
+    },
+    {
+      "at": "2026-08-24T09:44:09.055Z",
+      "monotonic_seconds": 36.191937704000004,
+      "phase": "admission",
+      "gap_seconds": 2.0064818070000072,
+      "load1": 0.39,
+      "load5": 0.67,
+      "runnable": 1,
+      "tasks": 4300,
+      "tctl_c": 54.625,
+      "cpu_busy_percent": {
+        "2": 2,
+        "3": 0.5
+      },
+      "benchmark_cpu_scaling_cur_freq_khz": 402786,
+      "scaling_cur_freq_read_error": null,
+      "scaling_cur_freq_acceptance_gate": false,
+      "read_error": null
+    },
+    {
+      "at": "2026-08-24T09:44:11.067Z",
+      "monotonic_seconds": 38.20324922,
+      "phase": "admission",
+      "gap_seconds": 2.011311515999992,
+      "load1": 0.39,
+      "load5": 0.67,
+      "runnable": 1,
+      "tasks": 4300,
+      "tctl_c": 54.25,
+      "cpu_busy_percent": {
+        "2": 1.0050251256281406,
+        "3": 0
+      },
+      "benchmark_cpu_scaling_cur_freq_khz": 402786,
+      "scaling_cur_freq_read_error": null,
+      "scaling_cur_freq_acceptance_gate": false,
+      "read_error": null
+    },
+    {
+      "at": "2026-08-24T09:44:13.078Z",
+      "monotonic_seconds": 40.214482728,
+      "phase": "admission",
+      "gap_seconds": 2.0112335080000037,
+      "load1": 0.39,
+      "load5": 0.67,
+      "runnable": 2,
+      "tasks": 4300,
+      "tctl_c": 54.25,
+      "cpu_busy_percent": {
+        "2": 1.0050251256281406,
+        "3": 0.4975124378109453
+      },
+      "benchmark_cpu_scaling_cur_freq_khz": 402786,
+      "scaling_cur_freq_read_error": null,
+      "scaling_cur_freq_acceptance_gate": false,
+      "read_error": null
+    },
+    {
+      "at": "2026-08-24T09:44:15.086Z",
+      "monotonic_seconds": 42.222844483,
+      "phase": "admission",
+      "gap_seconds": 2.008361755000003,
+      "load1": 0.44,
+      "load5": 0.67,
+      "runnable": 3,
+      "tasks": 4301,
+      "tctl_c": 54,
+      "cpu_busy_percent": {
+        "2": 1.5,
+        "3": 0.9950248756218906
+      },
+      "benchmark_cpu_scaling_cur_freq_khz": 402786,
+      "scaling_cur_freq_read_error": null,
+      "scaling_cur_freq_acceptance_gate": false,
+      "read_error": null
+    },
+    {
+      "at": "2026-08-24T09:44:17.097Z",
+      "monotonic_seconds": 44.233544048000006,
+      "phase": "admission",
+      "gap_seconds": 2.010699565000003,
+      "load1": 0.44,
+      "load5": 0.67,
+      "runnable": 1,
+      "tasks": 4301,
+      "tctl_c": 53.75,
+      "cpu_busy_percent": {
+        "2": 2.512562814070352,
+        "3": 0.4975124378109453
+      },
+      "benchmark_cpu_scaling_cur_freq_khz": 402786,
+      "scaling_cur_freq_read_error": null,
+      "scaling_cur_freq_acceptance_gate": false,
+      "read_error": null
+    },
+    {
+      "at": "2026-08-24T09:44:19.107Z",
+      "monotonic_seconds": 46.243522827,
+      "phase": "admission",
+      "gap_seconds": 2.0099787789999937,
+      "load1": 0.41,
+      "load5": 0.66,
+      "runnable": 1,
+      "tasks": 4299,
+      "tctl_c": 53.875,
+      "cpu_busy_percent": {
+        "2": 1.9900497512437811,
+        "3": 0
+      },
+      "benchmark_cpu_scaling_cur_freq_khz": 1371225,
+      "scaling_cur_freq_read_error": null,
+      "scaling_cur_freq_acceptance_gate": false,
+      "read_error": null
+    },
+    {
+      "at": "2026-08-24T09:44:21.117Z",
+      "monotonic_seconds": 48.253546821,
+      "phase": "admission",
+      "gap_seconds": 2.010023994000001,
+      "load1": 0.41,
+      "load5": 0.66,
+      "runnable": 1,
+      "tasks": 4307,
+      "tctl_c": 54.25,
+      "cpu_busy_percent": {
+        "2": 3,
+        "3": 1
+      },
+      "benchmark_cpu_scaling_cur_freq_khz": 402786,
+      "scaling_cur_freq_read_error": null,
+      "scaling_cur_freq_acceptance_gate": false,
+      "read_error": null
+    },
+    {
+      "at": "2026-08-24T09:44:23.126Z",
+      "monotonic_seconds": 50.262550495000006,
+      "phase": "admission",
+      "gap_seconds": 2.009003674000006,
+      "load1": 0.41,
+      "load5": 0.66,
+      "runnable": 2,
+      "tasks": 4307,
+      "tctl_c": 53.875,
+      "cpu_busy_percent": {
+        "2": 1.5151515151515151,
+        "3": 0
+      },
+      "benchmark_cpu_scaling_cur_freq_khz": 402786,
+      "scaling_cur_freq_read_error": null,
+      "scaling_cur_freq_acceptance_gate": false,
+      "read_error": null
+    },
+    {
+      "at": "2026-08-24T09:44:25.136Z",
+      "monotonic_seconds": 52.272697987,
+      "phase": "admission",
+      "gap_seconds": 2.0101474919999944,
+      "load1": 0.37,
+      "load5": 0.65,
+      "runnable": 1,
+      "tasks": 4306,
+      "tctl_c": 53.75,
+      "cpu_busy_percent": {
+        "2": 1.5,
+        "3": 0.9900990099009901
+      },
+      "benchmark_cpu_scaling_cur_freq_khz": 402786,
+      "scaling_cur_freq_read_error": null,
+      "scaling_cur_freq_acceptance_gate": false,
+      "read_error": null
+    },
+    {
+      "at": "2026-08-24T09:44:27.146Z",
+      "monotonic_seconds": 54.282916763,
+      "phase": "admission",
+      "gap_seconds": 2.010218776000002,
+      "load1": 0.37,
+      "load5": 0.65,
+      "runnable": 3,
+      "tasks": 4306,
+      "tctl_c": 53.5,
+      "cpu_busy_percent": {
+        "2": 1,
+        "3": 0
+      },
+      "benchmark_cpu_scaling_cur_freq_khz": 402786,
+      "scaling_cur_freq_read_error": null,
+      "scaling_cur_freq_acceptance_gate": false,
+      "read_error": null
+    },
+    {
+      "at": "2026-08-24T09:44:29.157Z",
+      "monotonic_seconds": 56.294159789,
+      "phase": "admission",
+      "gap_seconds": 2.0112430259999954,
+      "load1": 0.34,
+      "load5": 0.64,
+      "runnable": 1,
+      "tasks": 4306,
+      "tctl_c": 54.25,
+      "cpu_busy_percent": {
+        "2": 1.0050251256281406,
+        "3": 0.4975124378109453
+      },
+      "benchmark_cpu_scaling_cur_freq_khz": 402786,
+      "scaling_cur_freq_read_error": null,
+      "scaling_cur_freq_acceptance_gate": false,
+      "read_error": null
+    },
+    {
+      "at": "2026-08-24T09:44:31.167Z",
+      "monotonic_seconds": 58.303206893,
+      "phase": "admission",
+      "gap_seconds": 2.009047104000004,
+      "load1": 0.34,
+      "load5": 0.64,
+      "runnable": 1,
+      "tasks": 4292,
+      "tctl_c": 53.875,
+      "cpu_busy_percent": {
+        "2": 2.512562814070352,
+        "3": 0
+      },
+      "benchmark_cpu_scaling_cur_freq_khz": 402786,
+      "scaling_cur_freq_read_error": null,
+      "scaling_cur_freq_acceptance_gate": false,
+      "read_error": null
+    },
+    {
+      "at": "2026-08-24T09:44:33.171Z",
+      "monotonic_seconds": 60.307564832999994,
+      "phase": "admission",
+      "gap_seconds": 2.0043579399999913,
+      "load1": 0.34,
+      "load5": 0.64,
+      "runnable": 2,
+      "tasks": 4292,
+      "tctl_c": 53.625,
+      "cpu_busy_percent": {
+        "2": 2.0202020202020203,
+        "3": 0
+      },
+      "benchmark_cpu_scaling_cur_freq_khz": 402786,
+      "scaling_cur_freq_read_error": null,
+      "scaling_cur_freq_acceptance_gate": false,
+      "read_error": null
+    },
+    {
+      "at": "2026-08-24T09:44:35.181Z",
+      "monotonic_seconds": 62.317555095,
+      "phase": "admission",
+      "gap_seconds": 2.0099902620000094,
+      "load1": 0.4,
+      "load5": 0.65,
+      "runnable": 2,
+      "tasks": 4291,
+      "tctl_c": 54,
+      "cpu_busy_percent": {
+        "2": 4,
+        "3": 1.492537313432836
+      },
+      "benchmark_cpu_scaling_cur_freq_khz": 402786,
+      "scaling_cur_freq_read_error": null,
+      "scaling_cur_freq_acceptance_gate": false,
+      "read_error": null
+    },
+    {
+      "at": "2026-08-24T09:44:37.185Z",
+      "monotonic_seconds": 64.321520684,
+      "phase": "campaign",
+      "gap_seconds": 2.0039655890000034,
+      "load1": 0.4,
+      "load5": 0.65,
+      "runnable": 2,
+      "tasks": 4294,
+      "tctl_c": 80.5,
+      "cpu_busy_percent": {
+        "2": 0.5025125628140703,
+        "3": 99.50248756218906
+      },
+      "benchmark_cpu_scaling_cur_freq_khz": 4665543,
+      "scaling_cur_freq_read_error": null,
+      "scaling_cur_freq_acceptance_gate": false,
+      "read_error": null
+    },
+    {
+      "at": "2026-08-24T09:44:39.192Z",
+      "monotonic_seconds": 66.328971002,
+      "phase": "campaign",
+      "gap_seconds": 2.0074503179999965,
+      "load1": 0.53,
+      "load5": 0.67,
+      "runnable": 2,
+      "tasks": 4295,
+      "tctl_c": 86.75,
+      "cpu_busy_percent": {
+        "2": 0.4975124378109453,
+        "3": 100
+      },
+      "benchmark_cpu_scaling_cur_freq_khz": 4665711,
+      "scaling_cur_freq_read_error": null,
+      "scaling_cur_freq_acceptance_gate": false,
+      "read_error": null
+    },
+    {
+      "at": "2026-08-24T09:44:41.193Z",
+      "monotonic_seconds": 68.329948699,
+      "phase": "campaign",
+      "gap_seconds": 2.000977696999996,
+      "load1": 0.53,
+      "load5": 0.67,
+      "runnable": 1,
+      "tasks": 4291,
+      "tctl_c": 77,
+      "cpu_busy_percent": {
+        "2": 2.0100502512562812,
+        "3": 48.25870646766169
+      },
+      "benchmark_cpu_scaling_cur_freq_khz": 402786,
+      "scaling_cur_freq_read_error": null,
+      "scaling_cur_freq_acceptance_gate": false,
+      "read_error": null
+    },
+    {
+      "at": "2026-08-24T09:44:43.194Z",
+      "monotonic_seconds": 70.330838472,
+      "phase": "campaign",
+      "gap_seconds": 2.0008897729999973,
+      "load1": 0.53,
+      "load5": 0.67,
+      "runnable": 2,
+      "tasks": 4292,
+      "tctl_c": 64.625,
+      "cpu_busy_percent": {
+        "2": 2.0202020202020203,
+        "3": 0
+      },
+      "benchmark_cpu_scaling_cur_freq_khz": 402786,
+      "scaling_cur_freq_read_error": null,
+      "scaling_cur_freq_acceptance_gate": false,
+      "read_error": null
+    },
+    {
+      "at": "2026-08-24T09:44:45.195Z",
+      "monotonic_seconds": 72.33111002599999,
+      "phase": "campaign",
+      "gap_seconds": 2.000271553999994,
+      "load1": 0.48,
+      "load5": 0.66,
+      "runnable": 2,
+      "tasks": 4291,
+      "tctl_c": 59.125,
+      "cpu_busy_percent": {
+        "2": 2.512562814070352,
+        "3": 0.5
+      },
+      "benchmark_cpu_scaling_cur_freq_khz": 402786,
+      "scaling_cur_freq_read_error": null,
+      "scaling_cur_freq_acceptance_gate": false,
+      "read_error": null
+    },
+    {
+      "at": "2026-08-24T09:44:47.203Z",
+      "monotonic_seconds": 74.339498049,
+      "phase": "campaign",
+      "gap_seconds": 2.008388023000009,
+      "load1": 0.48,
+      "load5": 0.66,
+      "runnable": 2,
+      "tasks": 4294,
+      "tctl_c": 84.375,
+      "cpu_busy_percent": {
+        "2": 1.492537313432836,
+        "3": 95.5223880597015
+      },
+      "benchmark_cpu_scaling_cur_freq_khz": 4640740,
+      "scaling_cur_freq_read_error": null,
+      "scaling_cur_freq_acceptance_gate": false,
+      "read_error": null
+    },
+    {
+      "at": "2026-08-24T09:44:49.213Z",
+      "monotonic_seconds": 76.350034082,
+      "phase": "campaign",
+      "gap_seconds": 2.010536032999994,
+      "load1": 0.52,
+      "load5": 0.66,
+      "runnable": 2,
+      "tasks": 4294,
+      "tctl_c": 91.125,
+      "cpu_busy_percent": {
+        "2": 0.9950248756218906,
+        "3": 100
+      },
+      "benchmark_cpu_scaling_cur_freq_khz": 4640711,
+      "scaling_cur_freq_read_error": null,
+      "scaling_cur_freq_acceptance_gate": false,
+      "read_error": null
+    },
+    {
+      "at": "2026-08-24T09:44:51.214Z",
+      "monotonic_seconds": 78.35093294100001,
+      "phase": "campaign",
+      "gap_seconds": 2.000898859000017,
+      "load1": 0.52,
+      "load5": 0.66,
+      "runnable": 1,
+      "tasks": 4305,
+      "tctl_c": 91.375,
+      "cpu_busy_percent": {
+        "2": 2.0202020202020203,
+        "3": 93.5
+      },
+      "benchmark_cpu_scaling_cur_freq_khz": 402786,
+      "scaling_cur_freq_read_error": null,
+      "scaling_cur_freq_acceptance_gate": false,
+      "read_error": null
+    },
+    {
+      "at": "2026-08-24T09:44:53.215Z",
+      "monotonic_seconds": 80.352003203,
+      "phase": "campaign",
+      "gap_seconds": 2.0010702619999847,
+      "load1": 0.52,
+      "load5": 0.66,
+      "runnable": 1,
+      "tasks": 4303,
+      "tctl_c": 71.5,
+      "cpu_busy_percent": {
+        "2": 2.0100502512562812,
+        "3": 0.4975124378109453
+      },
+      "benchmark_cpu_scaling_cur_freq_khz": 402786,
+      "scaling_cur_freq_read_error": null,
+      "scaling_cur_freq_acceptance_gate": false,
+      "read_error": null
+    },
+    {
+      "at": "2026-08-24T09:44:55.216Z",
+      "monotonic_seconds": 82.353056833,
+      "phase": "campaign",
+      "gap_seconds": 2.0010536300000012,
+      "load1": 0.48,
+      "load5": 0.65,
+      "runnable": 1,
+      "tasks": 4303,
+      "tctl_c": 62.25,
+      "cpu_busy_percent": {
+        "2": 4.0201005025125625,
+        "3": 0
+      },
+      "benchmark_cpu_scaling_cur_freq_khz": 402786,
+      "scaling_cur_freq_read_error": null,
+      "scaling_cur_freq_acceptance_gate": false,
+      "read_error": null
+    },
+    {
+      "at": "2026-08-24T09:44:57.218Z",
+      "monotonic_seconds": 84.354454616,
+      "phase": "campaign",
+      "gap_seconds": 2.0013977830000016,
+      "load1": 0.48,
+      "load5": 0.65,
+      "runnable": 1,
+      "tasks": 4303,
+      "tctl_c": 58.125,
+      "cpu_busy_percent": {
+        "2": 2.5,
+        "3": 0.9950248756218906
+      },
+      "benchmark_cpu_scaling_cur_freq_khz": 1350228,
+      "scaling_cur_freq_read_error": null,
+      "scaling_cur_freq_acceptance_gate": false,
+      "read_error": null
+    },
+    {
+      "at": "2026-08-24T09:44:59.225Z",
+      "monotonic_seconds": 86.361497552,
+      "phase": "campaign",
+      "gap_seconds": 2.007042936000005,
+      "load1": 0.52,
+      "load5": 0.66,
+      "runnable": 2,
+      "tasks": 4306,
+      "tctl_c": 87.25,
+      "cpu_busy_percent": {
+        "2": 0.5,
+        "3": 99.0049751243781
+      },
+      "benchmark_cpu_scaling_cur_freq_khz": 4640735,
+      "scaling_cur_freq_read_error": null,
+      "scaling_cur_freq_acceptance_gate": false,
+      "read_error": null
+    },
+    {
+      "at": "2026-08-24T09:45:01.235Z",
+      "monotonic_seconds": 88.37148240399999,
+      "phase": "campaign",
+      "gap_seconds": 2.009984851999988,
+      "load1": 0.52,
+      "load5": 0.66,
+      "runnable": 2,
+      "tasks": 4300,
+      "tctl_c": 94.125,
+      "cpu_busy_percent": {
+        "2": 0,
+        "3": 100
+      },
+      "benchmark_cpu_scaling_cur_freq_khz": 4615716,
+      "scaling_cur_freq_read_error": null,
+      "scaling_cur_freq_acceptance_gate": false,
+      "read_error": null
+    },
+    {
+      "at": "2026-08-24T09:45:03.235Z",
+      "monotonic_seconds": 90.371724094,
+      "phase": "campaign",
+      "gap_seconds": 2.00024169000001,
+      "load1": 0.52,
+      "load5": 0.66,
+      "runnable": 1,
+      "tasks": 4297,
+      "tctl_c": 79,
+      "cpu_busy_percent": {
+        "2": 2.0100502512562812,
+        "3": 34.17085427135678
+      },
+      "benchmark_cpu_scaling_cur_freq_khz": 402786,
+      "scaling_cur_freq_read_error": null,
+      "scaling_cur_freq_acceptance_gate": false,
+      "read_error": null
+    },
+    {
+      "at": "2026-08-24T09:45:05.236Z",
+      "monotonic_seconds": 92.37242589499999,
+      "phase": "campaign",
+      "gap_seconds": 2.000701800999991,
+      "load1": 0.48,
+      "load5": 0.65,
+      "runnable": 1,
+      "tasks": 4299,
+      "tctl_c": 67,
+      "cpu_busy_percent": {
+        "2": 4.0201005025125625,
+        "3": 1
+      },
+      "benchmark_cpu_scaling_cur_freq_khz": 402786,
+      "scaling_cur_freq_read_error": null,
+      "scaling_cur_freq_acceptance_gate": false,
+      "read_error": null
+    },
+    {
+      "at": "2026-08-24T09:45:07.237Z",
+      "monotonic_seconds": 94.37390761500001,
+      "phase": "campaign",
+      "gap_seconds": 2.0014817200000152,
+      "load1": 0.48,
+      "load5": 0.65,
+      "runnable": 1,
+      "tasks": 4299,
+      "tctl_c": 60.625,
+      "cpu_busy_percent": {
+        "2": 2.0202020202020203,
+        "3": 0.5
+      },
+      "benchmark_cpu_scaling_cur_freq_khz": 402786,
+      "scaling_cur_freq_read_error": null,
+      "scaling_cur_freq_acceptance_gate": false,
+      "read_error": null
+    },
+    {
+      "at": "2026-08-24T09:45:09.239Z",
+      "monotonic_seconds": 96.375526271,
+      "phase": "campaign",
+      "gap_seconds": 2.001618655999991,
+      "load1": 0.44,
+      "load5": 0.64,
+      "runnable": 4,
+      "tasks": 4295,
+      "tctl_c": 62.75,
+      "cpu_busy_percent": {
+        "2": 3.5175879396984926,
+        "3": 0.5
+      },
+      "benchmark_cpu_scaling_cur_freq_khz": 402786,
+      "scaling_cur_freq_read_error": null,
+      "scaling_cur_freq_acceptance_gate": false,
+      "read_error": null
+    },
+    {
+      "at": "2026-08-24T09:45:11.240Z",
+      "monotonic_seconds": 98.376510019,
+      "phase": "campaign",
+      "gap_seconds": 2.000983747999996,
+      "load1": 0.44,
+      "load5": 0.64,
+      "runnable": 2,
+      "tasks": 4295,
+      "tctl_c": 59,
+      "cpu_busy_percent": {
+        "2": 2.0100502512562812,
+        "3": 0
+      },
+      "benchmark_cpu_scaling_cur_freq_khz": 402786,
+      "scaling_cur_freq_read_error": null,
+      "scaling_cur_freq_acceptance_gate": false,
+      "read_error": null
+    },
+    {
+      "at": "2026-08-24T09:45:13.249Z",
+      "monotonic_seconds": 100.38551538700001,
+      "phase": "campaign",
+      "gap_seconds": 2.009005368000018,
+      "load1": 0.44,
+      "load5": 0.64,
+      "runnable": 2,
+      "tasks": 4300,
+      "tctl_c": 90.5,
+      "cpu_busy_percent": {
+        "2": 0.5025125628140703,
+        "3": 98.5
+      },
+      "benchmark_cpu_scaling_cur_freq_khz": 4590773,
+      "scaling_cur_freq_read_error": null,
+      "scaling_cur_freq_acceptance_gate": false,
+      "read_error": null
+    },
+    {
+      "at": "2026-08-24T09:45:15.258Z",
+      "monotonic_seconds": 102.394820276,
+      "phase": "campaign",
+      "gap_seconds": 2.009304888999992,
+      "load1": 0.49,
+      "load5": 0.64,
+      "runnable": 5,
+      "tasks": 4301,
+      "tctl_c": 97.5,
+      "cpu_busy_percent": {
+        "2": 0,
+        "3": 100
+      },
+      "benchmark_cpu_scaling_cur_freq_khz": 4590821,
+      "scaling_cur_freq_read_error": null,
+      "scaling_cur_freq_acceptance_gate": false,
+      "read_error": null
+    },
+    {
+      "at": "2026-08-24T09:45:17.266Z",
+      "monotonic_seconds": 104.403046346,
+      "phase": "campaign",
+      "gap_seconds": 2.008226069999992,
+      "load1": 0.49,
+      "load5": 0.64,
+      "runnable": 1,
+      "tasks": 4298,
+      "tctl_c": 79.625,
+      "cpu_busy_percent": {
+        "2": 2.487562189054726,
+        "3": 28.35820895522388
+      },
+      "benchmark_cpu_scaling_cur_freq_khz": 402786,
+      "scaling_cur_freq_read_error": null,
+      "scaling_cur_freq_acceptance_gate": false,
+      "read_error": null
+    },
+    {
+      "at": "2026-08-24T09:45:17.267Z",
+      "monotonic_seconds": 104.40370752300001,
+      "phase": "campaign-end",
+      "gap_seconds": 0.0006611770000120032,
+      "load1": 0.49,
+      "load5": 0.64,
+      "runnable": 1,
+      "tasks": 4298,
+      "tctl_c": 79.625,
+      "cpu_busy_percent": {
+        "2": 0,
+        "3": null
+      },
+      "benchmark_cpu_scaling_cur_freq_khz": 402786,
+      "scaling_cur_freq_read_error": null,
+      "scaling_cur_freq_acceptance_gate": false,
+      "read_error": null
+    }
+  ],
+  "analysis": null,
+  "diagnostics": null
+}
