@@ -1176,12 +1176,12 @@ begin
     end
 
     configurations = selected_paired_order.split(',')
-    operations = configurations.map do |selected_configuration|
+    operations = configurations.map do |paired_configuration|
       {
-        selected_configuration,
+        paired_configuration,
         LimitsOverheadBenchmark.operation(
           selected_workload,
-          selected_configuration,
+          paired_configuration,
           source,
           buffer_size
         ),
