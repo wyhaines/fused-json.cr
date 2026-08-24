@@ -8,7 +8,7 @@ import {spawn} from "node:child_process";
 import {performance} from "node:perf_hooks";
 
 const ARTIFACT = "fused-json-milestone-6-dynamic-gate";
-const VERSION = 1;
+const VERSION = 2;
 const RUNNER_CPU = "0";
 const BENCHMARK_CPU = "3";
 const BENCHMARK_SIBLING_CPU = "2";
@@ -25,19 +25,25 @@ const THRESHOLDS = Object.freeze({
   minimum_task_cpu_percent: 99,
 });
 const ENVIRONMENT_POLICY = Object.freeze({
+  name: "busy-pinned-v2",
+  version: 2,
   sample_interval_ms: 2_000,
-  admission_seconds: 60,
-  admission_load1_maximum: 2.5,
-  admission_load5_maximum: 2.5,
-  admission_tctl_maximum_c: 70,
-  admission_cpu_busy_maximum_percent: 10,
-  start_tctl_maximum_c: 70,
-  cooldown_seconds: 180,
-  invalid_tctl_minimum_c: 95,
-  invalid_load1_strictly_greater_than: 4.0,
-  invalid_sibling_busy_strictly_greater_than_percent: 20,
+  initial_admission_seconds: 60,
+  block_admission_seconds: 6,
+  gate_load1_maximum: 5,
+  gate_load5_maximum: 5,
+  gate_tctl_maximum_c: 94,
+  gate_tctl_range_maximum_c: 5,
+  gate_sibling_cpu_busy_maximum_percent: 25,
+  gate_benchmark_cpu_busy_maximum_percent: 10,
+  block_gate_deadline_seconds: 180,
+  invalid_tctl_minimum_c: 100,
+  invalid_load1_strictly_greater_than: 7,
+  invalid_sibling_busy_strictly_greater_than_percent: 35,
   consecutive_breach_samples: 2,
   maximum_monitor_gap_seconds: 5,
+  minimum_parser_task_cpu_percent: 99,
+  child_window_sibling_busy_maximum_percent: 25,
   cpu_frequency_policy: "diagnostic-only; never gates, excludes, or normalizes",
 });
 const ORDER = Object.freeze(["normal", "reverse", "normal", "reverse", "normal"]);
@@ -612,10 +618,62 @@ function expectedCorpusBinding(frozen) {
   }));
 }
 
-function childReceiptIssues(receipt, entry, options, frozen) {
+function startSampleBindingMatches(receipt) {
+  return receipt?.environment_start_sample_sequence ===
+    receipt?.environment_start_gate?.admitted_sample_sequence;
+}
+
+function childEnvironmentSampleBindingIssues(receipt, environmentSamples) {
   const issues = [];
   const issue = (condition, message) => { if (!condition) issues.push(message); };
-  issue(receipt.receipt === "fused-json-m6-dynamic-child" && receipt.version === 1, "wrong child receipt schema");
+  if (!Array.isArray(environmentSamples)) {
+    return ["child environment sample binding has no retained monitor samples"];
+  }
+  const startSequence = receipt?.environment_start_sample_sequence;
+  const endSequence = receipt?.environment_end_sample_sequence;
+  issue(Number.isSafeInteger(startSequence) && startSequence >= 0,
+    "child environment start sample sequence is invalid");
+  issue(Number.isSafeInteger(endSequence) && endSequence >= 0,
+    "child environment end sample sequence is invalid");
+  if (!(Number.isSafeInteger(startSequence) && startSequence >= 0 &&
+        Number.isSafeInteger(endSequence) && endSequence >= 0)) {
+    return issues;
+  }
+  issue(startSequence <= endSequence,
+    "child environment sample range is reversed");
+  const samplesBySequence = new Map(
+    environmentSamples.map((sample) => [sample?.sequence, sample]),
+  );
+  const startSample = samplesBySequence.get(startSequence);
+  const endSample = samplesBySequence.get(endSequence);
+  issue(startSample !== undefined && endSample !== undefined,
+    "child environment sample range does not resolve to retained samples");
+  if (startSample === undefined || endSample === undefined) return issues;
+
+  const beforeMonotonicMs = receipt?.child_environment_window?.before?.monotonic_ms;
+  const afterMonotonicMs = receipt?.child_environment_window?.after?.monotonic_ms;
+  issue(Number.isFinite(beforeMonotonicMs) &&
+    startSample.monotonic_ms <= beforeMonotonicMs,
+  "child environment start sample is after the before boundary");
+  issue(Number.isFinite(afterMonotonicMs) &&
+    endSample.monotonic_ms <= afterMonotonicMs,
+  "child environment end sample is after the after boundary");
+  const nextStartSample = samplesBySequence.get(startSequence + 1);
+  const nextEndSample = samplesBySequence.get(endSequence + 1);
+  issue(nextStartSample === undefined ||
+    nextStartSample.monotonic_ms > beforeMonotonicMs,
+  "child environment start sample is not the latest sample at the before boundary");
+  issue(nextEndSample === undefined ||
+    nextEndSample.monotonic_ms > afterMonotonicMs,
+  "child environment end sample is not the latest sample at the after boundary");
+  return issues;
+}
+
+function childReceiptIssues(receipt, entry, options, frozen, environmentSamples = null) {
+  const issues = [];
+  const issue = (condition, message) => { if (!condition) issues.push(message); };
+  issue(receipt.receipt === "fused-json-m6-dynamic-child" && receipt.version === VERSION,
+    "wrong child receipt schema");
   issue(receipt.schedule_index === entry.index && receipt.process_id === entry.process_id &&
     receipt.order === entry.order && receipt.attempt === 1, "child receipt differs from frozen schedule");
   issue(receipt.commit_argument === options.commit && receipt.fused_json_commit === options.commit &&
@@ -636,6 +694,17 @@ function childReceiptIssues(receipt, entry, options, frozen) {
     receipt.identity_verification_after?.matched === true, "artifact identity verification failed around the child");
   issue(receipt.exit?.spawn_error === null && receipt.exit?.code === 0 && receipt.exit?.signal === null,
     "child did not exit successfully");
+  issues.push(...gateEvidenceIssues(
+    receipt.environment_start_gate,
+    entry.process_id,
+    ENVIRONMENT_POLICY.block_admission_seconds,
+    {environmentSamples, deadline: true},
+  ));
+  issue(startSampleBindingMatches(receipt),
+  "redundant environment start sample sequence differs from gate evidence");
+  issues.push(...childEnvironmentWindowIssues(receipt.child_environment_window));
+  issues.push(...childBoundaryTimingIssues(receipt));
+  issues.push(...childEnvironmentSampleBindingIssues(receipt, environmentSamples));
 
   for (const [label, raw] of Object.entries(receipt.raw ?? {})) {
     try {
@@ -653,8 +722,9 @@ function childReceiptIssues(receipt, entry, options, frozen) {
     issues.push(`task audit did not parse: ${receipt.task_audit_error ?? "unknown error"}`);
   } else {
     issue(receipt.task_audit.exit_status === receipt.exit?.code, "GNU time and wrapper exit statuses differ");
-    issue(receipt.task_audit.reported_cpu_percent >= THRESHOLDS.minimum_task_cpu_percent,
-      `child CPU ${receipt.task_audit.reported_cpu_percent}% is below ${THRESHOLDS.minimum_task_cpu_percent}%`);
+    issue(receipt.task_audit.reported_cpu_percent >=
+      ENVIRONMENT_POLICY.minimum_parser_task_cpu_percent,
+    `child CPU ${receipt.task_audit.reported_cpu_percent}% is below ${ENVIRONMENT_POLICY.minimum_parser_task_cpu_percent}%`);
   }
 
   if (receipt.parsed_output === null) {
@@ -714,7 +784,7 @@ function spawnCaptured(command, environment, stdoutFile, stderrFile,
   });
 }
 
-async function runChild(entry, options, frozen, scratchDirectory, control) {
+async function runChild(entry, options, frozen, scratchDirectory, control, startGate) {
   const before = takeIdentitySnapshot(frozen);
   const environment = childEnvironment(entry, options.commit);
   const auditFile = path.join(scratchDirectory, `process-${String(entry.index).padStart(2, "0")}.time-v.txt`);
@@ -724,14 +794,69 @@ async function runChild(entry, options, frozen, scratchDirectory, control) {
     throw new Error(`process ${entry.index} scratch file already exists`);
   }
   const command = timeCommand(entry, frozen, auditFile);
+  let environmentBoundaryBefore;
+  try {
+    environmentBoundaryBefore = captureChildEnvironmentBoundary(control.tctl_path);
+  } catch (error) {
+    const reason = {
+      kind: "child_environment_read_failure",
+      detail: `${entry.process_id} before: ${errorText(error)}`,
+    };
+    control.monitor.setInvalid(reason);
+    throw new CampaignInvalidError(reason.detail);
+  }
+  if (environmentBoundaryBefore.tctl_c >= ENVIRONMENT_POLICY.invalid_tctl_minimum_c) {
+    const reason = {
+      kind: "child_boundary_temperature",
+      detail: `${entry.process_id} before: Tctl ${environmentBoundaryBefore.tctl_c} C`,
+    };
+    control.monitor.setInvalid(reason);
+    throw new CampaignInvalidError(reason.detail);
+  }
   const startedAt = isoNow();
-  const startedMonotonic = performance.now() / 1_000;
+  const startedMonotonicMs = performance.now();
   const result = await spawnCaptured(command, environment, stdoutFile, stderrFile, {
     detached: true,
     onSpawn: (child) => { control.current_child = child; },
   });
   control.current_child = null;
-  const finishedMonotonic = performance.now() / 1_000;
+  const finishedAt = isoNow();
+  const finishedMonotonicMs = performance.now();
+  let environmentBoundaryAfter = null;
+  let environmentWindow;
+  let environmentEndSampleSequence = null;
+  try {
+    environmentBoundaryAfter = captureChildEnvironmentBoundary(control.tctl_path);
+    environmentEndSampleSequence = control.monitor.samples.at(-1)?.sequence ?? null;
+    environmentWindow = childEnvironmentWindow(
+      environmentBoundaryBefore,
+      environmentBoundaryAfter,
+    );
+    if (environmentBoundaryAfter.tctl_c >= ENVIRONMENT_POLICY.invalid_tctl_minimum_c) {
+      control.monitor.setInvalid({
+        kind: "child_boundary_temperature",
+        detail: `${entry.process_id} after: Tctl ${environmentBoundaryAfter.tctl_c} C`,
+      });
+    } else if (!environmentWindow.within_busy_limit) {
+      control.monitor.setInvalid({
+        kind: "child_window_sibling_cpu",
+        detail: `${entry.process_id}: CPU ${BENCHMARK_SIBLING_CPU} busy ${environmentWindow.cpu_busy_percent}% exceeded ${ENVIRONMENT_POLICY.child_window_sibling_busy_maximum_percent}%`,
+      });
+    }
+  } catch (error) {
+    const reason = {
+      kind: "child_environment_read_failure",
+      detail: `${entry.process_id} after: ${errorText(error)}`,
+    };
+    control.monitor.setInvalid(reason);
+    environmentWindow = {
+      cpu: BENCHMARK_SIBLING_CPU,
+      maximum_busy_percent: ENVIRONMENT_POLICY.child_window_sibling_busy_maximum_percent,
+      before: environmentBoundaryBefore,
+      after: environmentBoundaryAfter,
+      read_error: errorText(error),
+    };
+  }
   let auditBytes = Buffer.alloc(0);
   let auditReadError = null;
   try {
@@ -768,7 +893,7 @@ async function runChild(entry, options, frozen, scratchDirectory, control) {
   }
   const receipt = {
     receipt: "fused-json-m6-dynamic-child",
-    version: 1,
+    version: VERSION,
     schedule_index: entry.index,
     process_id: entry.process_id,
     order: entry.order,
@@ -791,8 +916,14 @@ async function runChild(entry, options, frozen, scratchDirectory, control) {
     identity_verification_before: before,
     identity_verification_after: after,
     started_at: startedAt,
-    finished_at: isoNow(),
-    elapsed_monotonic_seconds: finishedMonotonic - startedMonotonic,
+    finished_at: finishedAt,
+    started_monotonic_ms: startedMonotonicMs,
+    finished_monotonic_ms: finishedMonotonicMs,
+    elapsed_monotonic_seconds: (finishedMonotonicMs - startedMonotonicMs) / 1_000,
+    environment_start_gate: startGate,
+    environment_start_sample_sequence: startGate.admitted_sample_sequence,
+    environment_end_sample_sequence: environmentEndSampleSequence,
+    child_environment_window: environmentWindow,
     exit: {code: result.code, signal: result.signal, spawn_error: result.spawn_error},
     raw,
     parsed_stdout_sha256: parsedOutput === null ? null : raw.stdout.sha256,
@@ -804,7 +935,13 @@ async function runChild(entry, options, frozen, scratchDirectory, control) {
     validity_issues: [],
     valid: false,
   };
-  receipt.validity_issues = childReceiptIssues(receipt, entry, options, frozen);
+  receipt.validity_issues = childReceiptIssues(
+    receipt,
+    entry,
+    options,
+    frozen,
+    control.monitor.samples,
+  );
   receipt.valid = receipt.validity_issues.length === 0;
   return receipt;
 }
@@ -835,10 +972,23 @@ function writeDurableTextNew(target, textValue) {
   fsyncDirectory(path.dirname(target));
 }
 
+function writeAllSync(fd, bytes, writer = fs.writeSync) {
+  const buffer = Buffer.isBuffer(bytes) ? bytes : Buffer.from(bytes);
+  let offset = 0;
+  while (offset < buffer.length) {
+    const remaining = buffer.length - offset;
+    const written = writer(fd, buffer, offset, remaining, null);
+    if (!Number.isSafeInteger(written) || written <= 0 || written > remaining) {
+      throw new Error(`invalid synchronous write length ${written}`);
+    }
+    offset += written;
+  }
+}
+
 function appendDurableJsonLine(target, value) {
   const fd = fs.openSync(target, fs.constants.O_WRONLY | fs.constants.O_APPEND);
   try {
-    fs.writeSync(fd, `${JSON.stringify(value)}\n`, null, "utf8");
+    writeAllSync(fd, Buffer.from(`${JSON.stringify(value)}\n`, "utf8"));
     fs.fsyncSync(fd);
   } finally {
     fs.closeSync(fd);
@@ -912,14 +1062,32 @@ function resolveTctlPath() {
   throw new Error("could not resolve Tctl input");
 }
 
+function parseTctlInput(text) {
+  const rawMillicelsius = typeof text === "string" ? text.trim() : "";
+  if (!/^(?:0|[1-9]\d*)$/.test(rawMillicelsius)) {
+    throw new Error(`invalid Tctl input: ${JSON.stringify(rawMillicelsius)}`);
+  }
+  const millicelsius = Number(rawMillicelsius);
+  if (!Number.isSafeInteger(millicelsius)) throw new Error("unsafe Tctl integer");
+  return {
+    raw_millicelsius: rawMillicelsius,
+    celsius: millicelsius / 1_000,
+  };
+}
+
 function parseCpuCounters(text, cpu) {
-  const match = text.match(new RegExp(`^cpu${cpu}\\s+(.+)$`, "m"));
+  const match = text.match(new RegExp(`^(cpu${cpu}\\s+(.+))$`, "m"));
   if (match === null) throw new Error(`missing CPU ${cpu} counters`);
-  const counters = match[1].trim().split(/\s+/).map((value) => BigInt(value));
-  if (counters.length < 5) throw new Error(`short CPU ${cpu} counters`);
-  const total = counters.reduce((sum, value) => sum + value, 0n);
+  const rawCounters = match[2].trim().split(/\s+/);
+  if (rawCounters.length < 5) throw new Error(`short CPU ${cpu} counters`);
+  if (!rawCounters.every((value) => /^\d+$/.test(value))) {
+    throw new Error(`malformed CPU ${cpu} counters`);
+  }
+  const counters = rawCounters.map((value) => BigInt(value));
+  // guest and guest_nice are already included in user and nice respectively.
+  const total = counters.slice(0, 8).reduce((sum, value) => sum + value, 0n);
   const idle = counters[3] + counters[4];
-  return {total, idle};
+  return {proc_stat_cpu_line: match[1], counters, total, idle};
 }
 
 function cpuBusyPercent(previous, current) {
@@ -932,19 +1100,304 @@ function cpuBusyPercent(previous, current) {
   return Number(total - idle) / Number(total) * 100;
 }
 
-function admissionSampleAcceptable(sample) {
+function gateSampleAcceptable(sample) {
   return sample.read_errors.length === 0 &&
-    sample.cpu2_busy_percent !== null && sample.cpu3_busy_percent !== null &&
-    sample.load1 <= ENVIRONMENT_POLICY.admission_load1_maximum &&
-    sample.load5 <= ENVIRONMENT_POLICY.admission_load5_maximum &&
-    sample.tctl_c <= ENVIRONMENT_POLICY.admission_tctl_maximum_c &&
-    sample.cpu2_busy_percent <= ENVIRONMENT_POLICY.admission_cpu_busy_maximum_percent &&
-    sample.cpu3_busy_percent <= ENVIRONMENT_POLICY.admission_cpu_busy_maximum_percent;
+    Number.isFinite(sample.load1) && Number.isFinite(sample.load5) &&
+    Number.isFinite(sample.tctl_c) && Number.isFinite(sample.cpu2_busy_percent) &&
+    Number.isFinite(sample.cpu3_busy_percent) &&
+    sample.load1 >= 0 &&
+    sample.load5 >= 0 &&
+    sample.tctl_c >= 0 &&
+    sample.cpu2_busy_percent >= 0 &&
+    sample.cpu3_busy_percent >= 0 &&
+    sample.load1 <= ENVIRONMENT_POLICY.gate_load1_maximum &&
+    sample.load5 <= ENVIRONMENT_POLICY.gate_load5_maximum &&
+    sample.tctl_c <= ENVIRONMENT_POLICY.gate_tctl_maximum_c &&
+    sample.cpu2_busy_percent <= ENVIRONMENT_POLICY.gate_sibling_cpu_busy_maximum_percent &&
+    sample.cpu3_busy_percent <= ENVIRONMENT_POLICY.gate_benchmark_cpu_busy_maximum_percent;
 }
 
-function cooldownSampleTimely(startedMonotonicMs, sampleMonotonicMs, evaluatedMonotonicMs) {
-  const deadline = startedMonotonicMs + (ENVIRONMENT_POLICY.cooldown_seconds * 1_000);
+function gateTctlRange(samples) {
+  if (samples.length === 0) return null;
+  const temperaturesMillicelsius = samples.map((sample) => Math.round(sample.tctl_c * 1_000));
+  return (Math.max(...temperaturesMillicelsius) -
+    Math.min(...temperaturesMillicelsius)) / 1_000;
+}
+
+function resetUnstableGateWindow(samples) {
+  if (samples.length > 1 &&
+      gateTctlRange(samples) > ENVIRONMENT_POLICY.gate_tctl_range_maximum_c) {
+    const latest = samples.at(-1);
+    samples.length = 0;
+    samples.push(latest);
+  }
+}
+
+function gateEvidence(label, samples, requiredSeconds, {
+  waitStartedMonotonicMs,
+  absoluteDeadlineMonotonicMs = null,
+  admittedEvaluatedMonotonicMs,
+} = {}) {
+  if (samples.length === 0) throw new Error("gate evidence requires at least one sample");
+  const first = samples[0];
+  const admitted = samples.at(-1);
+  const temperatures = samples.map((sample) => sample.tctl_c);
+  return {
+    policy_name: ENVIRONMENT_POLICY.name,
+    policy_version: ENVIRONMENT_POLICY.version,
+    label,
+    required_continuous_seconds: requiredSeconds,
+    wait_started_monotonic_ms: waitStartedMonotonicMs,
+    block_gate_deadline_seconds: absoluteDeadlineMonotonicMs === null ? null :
+      ENVIRONMENT_POLICY.block_gate_deadline_seconds,
+    absolute_deadline_monotonic_ms: absoluteDeadlineMonotonicMs,
+    admitted_evaluated_monotonic_ms: admittedEvaluatedMonotonicMs,
+    first_acceptable_sample_sequence: first.sequence,
+    first_acceptable_monotonic_ms: first.monotonic_ms,
+    admitted_sample_sequence: admitted.sequence,
+    admitted_monotonic_ms: admitted.monotonic_ms,
+    continuous_seconds: (admitted.monotonic_ms - first.monotonic_ms) / 1_000,
+    sample_sequences: samples.map((sample) => sample.sequence),
+    sample_count: samples.length,
+    tctl_minimum_c: Math.min(...temperatures),
+    tctl_maximum_c: Math.max(...temperatures),
+    tctl_range_c: gateTctlRange(samples),
+  };
+}
+
+function minimumGateSampleCount(requiredSeconds) {
+  return Math.ceil(
+    (requiredSeconds * 1_000) / ENVIRONMENT_POLICY.sample_interval_ms,
+  ) + 1;
+}
+
+function gateEvidenceIssues(evidence, label, requiredSeconds, {
+  environmentSamples = null,
+  deadline = false,
+} = {}) {
+  const issues = [];
+  const issue = (condition, message) => { if (!condition) issues.push(message); };
+  issue(evidence?.policy_name === ENVIRONMENT_POLICY.name &&
+    evidence?.policy_version === ENVIRONMENT_POLICY.version,
+  `${label} gate has the wrong policy identity`);
+  issue(evidence?.label === label && evidence?.required_continuous_seconds === requiredSeconds,
+    `${label} gate has the wrong label or duration`);
+  issue(Array.isArray(evidence?.sample_sequences) && evidence.sample_sequences.length >= 2,
+    `${label} gate has no sample sequence evidence`);
+  const minimumSampleCount = minimumGateSampleCount(requiredSeconds);
+  issue(evidence?.sample_count === evidence?.sample_sequences?.length &&
+    evidence?.sample_count >= minimumSampleCount,
+  `${label} gate has fewer than ${minimumSampleCount} required samples`);
+  if (Array.isArray(evidence?.sample_sequences) && evidence.sample_sequences.length > 0) {
+    issue(evidence.sample_sequences.every((sequence, index, values) =>
+      Number.isSafeInteger(sequence) && (index === 0 || sequence === values[index - 1] + 1)),
+    `${label} gate sample sequences are not contiguous increasing integers`);
+    issue(evidence.first_acceptable_sample_sequence === evidence.sample_sequences[0] &&
+      evidence.admitted_sample_sequence === evidence.sample_sequences.at(-1),
+    `${label} gate endpoints differ from its sample sequences`);
+  }
+  issue(Number.isFinite(evidence?.first_acceptable_monotonic_ms) &&
+    Number.isFinite(evidence?.admitted_monotonic_ms) &&
+    evidence?.continuous_seconds ===
+      (evidence?.admitted_monotonic_ms - evidence?.first_acceptable_monotonic_ms) / 1_000 &&
+    evidence?.continuous_seconds >= requiredSeconds,
+  `${label} gate has inconsistent or insufficient continuous time`);
+  issue(Number.isFinite(evidence?.wait_started_monotonic_ms) &&
+    evidence?.wait_started_monotonic_ms <= evidence?.first_acceptable_monotonic_ms &&
+    Number.isFinite(evidence?.admitted_evaluated_monotonic_ms) &&
+    evidence?.admitted_evaluated_monotonic_ms >= evidence?.admitted_monotonic_ms,
+  `${label} gate has inconsistent wait or evaluation timing`);
+  issue(Number.isFinite(evidence?.tctl_minimum_c) && Number.isFinite(evidence?.tctl_maximum_c) &&
+    evidence?.tctl_range_c === gateTctlRange([
+      {tctl_c: evidence?.tctl_minimum_c},
+      {tctl_c: evidence?.tctl_maximum_c},
+    ]) &&
+    evidence?.tctl_maximum_c <= ENVIRONMENT_POLICY.gate_tctl_maximum_c &&
+    evidence?.tctl_range_c <= ENVIRONMENT_POLICY.gate_tctl_range_maximum_c,
+  `${label} gate has inconsistent or out-of-range Tctl evidence`);
+
+  if (deadline) {
+    issue(evidence?.block_gate_deadline_seconds ===
+      ENVIRONMENT_POLICY.block_gate_deadline_seconds &&
+      evidence?.absolute_deadline_monotonic_ms === evidence?.wait_started_monotonic_ms +
+        (ENVIRONMENT_POLICY.block_gate_deadline_seconds * 1_000) &&
+      blockGateSampleTimely(
+        evidence?.wait_started_monotonic_ms,
+        evidence?.admitted_monotonic_ms,
+        evidence?.admitted_evaluated_monotonic_ms,
+      ),
+    `${label} gate missed or misreported its absolute deadline`);
+  } else {
+    issue(evidence?.block_gate_deadline_seconds === null &&
+      evidence?.absolute_deadline_monotonic_ms === null,
+    `${label} initial gate unexpectedly records a block deadline`);
+  }
+
+  if (Array.isArray(environmentSamples) && Array.isArray(evidence?.sample_sequences)) {
+    const samplesBySequence = new Map();
+    for (const sample of environmentSamples) {
+      if (samplesBySequence.has(sample.sequence)) {
+        issues.push(`${label} environment samples contain duplicate sequence ${sample.sequence}`);
+      }
+      samplesBySequence.set(sample.sequence, sample);
+    }
+    const cited = evidence.sample_sequences.map((sequence) => samplesBySequence.get(sequence));
+    issue(cited.every((sample) => sample !== undefined),
+      `${label} gate cites a missing environment sample`);
+    if (cited.every((sample) => sample !== undefined)) {
+      issue(cited.every((sample) => gateSampleAcceptable(sample)),
+        `${label} gate cites a sample outside the load, CPU, or Tctl limits`);
+      const recomputed = gateEvidence(label, cited, requiredSeconds, {
+        waitStartedMonotonicMs: evidence.wait_started_monotonic_ms,
+        absoluteDeadlineMonotonicMs: evidence.absolute_deadline_monotonic_ms,
+        admittedEvaluatedMonotonicMs: evidence.admitted_evaluated_monotonic_ms,
+      });
+      issue(sameJson(recomputed, evidence),
+        `${label} gate differs when recomputed from environment samples`);
+    }
+  }
+  return issues;
+}
+
+function blockGateSampleTimely(startedMonotonicMs, sampleMonotonicMs, evaluatedMonotonicMs) {
+  const deadline = startedMonotonicMs + (ENVIRONMENT_POLICY.block_gate_deadline_seconds * 1_000);
   return sampleMonotonicMs <= deadline && evaluatedMonotonicMs <= deadline;
+}
+
+function captureChildEnvironmentBoundary(tctlPath) {
+  const observedAt = isoNow();
+  const monotonicMs = performance.now();
+  const counters = parseCpuCounters(
+    fs.readFileSync("/proc/stat", "utf8"),
+    BENCHMARK_SIBLING_CPU,
+  );
+  const tctl = parseTctlInput(fs.readFileSync(tctlPath, "utf8"));
+  return {
+    observed_at: observedAt,
+    monotonic_ms: monotonicMs,
+    proc_stat_cpu_line: counters.proc_stat_cpu_line,
+    counters: counters.counters.map((value) => value.toString()),
+    total_ticks: counters.total.toString(),
+    idle_ticks: counters.idle.toString(),
+    tctl_raw_millicelsius: tctl.raw_millicelsius,
+    tctl_c: tctl.celsius,
+  };
+}
+
+function childEnvironmentWindow(before, after) {
+  const beforeTotal = BigInt(before.total_ticks);
+  const beforeIdle = BigInt(before.idle_ticks);
+  const afterTotal = BigInt(after.total_ticks);
+  const afterIdle = BigInt(after.idle_ticks);
+  const deltaTotal = afterTotal - beforeTotal;
+  const deltaIdle = afterIdle - beforeIdle;
+  const deltaBusy = deltaTotal - deltaIdle;
+  if (deltaTotal <= 0n || deltaIdle < 0n || deltaIdle > deltaTotal) {
+    throw new Error("child-window CPU counters moved backwards or did not advance");
+  }
+  const busyPercent = Number(deltaBusy) / Number(deltaTotal) * 100;
+  return {
+    cpu: BENCHMARK_SIBLING_CPU,
+    maximum_busy_percent: ENVIRONMENT_POLICY.child_window_sibling_busy_maximum_percent,
+    before,
+    after,
+    delta_total_ticks: deltaTotal.toString(),
+    delta_idle_ticks: deltaIdle.toString(),
+    delta_busy_ticks: deltaBusy.toString(),
+    cpu_busy_percent: busyPercent,
+    within_busy_limit:
+      busyPercent <= ENVIRONMENT_POLICY.child_window_sibling_busy_maximum_percent,
+  };
+}
+
+function childEnvironmentWindowIssues(window) {
+  const issues = [];
+  const issue = (condition, message) => { if (!condition) issues.push(message); };
+  issue(sameJson(Object.keys(window ?? {}).sort(), [
+    "after", "before", "cpu", "cpu_busy_percent", "delta_busy_ticks",
+    "delta_idle_ticks", "delta_total_ticks", "maximum_busy_percent", "within_busy_limit",
+  ]), "child environment window has missing or unexpected fields");
+  issue(window?.cpu === BENCHMARK_SIBLING_CPU, "child environment window has the wrong CPU");
+  issue(window?.maximum_busy_percent ===
+    ENVIRONMENT_POLICY.child_window_sibling_busy_maximum_percent,
+  "child environment window has the wrong busy limit");
+  issue(window?.read_error === undefined, `child environment read failed: ${window?.read_error}`);
+
+  for (const position of ["before", "after"]) {
+    const boundary = window?.[position];
+    issue(sameJson(Object.keys(boundary ?? {}).sort(), [
+      "counters", "idle_ticks", "monotonic_ms", "observed_at", "proc_stat_cpu_line",
+      "tctl_c", "tctl_raw_millicelsius", "total_ticks",
+    ]), `${position} child boundary has missing or unexpected fields`);
+    issue(typeof boundary?.observed_at === "string" &&
+      Number.isFinite(Date.parse(boundary.observed_at)),
+    `${position} child boundary has no valid wall time`);
+    issue(Number.isFinite(boundary?.monotonic_ms), `${position} child boundary has no monotonic time`);
+    try {
+      const parsed = parseCpuCounters(`${boundary.proc_stat_cpu_line}\n`, BENCHMARK_SIBLING_CPU);
+      issue(Array.isArray(boundary.counters) && boundary.counters.length >= 5 &&
+        boundary.counters.every((value) => /^\d+$/.test(value)),
+      `${position} child boundary counters are not raw decimal strings`);
+      issue(sameJson(boundary.counters, parsed.counters.map((value) => value.toString())),
+        `${position} child boundary counters differ from the raw CPU line`);
+      issue(boundary.total_ticks === parsed.total.toString() &&
+        boundary.idle_ticks === parsed.idle.toString(),
+      `${position} child boundary totals differ from the raw CPU line`);
+    } catch (error) {
+      issues.push(`${position} child boundary CPU counters: ${errorText(error)}`);
+    }
+    try {
+      issue(typeof boundary.tctl_raw_millicelsius === "string" &&
+        /^(?:0|[1-9]\d*)$/.test(boundary.tctl_raw_millicelsius),
+        `${position} child boundary has malformed raw Tctl`);
+      const rawTctl = Number(boundary.tctl_raw_millicelsius);
+      issue(Number.isSafeInteger(rawTctl) && boundary.tctl_c === rawTctl / 1_000,
+        `${position} child boundary Tctl differs from its raw value`);
+      issue(boundary.tctl_c < ENVIRONMENT_POLICY.invalid_tctl_minimum_c,
+        `${position} child boundary Tctl reached the invalidation threshold`);
+    } catch (error) {
+      issues.push(`${position} child boundary Tctl: ${errorText(error)}`);
+    }
+  }
+
+  try {
+    const recomputed = childEnvironmentWindow(window.before, window.after);
+    issue(sameJson(window, recomputed), "child environment window differs when recomputed");
+  } catch (error) {
+    issues.push(`child environment window recompute failed: ${errorText(error)}`);
+  }
+  issue(Number.isFinite(window?.cpu_busy_percent), "child environment window busy percent is unavailable");
+  issue(window?.cpu_busy_percent <=
+    ENVIRONMENT_POLICY.child_window_sibling_busy_maximum_percent,
+  `child-window CPU ${BENCHMARK_SIBLING_CPU} exceeded ${ENVIRONMENT_POLICY.child_window_sibling_busy_maximum_percent}%`);
+  issue(window?.within_busy_limit === true, "child environment window is outside its busy limit");
+  return issues;
+}
+
+function childBoundaryTimingIssues(receipt) {
+  const issues = [];
+  const before = receipt.child_environment_window?.before;
+  const after = receipt.child_environment_window?.after;
+  if (!(Number.isFinite(receipt.started_monotonic_ms) &&
+        Number.isFinite(receipt.finished_monotonic_ms) &&
+        before?.monotonic_ms <= receipt.started_monotonic_ms &&
+        receipt.started_monotonic_ms <= receipt.finished_monotonic_ms &&
+        receipt.finished_monotonic_ms <= after?.monotonic_ms)) {
+    issues.push("child environment monotonic boundaries do not enclose the measured process");
+  }
+  if (receipt.elapsed_monotonic_seconds !==
+      (receipt.finished_monotonic_ms - receipt.started_monotonic_ms) / 1_000) {
+    issues.push("child elapsed monotonic time differs from its boundaries");
+  }
+  const startedWallMs = Date.parse(receipt.started_at);
+  const finishedWallMs = Date.parse(receipt.finished_at);
+  if (!(Number.isFinite(startedWallMs) && Number.isFinite(finishedWallMs) &&
+        Date.parse(before?.observed_at) <= startedWallMs &&
+        startedWallMs <= finishedWallMs &&
+        finishedWallMs <= Date.parse(after?.observed_at))) {
+    issues.push("child environment wall-clock boundaries do not enclose the measured process");
+  }
+  return issues;
 }
 
 function environmentInvalidation(policyState, sample) {
@@ -966,16 +1419,169 @@ function environmentInvalidation(policyState, sample) {
   if (policyState.load_breaches >= ENVIRONMENT_POLICY.consecutive_breach_samples) {
     return {
       kind: "load",
-      detail: `load1 exceeded 4.0 for ${policyState.load_breaches} consecutive samples`,
+      detail: `load1 exceeded ${ENVIRONMENT_POLICY.invalid_load1_strictly_greater_than} for ${policyState.load_breaches} consecutive samples`,
     };
   }
   if (policyState.sibling_breaches >= ENVIRONMENT_POLICY.consecutive_breach_samples) {
     return {
       kind: "sibling_cpu",
-      detail: `CPU ${BENCHMARK_SIBLING_CPU} exceeded 20% for ${policyState.sibling_breaches} consecutive samples`,
+      detail: `CPU ${BENCHMARK_SIBLING_CPU} exceeded ${ENVIRONMENT_POLICY.invalid_sibling_busy_strictly_greater_than_percent}% for ${policyState.sibling_breaches} consecutive samples`,
     };
   }
   return null;
+}
+
+function replayEnvironmentSamples(samples) {
+  const issues = [];
+  const invalidations = [];
+  const policyState = {load_breaches: 0, sibling_breaches: 0};
+  if (!Array.isArray(samples) || samples.length === 0) {
+    return {
+      policy_name: ENVIRONMENT_POLICY.name,
+      policy_version: ENVIRONMENT_POLICY.version,
+      sample_count: Array.isArray(samples) ? samples.length : null,
+      invalidations,
+      issues: ["environment replay requires retained samples"],
+      passed: false,
+    };
+  }
+  let previousMonotonicMs = null;
+  for (let index = 0; index < samples.length; index += 1) {
+    const sample = samples[index];
+    const issue = (condition, message) => { if (!condition) issues.push(message); };
+    if (sample?.sequence !== index || !Number.isSafeInteger(sample?.sequence)) {
+      issues.push(`environment sample ${index} has sequence ${sample?.sequence}`);
+    }
+    issue(typeof sample?.label === "string" && sample.label.length > 0,
+      `environment sample ${index} has an invalid label`);
+    issue(typeof sample?.observed_at === "string" &&
+      Number.isFinite(Date.parse(sample.observed_at)),
+    `environment sample ${index} has an invalid wall time`);
+    issue(Number.isFinite(sample?.monotonic_ms) && sample.monotonic_ms >= 0,
+      `environment sample ${index} has invalid monotonic time`);
+    if (previousMonotonicMs !== null) {
+      issue(sample?.monotonic_ms > previousMonotonicMs,
+        `environment sample ${index} monotonic time did not advance`);
+    }
+    issue(Array.isArray(sample?.read_errors) &&
+      sample.read_errors.every((entry) => typeof entry === "string" && entry.length > 0),
+    `environment sample ${index} has malformed read_errors`);
+    for (const [field, maximum] of [
+      ["load1", Number.POSITIVE_INFINITY],
+      ["load5", Number.POSITIVE_INFINITY],
+      ["tctl_c", Number.POSITIVE_INFINITY],
+    ]) {
+      issue(Number.isFinite(sample?.[field]) && sample[field] >= 0 &&
+        sample[field] <= maximum,
+      `environment sample ${index} has invalid ${field}`);
+    }
+    for (const field of ["cpu2_busy_percent", "cpu3_busy_percent"]) {
+      const valid = index === 0 ? sample?.[field] === null :
+        Number.isFinite(sample?.[field]) && sample[field] >= 0 && sample[field] <= 100;
+      issue(valid, `environment sample ${index} has invalid ${field}`);
+    }
+    const frequencyValid =
+      (Number.isFinite(sample?.cpu3_scaling_cur_freq_khz) &&
+        sample.cpu3_scaling_cur_freq_khz > 0 && sample?.cpu3_frequency_error === null) ||
+      (sample?.cpu3_scaling_cur_freq_khz === null &&
+        typeof sample?.cpu3_frequency_error === "string" &&
+        sample.cpu3_frequency_error.length > 0);
+    issue(frequencyValid,
+      `environment sample ${index} has malformed diagnostic frequency evidence`);
+    const expectedGap = previousMonotonicMs === null ? null :
+      (sample.monotonic_ms - previousMonotonicMs) / 1_000;
+    if (sample?.gap_seconds !== expectedGap) {
+      issues.push(`environment sample ${index} gap differs from retained monotonic times`);
+    }
+    previousMonotonicMs = sample?.monotonic_ms;
+    try {
+      const reason = environmentInvalidation(policyState, sample);
+      if (reason !== null) {
+        invalidations.push({sample_sequence: sample.sequence, ...reason});
+      }
+    } catch (error) {
+      issues.push(`environment sample ${index} replay failed: ${errorText(error)}`);
+    }
+  }
+  return {
+    policy_name: ENVIRONMENT_POLICY.name,
+    policy_version: ENVIRONMENT_POLICY.version,
+    sample_count: samples.length,
+    invalidations,
+    issues,
+    passed: issues.length === 0 && invalidations.length === 0,
+  };
+}
+
+function chronologyAudit(admission, observations, schedule) {
+  const issues = [];
+  const timeline = [];
+  if (admission === null || !Number.isFinite(admission?.admitted_evaluated_monotonic_ms) ||
+      !Number.isSafeInteger(admission?.admitted_sample_sequence)) {
+    issues.push("chronology has no valid initial-admission endpoint");
+  }
+  let previousEndpoint = admission?.admitted_evaluated_monotonic_ms ?? null;
+  let previousEndSequence = admission?.admitted_sample_sequence ?? null;
+  for (let index = 0; index < observations.length; index += 1) {
+    const observation = observations[index];
+    const expected = schedule[index];
+    const gate = observation?.environment_start_gate;
+    const before = observation?.child_environment_window?.before;
+    const after = observation?.child_environment_window?.after;
+    if (expected === undefined || observation?.schedule_index !== expected.index ||
+        observation?.process_id !== expected.process_id || observation?.order !== expected.order) {
+      issues.push(`observation ${index} differs from the frozen schedule`);
+    }
+    if (!(Number.isFinite(gate?.wait_started_monotonic_ms) &&
+          Number.isFinite(gate?.first_acceptable_monotonic_ms) &&
+          Number.isFinite(gate?.admitted_monotonic_ms) &&
+          Number.isFinite(gate?.admitted_evaluated_monotonic_ms) &&
+          Number.isFinite(before?.monotonic_ms) && Number.isFinite(after?.monotonic_ms))) {
+      issues.push(`observation ${index} has incomplete chronology fields`);
+    } else {
+      if (!(previousEndpoint < gate.wait_started_monotonic_ms &&
+            gate.wait_started_monotonic_ms < gate.first_acceptable_monotonic_ms)) {
+        issues.push(`observation ${index} gate starts before the preceding endpoint`);
+      }
+      if (!(gate.admitted_monotonic_ms <= gate.admitted_evaluated_monotonic_ms &&
+            gate.admitted_evaluated_monotonic_ms < before.monotonic_ms)) {
+        issues.push(`observation ${index} gate admission does not precede its child boundary`);
+      }
+      if (before.monotonic_ms >= after.monotonic_ms) {
+        issues.push(`observation ${index} child boundaries overlap backwards`);
+      }
+      previousEndpoint = after.monotonic_ms;
+    }
+    if (!(Number.isSafeInteger(gate?.first_acceptable_sample_sequence) &&
+          Number.isSafeInteger(observation?.environment_start_sample_sequence) &&
+          Number.isSafeInteger(observation?.environment_end_sample_sequence) &&
+          previousEndSequence < gate.first_acceptable_sample_sequence &&
+          gate.admitted_sample_sequence === observation.environment_start_sample_sequence &&
+          observation.environment_start_sample_sequence <=
+            observation.environment_end_sample_sequence)) {
+      issues.push(`observation ${index} does not use fresh post-predecessor samples`);
+    }
+    previousEndSequence = observation?.environment_end_sample_sequence ?? null;
+    timeline.push({
+      schedule_index: observation?.schedule_index ?? null,
+      process_id: observation?.process_id ?? null,
+      gate_wait_started_monotonic_ms: gate?.wait_started_monotonic_ms ?? null,
+      gate_admitted_evaluated_monotonic_ms:
+        gate?.admitted_evaluated_monotonic_ms ?? null,
+      gate_first_acceptable_sample_sequence:
+        gate?.first_acceptable_sample_sequence ?? null,
+      environment_start_sample_sequence:
+        observation?.environment_start_sample_sequence ?? null,
+      environment_end_sample_sequence:
+        observation?.environment_end_sample_sequence ?? null,
+      child_before_monotonic_ms: before?.monotonic_ms ?? null,
+      child_after_monotonic_ms: after?.monotonic_ms ?? null,
+    });
+  }
+  if (observations.length !== schedule.length) {
+    issues.push(`chronology retained ${observations.length}/${schedule.length} scheduled observations`);
+  }
+  return {issues, timeline, passed: issues.length === 0};
 }
 
 class EnvironmentMonitor {
@@ -1047,8 +1653,9 @@ class EnvironmentMonitor {
       sample.read_errors.push(`loadavg: ${errorText(error)}`);
     }
     try {
-      sample.tctl_c = Number(fs.readFileSync(this.tctl_path, "utf8").trim()) / 1_000;
-      if (!Number.isFinite(sample.tctl_c)) throw new Error("nonfinite Tctl");
+      sample.tctl_c = parseTctlInput(
+        fs.readFileSync(this.tctl_path, "utf8"),
+      ).celsius;
     } catch (error) {
       sample.read_errors.push(`Tctl: ${errorText(error)}`);
     }
@@ -1108,60 +1715,54 @@ class EnvironmentMonitor {
     }
   }
 
-  async awaitAdmission() {
-    let sequence = this.samples.at(-1).sequence;
-    let streakStart = null;
-    let firstSequence = null;
-    while (true) {
-      const sample = await this.waitForSampleAfter(sequence);
-      sequence = sample.sequence;
-      this.assertValid();
-      if (!admissionSampleAcceptable(sample)) {
-        streakStart = null;
-        firstSequence = null;
-        continue;
-      }
-      if (streakStart === null) {
-        streakStart = sample.monotonic_ms;
-        firstSequence = sample.sequence;
-      }
-      if ((sample.monotonic_ms - streakStart) / 1_000 >= ENVIRONMENT_POLICY.admission_seconds) {
-        return {
-          first_acceptable_sample_sequence: firstSequence,
-          first_acceptable_monotonic_ms: streakStart,
-          admitted_sample_sequence: sample.sequence,
-          admitted_monotonic_ms: sample.monotonic_ms,
-          continuous_seconds: (sample.monotonic_ms - streakStart) / 1_000,
-        };
-      }
-    }
-  }
-
-  async awaitObservationStart(label) {
+  async awaitGate(label, requiredSeconds, {deadline = false} = {}) {
+    this.assertValid();
     const started = performance.now();
-    const deadline = started + (ENVIRONMENT_POLICY.cooldown_seconds * 1_000);
+    const absoluteDeadline = started +
+      (ENVIRONMENT_POLICY.block_gate_deadline_seconds * 1_000);
     let sequence = this.samples.at(-1).sequence;
+    const acceptableSamples = [];
     while (true) {
       const sample = await this.waitForSampleAfter(sequence);
       sequence = sample.sequence;
       this.assertValid();
       const evaluated = performance.now();
-      if (!cooldownSampleTimely(started, sample.monotonic_ms, evaluated)) {
+      if (deadline && !blockGateSampleTimely(started, sample.monotonic_ms, evaluated)) {
         const reason = {
-          kind: "cooldown_timeout",
-          detail: `${label} did not reach Tctl <= 70 C by the absolute 180-second deadline`,
+          kind: "block_gate_timeout",
+          detail: `${label} did not sustain the ${requiredSeconds}-second ${ENVIRONMENT_POLICY.name} gate by the absolute ${ENVIRONMENT_POLICY.block_gate_deadline_seconds}-second deadline`,
           started_monotonic_ms: started,
-          deadline_monotonic_ms: deadline,
+          deadline_monotonic_ms: absoluteDeadline,
           sample_monotonic_ms: sample.monotonic_ms,
           evaluated_monotonic_ms: evaluated,
         };
         this.setInvalid(reason);
         throw new CampaignInvalidError(reason.detail);
       }
-      if (sample.tctl_c <= ENVIRONMENT_POLICY.start_tctl_maximum_c) {
-        return {...sample, start_label: label};
+      if (!gateSampleAcceptable(sample)) {
+        acceptableSamples.length = 0;
+        continue;
+      }
+      acceptableSamples.push(sample);
+      resetUnstableGateWindow(acceptableSamples);
+      const evidence = gateEvidence(label, acceptableSamples, requiredSeconds, {
+        waitStartedMonotonicMs: started,
+        absoluteDeadlineMonotonicMs: deadline ? absoluteDeadline : null,
+        admittedEvaluatedMonotonicMs: evaluated,
+      });
+      if (evidence.continuous_seconds >= requiredSeconds &&
+          evidence.sample_count >= minimumGateSampleCount(requiredSeconds)) {
+        return evidence;
       }
     }
+  }
+
+  awaitAdmission() {
+    return this.awaitGate("initial-admission", ENVIRONMENT_POLICY.initial_admission_seconds);
+  }
+
+  awaitObservationStart(label) {
+    return this.awaitGate(label, ENVIRONMENT_POLICY.block_admission_seconds, {deadline: true});
   }
 }
 
@@ -1194,7 +1795,10 @@ function baseReceipt(options, frozen, schedule) {
       runner_cpu: RUNNER_CPU,
       wrapper: "GNU time -v around taskset -c 3",
       parameters: PARAMETERS,
-      task_cpu_validity: {comparison: ">=", percent: THRESHOLDS.minimum_task_cpu_percent},
+      task_cpu_validity: {
+        comparison: ">=",
+        percent: ENVIRONMENT_POLICY.minimum_parser_task_cpu_percent,
+      },
       environment_policy: ENVIRONMENT_POLICY,
       thermal_monitor: "owned by this dynamic-gate run; samples are durable in the environment journal",
       exclusions: "none; any child, identity, monitor, task-CPU, or receipt failure invalidates the complete run",
@@ -1383,21 +1987,27 @@ async function runCampaign(options) {
   try {
     runtime.monitor.start();
     runtime.admission = await runtime.monitor.awaitAdmission();
+    const admissionIssues = gateEvidenceIssues(
+      runtime.admission,
+      "initial-admission",
+      ENVIRONMENT_POLICY.initial_admission_seconds,
+      {environmentSamples: runtime.monitor.samples},
+    );
+    if (admissionIssues.length > 0) {
+      throw new CampaignInvalidError(`initial admission audit failed: ${admissionIssues.join("; ")}`);
+    }
     event("environment-admitted", runtime.admission);
     for (const entry of schedule) {
       if (runtime.interruption !== null) {
         throw new CampaignInvalidError(`interrupted by ${runtime.interruption.signal}`);
       }
       runtime.monitor.assertValid();
-      const startSample = await runtime.monitor.awaitObservationStart(entry.process_id);
+      const startGate = await runtime.monitor.awaitObservationStart(entry.process_id);
       event("process-start-admitted", {
         process_id: entry.process_id,
-        sample_sequence: startSample.sequence,
-        tctl_c: startSample.tctl_c,
+        gate: startGate,
       });
-      const observation = await runChild(entry, options, frozen, scratch, runtime);
-      observation.environment_start_sample_sequence = startSample.sequence;
-      observation.environment_end_sample_sequence = runtime.monitor.samples.at(-1)?.sequence ?? null;
+      const observation = await runChild(entry, options, frozen, scratch, runtime, startGate);
       if (runtime.invalid_reason !== null) {
         observation.validity_issues.push(
           `environment invalidated: ${runtime.invalid_reason.kind}: ${runtime.invalid_reason.detail}`,
@@ -1446,6 +2056,92 @@ async function runCampaign(options) {
   if (!finalIdentityVerification.matched) {
     invalidReasons.push(...finalIdentityVerification.mismatches.map((mismatch) => `final identity: ${mismatch}`));
   }
+  const gateAudit = {
+    policy_name: ENVIRONMENT_POLICY.name,
+    policy_version: ENVIRONMENT_POLICY.version,
+    initial_admission: null,
+    process_starts: [],
+    passed: true,
+  };
+  if (runtime.admission !== null) {
+    const issues = gateEvidenceIssues(
+      runtime.admission,
+      "initial-admission",
+      ENVIRONMENT_POLICY.initial_admission_seconds,
+      {environmentSamples: runtime.monitor.samples},
+    );
+    gateAudit.initial_admission = {issues, passed: issues.length === 0};
+    for (const issue of issues) invalidReasons.push(`initial admission audit: ${issue}`);
+  } else {
+    gateAudit.passed = false;
+  }
+  for (const observation of observations) {
+    const issues = gateEvidenceIssues(
+      observation.environment_start_gate,
+      observation.process_id,
+      ENVIRONMENT_POLICY.block_admission_seconds,
+      {environmentSamples: runtime.monitor.samples, deadline: true},
+    );
+    gateAudit.process_starts.push({process_id: observation.process_id, issues, passed: issues.length === 0});
+    for (const issue of issues) invalidReasons.push(`${observation.process_id} gate audit: ${issue}`);
+  }
+  gateAudit.passed = gateAudit.passed &&
+    gateAudit.initial_admission?.passed === true &&
+    gateAudit.process_starts.length === schedule.length &&
+    gateAudit.process_starts.every((entry) => entry.passed);
+
+  const environmentReplay = replayEnvironmentSamples(runtime.monitor.samples);
+  for (const issue of environmentReplay.issues) {
+    invalidReasons.push(`environment replay: ${issue}`);
+  }
+  for (const invalidation of environmentReplay.invalidations) {
+    invalidReasons.push(
+      `environment replay sample ${invalidation.sample_sequence}: ${invalidation.kind}: ${invalidation.detail}`,
+    );
+  }
+
+  const childReceiptAudit = {
+    expected_observations: schedule.length,
+    audited_observations: observations.length,
+    entries: [],
+    passed: observations.length === schedule.length,
+  };
+  for (let index = 0; index < observations.length; index += 1) {
+    const observation = observations[index];
+    const entry = schedule[index];
+    let issues;
+    try {
+      issues = entry === undefined ? ["no corresponding frozen schedule entry"] :
+        childReceiptIssues(
+          observation,
+          entry,
+          options,
+          frozen,
+          runtime.monitor.samples,
+        );
+    } catch (error) {
+      issues = [`child receipt replay failed: ${errorText(error)}`];
+    }
+    childReceiptAudit.entries.push({
+      schedule_index: observation?.schedule_index ?? null,
+      process_id: observation?.process_id ?? null,
+      issues,
+      passed: issues.length === 0,
+    });
+    for (const issue of issues) {
+      invalidReasons.push(`${observation?.process_id ?? `observation-${index}`} child replay: ${issue}`);
+    }
+  }
+  if (observations.length !== schedule.length) {
+    invalidReasons.push(
+      `child receipt replay incomplete: audited ${observations.length}/${schedule.length}`,
+    );
+  }
+  childReceiptAudit.passed = childReceiptAudit.passed &&
+    childReceiptAudit.entries.every((entry) => entry.passed);
+
+  const chronology = chronologyAudit(runtime.admission, observations, schedule);
+  for (const issue of chronology.issues) invalidReasons.push(`chronology replay: ${issue}`);
 
   let analysis = null;
   let analysisError = null;
@@ -1478,10 +2174,16 @@ async function runCampaign(options) {
       sample_count: runtime.monitor.samples.length,
       samples: runtime.monitor.samples,
       journal: options.environment_journal,
+      gate_audit: gateAudit,
     },
     completed_processes: observations.length,
     observations,
     final_identity_verification: finalIdentityVerification,
+    independent_audits: {
+      environment_replay: environmentReplay,
+      child_receipts: childReceiptAudit,
+      chronology,
+    },
     analysis,
     analysis_error: analysisError,
     gates,
@@ -1579,6 +2281,10 @@ function syntheticObservation(entry, corpusMedians, sampleMultiplier) {
 
 function runSelfAudit() {
   const checks = {};
+  if (VERSION !== 2 || ENVIRONMENT_POLICY.version !== 2) {
+    throw new Error("dynamic receipt or environment policy schema is not v2");
+  }
+  checks.schema = "dynamic receipts and busy-pinned environment policy are explicitly version 2";
   const schedule = buildSchedule();
   assertSchedule(schedule);
   if (schedule.filter((entry) => entry.order === "normal").length !== 3 ||
@@ -1644,32 +2350,203 @@ function runSelfAudit() {
   expectThrow("missing corpus result", () => analyzeObservations(missingCorpus, schedule));
   checks.incomplete_data = "rejected missing process, invalid child, missing corpus, and unevaluable analysis";
 
+  const parsedTctl = parseTctlInput("94000\n");
+  if (parsedTctl.raw_millicelsius !== "94000" || parsedTctl.celsius !== 94) {
+    throw new Error("strict Tctl parser produced the wrong value");
+  }
+  for (const malformedTctl of [
+    "", " \n", "-1", "094000", "94.0", "+94000", "NaN", "1e5",
+    "9007199254740992",
+  ]) {
+    expectThrow(`malformed Tctl ${JSON.stringify(malformedTctl)}`, () =>
+      parseTctlInput(malformedTctl));
+  }
+  checks.sensor_input = "strict integer Tctl parsing rejects empty, malformed, and unsafe sensor reads";
+
   const environmentBase = {
+    sequence: 0,
+    label: "monitor",
+    observed_at: "2026-08-24T00:00:00.000Z",
+    monotonic_ms: 1_000,
     read_errors: [],
     gap_seconds: 2,
-    tctl_c: 70,
-    load1: 2.5,
-    load5: 2.5,
-    cpu2_busy_percent: 10,
+    tctl_c: 94,
+    load1: 5,
+    load5: 5,
+    cpu2_busy_percent: 25,
     cpu3_busy_percent: 10,
+    cpu3_scaling_cur_freq_khz: 4_000_000,
+    cpu3_frequency_error: null,
   };
-  if (!admissionSampleAcceptable(environmentBase) ||
-      admissionSampleAcceptable({...environmentBase, cpu3_busy_percent: 10.001})) {
-    throw new Error("environment admission boundary self-audit failed");
+  if (!sameJson(ENVIRONMENT_POLICY, {
+    name: "busy-pinned-v2",
+    version: 2,
+    sample_interval_ms: 2_000,
+    initial_admission_seconds: 60,
+    block_admission_seconds: 6,
+    gate_load1_maximum: 5,
+    gate_load5_maximum: 5,
+    gate_tctl_maximum_c: 94,
+    gate_tctl_range_maximum_c: 5,
+    gate_sibling_cpu_busy_maximum_percent: 25,
+    gate_benchmark_cpu_busy_maximum_percent: 10,
+    block_gate_deadline_seconds: 180,
+    invalid_tctl_minimum_c: 100,
+    invalid_load1_strictly_greater_than: 7,
+    invalid_sibling_busy_strictly_greater_than_percent: 35,
+    consecutive_breach_samples: 2,
+    maximum_monitor_gap_seconds: 5,
+    minimum_parser_task_cpu_percent: 99,
+    child_window_sibling_busy_maximum_percent: 25,
+    cpu_frequency_policy: "diagnostic-only; never gates, excludes, or normalizes",
+  })) {
+    throw new Error("busy-pinned-v2 policy identity or thresholds changed");
+  }
+  if (!gateSampleAcceptable(environmentBase) ||
+      gateSampleAcceptable({...environmentBase, load1: 5.001}) ||
+      gateSampleAcceptable({...environmentBase, load5: 5.001}) ||
+      gateSampleAcceptable({...environmentBase, tctl_c: 94.001}) ||
+      gateSampleAcceptable({...environmentBase, cpu2_busy_percent: 25.001}) ||
+      gateSampleAcceptable({...environmentBase, cpu3_busy_percent: 10.001}) ||
+      gateSampleAcceptable({...environmentBase, load1: -0.001}) ||
+      gateSampleAcceptable({...environmentBase, tctl_c: -0.001}) ||
+      gateSampleAcceptable({...environmentBase, cpu2_busy_percent: -0.001})) {
+    throw new Error("environment gate boundary self-audit failed");
+  }
+  const stableGateSamples = Array.from({length: 31}, (_, index) => ({
+    ...environmentBase,
+    sequence: index + 1,
+    monotonic_ms: 1_000 + (index * 2_000),
+    tctl_c: index % 2 === 0 ? 89 : 94,
+  }));
+  if (gateTctlRange(stableGateSamples) !== 5) {
+    throw new Error("inclusive Tctl range boundary self-audit failed");
+  }
+  const admissionEvidence = gateEvidence(
+    "initial-admission",
+    stableGateSamples,
+    ENVIRONMENT_POLICY.initial_admission_seconds,
+    {
+      waitStartedMonotonicMs: 999,
+      admittedEvaluatedMonotonicMs: 61_001,
+    },
+  );
+  if (admissionEvidence.continuous_seconds !== 60 ||
+      admissionEvidence.sample_sequences.length !== 31 ||
+      admissionEvidence.sample_count !== 31 ||
+      admissionEvidence.tctl_range_c !== 5 ||
+      admissionEvidence.policy_name !== "busy-pinned-v2" ||
+      admissionEvidence.policy_version !== 2 ||
+      gateEvidenceIssues(admissionEvidence, "initial-admission", 60, {
+        environmentSamples: stableGateSamples,
+      }).length !== 0) {
+    throw new Error("gate evidence self-audit failed");
+  }
+  const sparseAdmissionSamples = Array.from({length: 30}, (_, index) => ({
+    ...environmentBase,
+    sequence: index + 1,
+    monotonic_ms: 1_000 + Math.round(index * (60_000 / 29)),
+    tctl_c: 90,
+  }));
+  const sparseAdmissionEvidence = gateEvidence(
+    "initial-admission",
+    sparseAdmissionSamples,
+    ENVIRONMENT_POLICY.initial_admission_seconds,
+    {
+      waitStartedMonotonicMs: 999,
+      admittedEvaluatedMonotonicMs: 61_001,
+    },
+  );
+  if (sparseAdmissionEvidence.continuous_seconds !== 60 ||
+      gateEvidenceIssues(sparseAdmissionEvidence, "initial-admission", 60, {
+        environmentSamples: sparseAdmissionSamples,
+      }).length === 0) {
+    throw new Error("sparse 60-second gate window was accepted");
+  }
+  const blockEvidence = gateEvidence(
+    "synthetic-block",
+    stableGateSamples.slice(0, 4),
+    ENVIRONMENT_POLICY.block_admission_seconds,
+    {
+      waitStartedMonotonicMs: 999,
+      absoluteDeadlineMonotonicMs: 180_999,
+      admittedEvaluatedMonotonicMs: 7_001,
+    },
+  );
+  if (blockEvidence.continuous_seconds !== 6 ||
+      gateEvidenceIssues(blockEvidence, "synthetic-block", 6, {
+        environmentSamples: stableGateSamples,
+        deadline: true,
+      }).length !== 0) {
+    throw new Error("six-second block gate self-audit failed");
+  }
+  const alteredEvidence = structuredClone(blockEvidence);
+  alteredEvidence.tctl_range_c = 5.001;
+  if (gateEvidenceIssues(alteredEvidence, "synthetic-block", 6, {
+    environmentSamples: stableGateSamples,
+    deadline: true,
+  }).length === 0) {
+    throw new Error("out-of-range block gate evidence was accepted");
+  }
+  const contaminatedGateSamples = structuredClone(stableGateSamples);
+  contaminatedGateSamples[2].load1 = 5.001;
+  if (gateEvidenceIssues(blockEvidence, "synthetic-block", 6, {
+    environmentSamples: contaminatedGateSamples,
+    deadline: true,
+  }).length === 0) {
+    throw new Error("gate evidence accepted an out-of-limit cited environment sample");
+  }
+  const gappedEvidence = structuredClone(blockEvidence);
+  gappedEvidence.sample_sequences[2] += 1;
+  if (gateEvidenceIssues(gappedEvidence, "synthetic-block", 6, {
+    environmentSamples: stableGateSamples,
+    deadline: true,
+  }).length === 0) {
+    throw new Error("gate evidence accepted noncontiguous sample sequences");
+  }
+  const deadlineEqualityEvidence = structuredClone(blockEvidence);
+  deadlineEqualityEvidence.admitted_evaluated_monotonic_ms = 180_999;
+  if (gateEvidenceIssues(deadlineEqualityEvidence, "synthetic-block", 6, {
+    environmentSamples: stableGateSamples,
+    deadline: true,
+  }).length !== 0) {
+    throw new Error("inclusive absolute block deadline was rejected");
+  }
+  const lateEvidence = structuredClone(deadlineEqualityEvidence);
+  lateEvidence.admitted_evaluated_monotonic_ms += 0.001;
+  if (gateEvidenceIssues(lateEvidence, "synthetic-block", 6, {
+    environmentSamples: stableGateSamples,
+    deadline: true,
+  }).length === 0) {
+    throw new Error("late absolute block deadline was accepted");
+  }
+  const unstableGateSamples = [
+    {...environmentBase, sequence: 1, tctl_c: 88},
+    {...environmentBase, sequence: 2, monotonic_ms: 3_000, tctl_c: 94},
+  ];
+  resetUnstableGateWindow(unstableGateSamples);
+  if (unstableGateSamples.length !== 1 || unstableGateSamples[0].sequence !== 2) {
+    throw new Error("Tctl range suffix reset self-audit failed");
   }
   let environmentState = {load_breaches: 0, sibling_breaches: 0};
-  if (environmentInvalidation(environmentState, {...environmentBase, load1: 4.1}) !== null ||
-      environmentInvalidation(environmentState, {...environmentBase, load1: 4.1})?.kind !== "load") {
+  if (environmentInvalidation(environmentState, {...environmentBase, load1: 7}) !== null ||
+      environmentInvalidation(environmentState, {...environmentBase, load1: 7}) !== null ||
+      environmentInvalidation(environmentState, {...environmentBase, load1: 7.001}) !== null ||
+      environmentInvalidation(environmentState, {...environmentBase, load1: 7.001})?.kind !== "load") {
     throw new Error("two-sample load invalidation self-audit failed");
   }
   environmentState = {load_breaches: 0, sibling_breaches: 0};
-  environmentInvalidation(environmentState, {...environmentBase, cpu2_busy_percent: 21});
+  if (environmentInvalidation(environmentState, {...environmentBase, cpu2_busy_percent: 35}) !== null) {
+    throw new Error("inclusive sibling invalidation boundary self-audit failed");
+  }
+  environmentInvalidation(environmentState, {...environmentBase, cpu2_busy_percent: 35.001});
   environmentInvalidation(environmentState, environmentBase);
-  if (environmentInvalidation(environmentState, {...environmentBase, cpu2_busy_percent: 21}) !== null) {
+  if (environmentInvalidation(environmentState, {...environmentBase, cpu2_busy_percent: 35.001}) !== null ||
+      environmentInvalidation(environmentState, {...environmentBase, cpu2_busy_percent: 35.001})?.kind !== "sibling_cpu") {
     throw new Error("sibling-CPU breach reset self-audit failed");
   }
   if (environmentInvalidation(
-    {load_breaches: 0, sibling_breaches: 0}, {...environmentBase, tctl_c: 95},
+    {load_breaches: 0, sibling_breaches: 0}, {...environmentBase, tctl_c: 100},
   )?.kind !== "temperature" || environmentInvalidation(
     {load_breaches: 0, sibling_breaches: 0}, {...environmentBase, gap_seconds: 5.001},
   )?.kind !== "monitor_gap" || environmentInvalidation(
@@ -1677,14 +2554,200 @@ function runSelfAudit() {
   )?.kind !== "environment_read_failure") {
     throw new Error("environment hard-invalidation self-audit failed");
   }
+
+  const replaySamples = [
+    {...environmentBase, sequence: 0, label: "monitor-start", monotonic_ms: 1_000,
+      gap_seconds: null, load1: 7, tctl_c: 99.999,
+      cpu2_busy_percent: null, cpu3_busy_percent: null},
+    {...environmentBase, sequence: 1, label: "monitor", monotonic_ms: 3_000, gap_seconds: 2,
+      load1: 7, tctl_c: 99.999, cpu2_busy_percent: 35},
+  ];
+  if (!replayEnvironmentSamples(replaySamples).passed) {
+    throw new Error("valid retained environment samples failed replay");
+  }
+  const loadReplaySamples = structuredClone(replaySamples);
+  loadReplaySamples[0].load1 = 7.001;
+  loadReplaySamples[1].load1 = 7.001;
+  const loadReplay = replayEnvironmentSamples(loadReplaySamples);
+  if (loadReplay.invalidations.length !== 1 ||
+      loadReplay.invalidations[0].kind !== "load" ||
+      loadReplay.invalidations[0].sample_sequence !== 1) {
+    throw new Error("environment replay did not reproduce the two-sample load breach");
+  }
+  const sensorReplaySamples = [
+    {...replaySamples[0], tctl_c: null, read_errors: ["Tctl: invalid Tctl input"]},
+  ];
+  if (replayEnvironmentSamples(sensorReplaySamples).invalidations[0]?.kind !==
+      "environment_read_failure") {
+    throw new Error("environment replay did not retain malformed-sensor invalidation");
+  }
+  const wrongGapSamples = structuredClone(replaySamples);
+  wrongGapSamples[1].gap_seconds = 1;
+  if (replayEnvironmentSamples(wrongGapSamples).issues.length === 0) {
+    throw new Error("environment replay accepted a gap inconsistent with monotonic times");
+  }
+  const coerciveReplaySamples = structuredClone(replaySamples);
+  coerciveReplaySamples[1].load1 = "5";
+  if (replayEnvironmentSamples(coerciveReplaySamples).issues.length === 0) {
+    throw new Error("environment replay accepted a coercive numeric value");
+  }
+  const reversedTimeSamples = structuredClone(replaySamples);
+  reversedTimeSamples[1].monotonic_ms = 999;
+  reversedTimeSamples[1].gap_seconds = -0.001;
+  if (replayEnvironmentSamples(reversedTimeSamples).issues.length === 0) {
+    throw new Error("environment replay accepted non-increasing monotonic time");
+  }
+
+  const chronologyAdmission = {
+    admitted_sample_sequence: 0,
+    admitted_evaluated_monotonic_ms: 500,
+  };
+  const chronologicalObservations = schedule.map((entry, index) => {
+    const blockBase = 1_000 + (index * 10_000);
+    const sampleBase = 1 + (index * 10);
+    return {
+      schedule_index: entry.index,
+      process_id: entry.process_id,
+      order: entry.order,
+      environment_start_gate: {
+        wait_started_monotonic_ms: blockBase,
+        first_acceptable_monotonic_ms: blockBase + 1_000,
+        admitted_monotonic_ms: blockBase + 7_000,
+        admitted_evaluated_monotonic_ms: blockBase + 7_001,
+        first_acceptable_sample_sequence: sampleBase,
+        admitted_sample_sequence: sampleBase + 3,
+      },
+      environment_start_sample_sequence: sampleBase + 3,
+      environment_end_sample_sequence: sampleBase + 4,
+      child_environment_window: {
+        before: {monotonic_ms: blockBase + 8_000},
+        after: {monotonic_ms: blockBase + 9_000},
+      },
+    };
+  });
+  if (!chronologyAudit(chronologyAdmission, chronologicalObservations, schedule).passed) {
+    throw new Error("valid cross-process chronology failed replay");
+  }
+  const recycledGateObservations = structuredClone(chronologicalObservations);
+  recycledGateObservations[1].environment_start_gate.wait_started_monotonic_ms = 1_000;
+  recycledGateObservations[1].environment_start_gate.first_acceptable_monotonic_ms = 2_000;
+  if (chronologyAudit(chronologyAdmission, recycledGateObservations, schedule).passed) {
+    throw new Error("chronology replay accepted a recycled gate window");
+  }
+  const recycledSequenceObservations = structuredClone(chronologicalObservations);
+  recycledSequenceObservations[1].environment_start_gate.first_acceptable_sample_sequence =
+    recycledSequenceObservations[0].environment_end_sample_sequence;
+  if (chronologyAudit(chronologyAdmission, recycledSequenceObservations, schedule).passed) {
+    throw new Error("chronology replay accepted a recycled gate sample sequence");
+  }
+  const lateGateObservations = structuredClone(chronologicalObservations);
+  lateGateObservations[2].environment_start_gate.admitted_evaluated_monotonic_ms = 29_000.001;
+  if (chronologyAudit(chronologyAdmission, lateGateObservations, schedule).passed) {
+    throw new Error("chronology replay accepted gate admission after the child boundary");
+  }
+  if (!startSampleBindingMatches({
+    environment_start_sample_sequence: 4,
+    environment_start_gate: {admitted_sample_sequence: 4},
+  }) || startSampleBindingMatches({
+    environment_start_sample_sequence: 3,
+    environment_start_gate: {admitted_sample_sequence: 4},
+  })) {
+    throw new Error("redundant environment start sample binding self-audit failed");
+  }
   requireRunnerAffinity("0");
   expectThrow("runner not pinned only to CPU 0", () => requireRunnerAffinity("0-3"));
-  if (!cooldownSampleTimely(1_000, 181_000, 181_000) ||
-      cooldownSampleTimely(1_000, 181_000.001, 181_000.001) ||
-      cooldownSampleTimely(1_000, 180_000, 181_000.001)) {
-    throw new Error("absolute cooldown deadline self-audit failed");
+  if (!blockGateSampleTimely(1_000, 181_000, 181_000) ||
+      blockGateSampleTimely(1_000, 181_000.001, 181_000.001) ||
+      blockGateSampleTimely(1_000, 180_000, 181_000.001)) {
+    throw new Error("absolute block-gate deadline self-audit failed");
   }
-  checks.environment = "admission boundaries, exact invalidation rules, breach reset, absolute cooldown deadline, and runner affinity verified";
+
+  const syntheticBoundary = (monotonicMs, line, tctlRaw) => {
+    const parsedCounters = parseCpuCounters(`${line}\n`, BENCHMARK_SIBLING_CPU);
+    return {
+      observed_at: "2026-08-24T00:00:00.000Z",
+      monotonic_ms: monotonicMs,
+      proc_stat_cpu_line: line,
+      counters: parsedCounters.counters.map((value) => value.toString()),
+      total_ticks: parsedCounters.total.toString(),
+      idle_ticks: parsedCounters.idle.toString(),
+      tctl_raw_millicelsius: tctlRaw,
+      tctl_c: Number(tctlRaw) / 1_000,
+    };
+  };
+  const childBefore = syntheticBoundary(
+    1_000, "cpu2 100 0 50 400 50", "94000",
+  );
+  const childAfterAtLimit = syntheticBoundary(
+    2_000, "cpu2 120 0 80 530 70", "94000",
+  );
+  const exactChildWindow = childEnvironmentWindow(childBefore, childAfterAtLimit);
+  if (exactChildWindow.cpu_busy_percent !== 25 || !exactChildWindow.within_busy_limit ||
+      childEnvironmentWindowIssues(exactChildWindow).length !== 0) {
+    throw new Error("inclusive child-window CPU boundary self-audit failed");
+  }
+  const childBindingSamples = [
+    {...replaySamples[0], monotonic_ms: 900},
+    {...replaySamples[1], monotonic_ms: 1_900, gap_seconds: 1},
+    {...replaySamples[1], sequence: 2, monotonic_ms: 2_100, gap_seconds: 0.2},
+  ];
+  const childBindingReceipt = {
+    environment_start_gate: {admitted_sample_sequence: 0},
+    environment_start_sample_sequence: 0,
+    environment_end_sample_sequence: 1,
+    child_environment_window: exactChildWindow,
+  };
+  if (childEnvironmentSampleBindingIssues(
+    childBindingReceipt,
+    childBindingSamples,
+  ).length !== 0) {
+    throw new Error("valid child environment sample binding failed replay");
+  }
+  const staleChildBinding = structuredClone(childBindingReceipt);
+  staleChildBinding.environment_end_sample_sequence = 0;
+  if (childEnvironmentSampleBindingIssues(
+    staleChildBinding,
+    childBindingSamples,
+  ).length === 0) {
+    throw new Error("stale child environment end sample was accepted");
+  }
+  const missingBoundaryField = structuredClone(exactChildWindow);
+  delete missingBoundaryField.before.tctl_c;
+  if (childEnvironmentWindowIssues(missingBoundaryField).length === 0) {
+    throw new Error("missing child boundary field was accepted");
+  }
+  const timingReceipt = {
+    child_environment_window: exactChildWindow,
+    started_at: "2026-08-24T00:00:00.000Z",
+    finished_at: "2026-08-24T00:00:00.000Z",
+    started_monotonic_ms: 1_100,
+    finished_monotonic_ms: 1_900,
+    elapsed_monotonic_seconds: 0.8,
+  };
+  if (childBoundaryTimingIssues(timingReceipt).length !== 0) {
+    throw new Error("enclosing child boundary timing was rejected");
+  }
+  const escapedTimingReceipt = structuredClone(timingReceipt);
+  escapedTimingReceipt.finished_monotonic_ms = 2_001;
+  escapedTimingReceipt.elapsed_monotonic_seconds = 0.901;
+  if (childBoundaryTimingIssues(escapedTimingReceipt).length === 0) {
+    throw new Error("non-enclosing child boundary timing was accepted");
+  }
+  const childAfterOverLimit = syntheticBoundary(
+    2_000, "cpu2 121 0 80 529 70", "94000",
+  );
+  const overLimitWindow = childEnvironmentWindow(childBefore, childAfterOverLimit);
+  if (overLimitWindow.cpu_busy_percent !== 25.5 || overLimitWindow.within_busy_limit ||
+      childEnvironmentWindowIssues(overLimitWindow).length === 0) {
+    throw new Error("over-limit child-window CPU self-audit failed");
+  }
+  const hotBoundary = syntheticBoundary(
+    2_000, "cpu2 120 0 80 530 70", "100000",
+  );
+  if (childEnvironmentWindowIssues(childEnvironmentWindow(childBefore, hotBoundary)).length === 0) {
+    throw new Error("child boundary temperature invalidation self-audit failed");
+  }
+  checks.environment = "busy-pinned-v2 gates, global replay, cross-process chronology, strict invalidations, child-window counters, and runner affinity verified";
 
   const interrupted = {signal: "SIGINT", at: "2026-08-24T00:00:00.000Z"};
   const interruptionJournal = partialJournal(
@@ -1700,6 +2763,18 @@ function runSelfAudit() {
 
   const durabilityDirectory = fs.mkdtempSync(path.join(os.tmpdir(), "fused-json-dynamic-self-audit-"));
   try {
+    const shortWriteFragments = [];
+    writeAllSync(123, Buffer.from("short-write-audit", "utf8"),
+      (_fd, buffer, offset, length) => {
+        const written = Math.min(3, length);
+        shortWriteFragments.push(Buffer.from(buffer.subarray(offset, offset + written)));
+        return written;
+      });
+    if (Buffer.concat(shortWriteFragments).toString("utf8") !== "short-write-audit") {
+      throw new Error("write-all loop lost bytes across short writes");
+    }
+    expectThrow("zero-length synchronous write", () =>
+      writeAllSync(123, Buffer.from("x"), () => 0));
     const atomicFile = path.join(durabilityDirectory, "atomic.json");
     const eventFile = path.join(durabilityDirectory, "events.jsonl");
     atomicCreate(atomicFile, {generation: 0});
@@ -1715,7 +2790,7 @@ function runSelfAudit() {
   } finally {
     fs.rmSync(durabilityDirectory, {recursive: true, force: true});
   }
-  checks.durability = "generation-0 atomic create, atomic replacement, and append-only journal writes verified";
+  checks.durability = "short-write completion, generation-0 create, atomic replacement, and append-only journal writes verified";
 
   const timeSample = [
     "\tUser time (seconds): 10.00",

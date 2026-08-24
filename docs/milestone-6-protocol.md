@@ -1,6 +1,8 @@
 # Milestone 6 validation protocol
 
-Status: frozen before formal observations. Any change to a gate, fixture,
+Status: `busy-pinned-v2` frozen before any formal timed observation. The original
+quiet-host policy was superseded before timing because persistent shared GUI
+work could not satisfy its admission gate. Any later change to a gate, fixture,
 schedule, validity rule, build, or runner starts a new complete campaign. A
 failed or invalid campaign is retained in full; individual observations are
 never rerun selectively.
@@ -16,7 +18,8 @@ exact artifacts on the same host. The campaign, dynamic, and compatibility
 receipts separately bind their runners and runtime tools by SHA-256.
 
 Pin the campaign runner to CPU 0 and every measured child to CPU 3. CPU 2 is
-CPU 3's SMT sibling and remains idle. Children receive `GC_NPROCS=1`,
+CPU 3's SMT sibling; persistent background work on it is permitted only within
+the frozen bounds below. Children receive `GC_NPROCS=1`,
 `GC_MARKERS=1`, `CRYSTAL_WORKERS=1`, and `OMP_NUM_THREADS=1`; leave all
 other recorded GC and allocator variables unset. Use a 32 KiB benchmark buffer
 and nesting limit 512. FusedJSON uses that parser buffer; Crystal uses the same
@@ -25,22 +28,47 @@ GNU `time`, and `taskset` identities. The untimed semantic preflight runs
 outside environmental admission and is shared unchanged by both campaigns.
 
 Before the first observation, require 60 continuous seconds of two-second
-samples with one- and five-minute load averages at most 2.5, Tctl at most 70 C,
-and CPUs 2 and 3 each at most 10% busy. Start each later pair or standalone
-run from a fresh sample at or below 70 C, waiting at most 180 seconds.
+samples with one- and five-minute load averages at most 5.0, Tctl at most 94 C,
+CPU 2 at most 25% busy, and CPU 3 at most 10% busy. Tctl may span no more than
+5 C across that window. Before every later block, require six continuous
+seconds under the same limits, waiting at most 180 seconds. A throughput block
+has one gate before its page-cache warm and a second gate after that warm and
+before its first parser child. Both the admitted sample and the runner's
+evaluation of that sample must occur within the 180-second deadline.
 
 Invalidate the complete campaign if any of these occurs:
 
-- Tctl reaches 95 C;
-- one-minute load exceeds 4.0 twice consecutively;
-- CPU 2 exceeds 20% busy twice consecutively;
+- Tctl reaches 100 C;
+- one-minute load exceeds 7.0 twice consecutively;
+- CPU 2 exceeds 35% busy twice consecutively;
 - an environment read fails or monitoring has a gap over five seconds; or
 - a measured parser child receives less than 99% task CPU according to GNU
   `time`.
 
+Immediately before and after every child, record Tctl and the raw CPU 2
+`/proc/stat` counters. Recompute CPU 2 busy time across the exact child window
+and invalidate the campaign when it exceeds 25%. A boundary Tctl at or above
+100 C also invalidates immediately. These synchronous boundaries cover short
+excursions that the two-second monitor could miss.
+
 CPU 3 frequency is diagnostic only. It is not an admission, exclusion,
 normalization, or adjustment rule. Warp and other shared-host activity are
-therefore tolerated only when the frozen rules remain satisfied.
+tolerated only when the frozen rules remain satisfied. Results from this
+protocol are comparative measurements under a hot, shared host. They are not
+quiet-host or peak parser throughput.
+
+### Policy revision rationale
+
+No formal timed observation was made under the superseded policy. A controlled
+30-second pre-observation baseline found load1 3.54-3.83, load5 4.00-4.05,
+Tctl 88.6-92.5 C, CPU 2 averaging 16.46% busy, and CPU 3 averaging 3.84% busy.
+A separate 20-second CPU 2 sample averaged 21.8% and peaked at 23.71%. A
+non-measurement pilot that moved the parser to CPU 2 was rejected: background
+work migrated to CPU 3, which averaged 16.44% busy. The v2 gates bound the
+observed shared workload and add exact child-window sibling accounting rather
+than claiming isolation. The earlier semantic preflight remains preserved as
+superseded evidence; the clean v2 commit requires a new build attestation,
+binaries, and preflight before timing.
 
 ## Generated inputs
 
@@ -112,11 +140,13 @@ record reachable through receipt emission under policy
 ## Additional gates and compatibility
 
 Run `crystal run --release --no-debug scripts/check_large_offset.cr` at the
-measured commit and retain its exact post-`2^32` result. Recheck dynamic parsing on the five canonical Oj corpora
-with five fresh alternating-order processes, one second of warmup, two seconds
-of measurement, and 20 allocation operations. The geometric mean of the five
-per-corpus median FusedJSON/Crystal ratios must be at least 1.5; no corpus may
-have a median ratio below 0.98.
+measured commit and retain its exact post-`2^32` result. Recheck dynamic parsing
+on the five canonical Oj corpora with five fresh alternating-order processes,
+one second of warmup, two seconds of measurement, and 20 allocation operations.
+Apply the same `busy-pinned-v2` admission, block-start, global invalidation,
+child-window CPU 2, boundary Tctl, and task CPU rules used by the TiC campaigns.
+The geometric mean of the five per-corpus median FusedJSON/Crystal ratios must
+be at least 1.5; no corpus may have a median ratio below 0.98.
 
 When `FUSED_JSON_TIC_CORPUS` names Sunlight's local `data/raw/payer-cache`,
 freeze the sorted in-network file list and an Oj-derived, versioned per-file
@@ -140,7 +170,7 @@ From a clean checkout, create one external artifact directory and build the
 three attested programs:
 
 ```console
-$ M6_ROOT=/tmp/fused-json-m6-formal
+$ M6_ROOT=/tmp/fused-json-m6-formal-v2
 $ M6_COMMIT=$(git rev-parse HEAD)
 $ CRYSTAL_BIN=$(command -v crystal)
 $ mkdir -p "$M6_ROOT/bin" "$M6_ROOT/fixtures" "$M6_ROOT/receipts"
@@ -204,7 +234,9 @@ a composite final receipt. Preserve the frozen schedule, every child receipt,
 complete GNU-time stderr, environment samples, admission and validity state,
 bootstrap inputs and result, RSS ceiling calculation, diagnostics, identities,
 and final pass/fail state. Each campaign contains exactly 173 observations in
-77 admitted blocks; the shared preflight contains five verifications.
+77 logical blocks and 117 block-admission gate events; throughput blocks have
+separate pre-warm and post-warm gates. The shared preflight contains five
+verifications.
 
 Run campaign IDs 1 and 2 completely with identical artifacts. The paired
 campaign is accepted only when both receipts are valid and pass both gates and

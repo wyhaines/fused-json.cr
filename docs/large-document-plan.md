@@ -1,8 +1,8 @@
 # Large-document typed streaming implementation plan
 
 Status: in progress. Milestones 1 through 5 are implemented. Milestone 6,
-controlled performance and scale validation, is next. This plan implements the
-requirements in the
+controlled performance and scale validation, is now in progress. This plan
+implements the requirements in the
 [Large-document typed streaming specification](large-document-processing.md).
 
 ## Working rules
@@ -181,12 +181,17 @@ bootstrap, and managed-allocation gate. Accepted receipts and all unsuccessful
 attempts are recorded in the
 [Milestone 5 benchmark results](milestone-5-benchmark-results.md).
 
-## Milestone 6: Performance and scale validation (next)
+## Milestone 6: Performance and scale validation (in progress)
 
-Use isolated release builds and a quiet, CPU-pinned host. Predeclare at least
-20 paired blocks per profile. Each block contains one fresh FusedJSON process
-and one fresh Crystal process in a predetermined, balanced AB/BA order. One
-process result is one observation; iterations within a process are not
+Use attested release builds and the CPU-pinned, predeclared host policy in the
+[Milestone 6 validation protocol](milestone-6-protocol.md). The current
+`busy-pinned-v2` campaign bounds persistent background load, temperature, the
+benchmark CPU, and its SMT sibling before and during every child. Its results
+are comparative measurements under a hot shared host, not peak quiet-host
+throughput. Predeclare at least 20 paired blocks per profile. Each block
+contains one fresh FusedJSON process and one fresh Crystal process in a
+predetermined, balanced AB/BA order. One process result is one observation;
+iterations within a process are not
 independent samples. Retain every valid run and define exclusions before the
 campaign starts. Use plain inputs from a warmed page cache and identical parser
 buffers for the throughput gate; the plain-drain mode records the storage and

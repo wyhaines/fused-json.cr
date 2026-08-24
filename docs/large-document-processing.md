@@ -2,7 +2,7 @@
 
 Status: accepted. Milestones 1 through 5 are implemented. The
 [Milestone 5 acceptance evidence](milestone-5-benchmark-results.md) is
-recorded; Milestone 6 performance and scale validation is next.
+recorded; Milestone 6 performance and scale validation is in progress.
 
 ## Purpose
 

@@ -19,7 +19,7 @@ import {spawn} from "node:child_process";
 import {performance} from "node:perf_hooks";
 
 const ARTIFACT = "fused-json-milestone-6-tic-campaign";
-const VERSION = 1;
+const VERSION = 2;
 const RUNNER_CPU = "0";
 const BENCHMARK_CPU = "3";
 const BENCHMARK_SIBLING_CPU = "2";
@@ -59,20 +59,25 @@ const DIAGNOSTICS = Object.freeze({
   retainedPairs: 4,
 });
 const ENVIRONMENT_POLICY = Object.freeze({
+  name: "busy-pinned-v2",
+  version: 2,
   sampleIntervalMs: 2_000,
-  admissionSeconds: 60,
-  admissionLoad1Maximum: 2.5,
-  admissionLoad5Maximum: 2.5,
-  admissionTctlMaximumC: 70,
-  admissionCpuBusyMaximumPercent: 10,
-  startTctlMaximumC: 70,
-  cooldownSeconds: 180,
-  invalidTctlMinimumC: 95,
-  invalidLoad1StrictlyGreaterThan: 4.0,
-  invalidSiblingBusyStrictlyGreaterThanPercent: 20,
+  initialAdmissionSeconds: 60,
+  blockAdmissionSeconds: 6,
+  gateLoad1Maximum: 5,
+  gateLoad5Maximum: 5,
+  gateTctlMaximumC: 94,
+  gateTctlRangeMaximumC: 5,
+  gateSiblingCpuBusyMaximumPercent: 25,
+  gateBenchmarkCpuBusyMaximumPercent: 10,
+  blockGateDeadlineSeconds: 180,
+  invalidTctlMinimumC: 100,
+  invalidLoad1StrictlyGreaterThan: 7,
+  invalidSiblingBusyStrictlyGreaterThanPercent: 35,
   consecutiveBreachSamples: 2,
   maximumMonitorGapSeconds: 5,
   minimumParserTaskCpuPercent: 99,
+  childWindowSiblingBusyMaximumPercent: 25,
   cpuFrequencyPolicy: "diagnostic-only; never gates, excludes, or normalizes",
 });
 const CHILD_ENVIRONMENT = Object.freeze({
@@ -229,10 +234,24 @@ function writeDurableAtomicNew(file, text) {
   fsyncDirectory(path.dirname(file));
 }
 
+function writeAllSync(descriptor, bytes, writer = fs.writeSync) {
+  if (!Buffer.isBuffer(bytes)) throw new Error("write-all input must be a Buffer");
+  let offset = 0;
+  while (offset < bytes.length) {
+    const remaining = bytes.length - offset;
+    const written = writer(descriptor, bytes, offset, remaining);
+    if (!Number.isSafeInteger(written) || written <= 0 || written > remaining) {
+      throw new Error(`invalid synchronous write count: ${written}`);
+    }
+    offset += written;
+  }
+  return offset;
+}
+
 function appendDurableJsonLine(file, value) {
   const descriptor = fs.openSync(file, "a");
   try {
-    fs.writeSync(descriptor, `${JSON.stringify(value)}\n`, null, "utf8");
+    writeAllSync(descriptor, Buffer.from(`${JSON.stringify(value)}\n`, "utf8"));
     fs.fsyncSync(descriptor);
   } finally {
     fs.closeSync(descriptor);
@@ -570,13 +589,19 @@ function rssCeiling(baselinePeakKibibytes) {
   };
 }
 
-function parseCpuCounters(text, cpu) {
-  const match = text.match(new RegExp(`^cpu${cpu}\\s+(.+)$`, "m"));
+function parseCpuCounterLine(text, cpu) {
+  const match = text.match(new RegExp(`^(cpu${cpu}\\s+(.+))$`, "m"));
   if (!match) throw new Error(`missing CPU ${cpu} counters`);
-  const counters = match[1].trim().split(/\s+/).map((value) => BigInt(value));
+  const counters = match[2].trim().split(/\s+/).map((value) => BigInt(value));
   if (counters.length < 5) throw new Error(`short CPU ${cpu} counters`);
-  const total = counters.reduce((sum, value) => sum + value, 0n);
+  // guest and guest_nice are already included in user and nice respectively.
+  const total = counters.slice(0, 8).reduce((sum, value) => sum + value, 0n);
   const idle = counters[3] + (counters[4] ?? 0n);
+  return {rawLine: match[1], counters, total, idle};
+}
+
+function parseCpuCounters(text, cpu) {
+  const {total, idle} = parseCpuCounterLine(text, cpu);
   return {total, idle};
 }
 
@@ -586,6 +611,56 @@ function cpuBusyPercent(previous, current) {
   const idle = current.idle - previous.idle;
   if (total <= 0n || idle < 0n || idle > total) throw new Error("CPU counters moved backwards or did not advance");
   return Number(total - idle) / Number(total) * 100;
+}
+
+function parseTctlInput(text) {
+  const rawMillidegrees = typeof text === "string" ? text.trim() : "";
+  if (!/^(?:0|[1-9]\d*)$/.test(rawMillidegrees)) {
+    throw new Error("Tctl input is not a nonempty unsigned decimal integer");
+  }
+  const millidegrees = Number(rawMillidegrees);
+  if (!Number.isSafeInteger(millidegrees)) throw new Error("Tctl input exceeds the safe integer range");
+  return {rawMillidegrees, celsius: millidegrees / 1000};
+}
+
+function readChildBoundary(tctlPath) {
+  const observedAt = new Date().toISOString();
+  const monotonicMs = performance.now();
+  const cpu = parseCpuCounterLine(fs.readFileSync("/proc/stat", "utf8"), BENCHMARK_SIBLING_CPU);
+  const tctl = parseTctlInput(fs.readFileSync(tctlPath, "utf8"));
+  return {
+    observed_at: observedAt,
+    monotonic_ms: monotonicMs,
+    proc_stat_cpu_line: cpu.rawLine,
+    counters: cpu.counters.map((value) => value.toString()),
+    total_ticks: cpu.total.toString(),
+    idle_ticks: cpu.idle.toString(),
+    tctl_raw_millicelsius: tctl.rawMillidegrees,
+    tctl_c: tctl.celsius,
+  };
+}
+
+function childEnvironmentWindow(before, after) {
+  const beforeCounters = {total: BigInt(before.total_ticks), idle: BigInt(before.idle_ticks)};
+  const afterCounters = {total: BigInt(after.total_ticks), idle: BigInt(after.idle_ticks)};
+  const deltaTotal = afterCounters.total - beforeCounters.total;
+  const deltaIdle = afterCounters.idle - beforeCounters.idle;
+  if (deltaTotal <= 0n || deltaIdle < 0n || deltaIdle > deltaTotal) {
+    throw new Error("child-window CPU counters moved backwards or did not advance");
+  }
+  const deltaBusy = deltaTotal - deltaIdle;
+  const busyPercent = Number(deltaBusy) / Number(deltaTotal) * 100;
+  return {
+    cpu: BENCHMARK_SIBLING_CPU,
+    maximum_busy_percent: ENVIRONMENT_POLICY.childWindowSiblingBusyMaximumPercent,
+    before,
+    after,
+    delta_total_ticks: deltaTotal.toString(),
+    delta_idle_ticks: deltaIdle.toString(),
+    delta_busy_ticks: deltaBusy.toString(),
+    cpu_busy_percent: busyPercent,
+    within_busy_limit: busyPercent <= ENVIRONMENT_POLICY.childWindowSiblingBusyMaximumPercent,
+  };
 }
 
 function resolveTctlPath() {
@@ -617,18 +692,78 @@ function environmentInvalidation(policyState, sample) {
     sample.cpu2_busy_percent > ENVIRONMENT_POLICY.invalidSiblingBusyStrictlyGreaterThanPercent
     ? policyState.siblingBreaches + 1 : 0;
   if (policyState.loadBreaches >= ENVIRONMENT_POLICY.consecutiveBreachSamples) {
-    return {kind: "load", detail: `load1 exceeded 4.0 for ${policyState.loadBreaches} consecutive samples`};
+    return {kind: "load", detail: `load1 exceeded ${ENVIRONMENT_POLICY.invalidLoad1StrictlyGreaterThan} for ` +
+      `${policyState.loadBreaches} consecutive samples`};
   }
   if (policyState.siblingBreaches >= ENVIRONMENT_POLICY.consecutiveBreachSamples) {
-    return {kind: "sibling_cpu", detail: `CPU 2 exceeded 20% for ${policyState.siblingBreaches} consecutive samples`};
+    return {kind: "sibling_cpu",
+      detail: `CPU ${BENCHMARK_SIBLING_CPU} exceeded ` +
+        `${ENVIRONMENT_POLICY.invalidSiblingBusyStrictlyGreaterThanPercent}% for ` +
+        `${policyState.siblingBreaches} consecutive samples`};
   }
   return null;
 }
 
-function cooldownDecision(sample, deadlineMonotonicMs) {
-  if (sample.monotonic_ms > deadlineMonotonicMs) return "timed-out";
-  if (sample.tctl_c <= ENVIRONMENT_POLICY.startTctlMaximumC) return "ready";
-  return "waiting";
+function gateSampleAcceptable(sample) {
+  return sample.cpu2_busy_percent !== null && sample.cpu3_busy_percent !== null &&
+    sample.load1 <= ENVIRONMENT_POLICY.gateLoad1Maximum &&
+    sample.load5 <= ENVIRONMENT_POLICY.gateLoad5Maximum &&
+    sample.tctl_c <= ENVIRONMENT_POLICY.gateTctlMaximumC &&
+    sample.cpu2_busy_percent <= ENVIRONMENT_POLICY.gateSiblingCpuBusyMaximumPercent &&
+    sample.cpu3_busy_percent <= ENVIRONMENT_POLICY.gateBenchmarkCpuBusyMaximumPercent;
+}
+
+function advanceGateWindow(window, sample) {
+  if (!gateSampleAcceptable(sample)) return null;
+  if (window === null) {
+    return {samples: [sample], minimumTctlC: sample.tctl_c, maximumTctlC: sample.tctl_c};
+  }
+  const minimumTctlC = Math.min(window.minimumTctlC, sample.tctl_c);
+  const maximumTctlC = Math.max(window.maximumTctlC, sample.tctl_c);
+  if (maximumTctlC - minimumTctlC > ENVIRONMENT_POLICY.gateTctlRangeMaximumC) {
+    return {samples: [sample], minimumTctlC: sample.tctl_c, maximumTctlC: sample.tctl_c};
+  }
+  return {samples: [...window.samples, sample], minimumTctlC, maximumTctlC};
+}
+
+function admittedGate(window, requiredSeconds, label) {
+  if (window === null) return null;
+  const first = window.samples[0];
+  const last = window.samples.at(-1);
+  const durationSeconds = (last.monotonic_ms - first.monotonic_ms) / 1000;
+  const minimumSampleCount = Math.ceil(requiredSeconds / (ENVIRONMENT_POLICY.sampleIntervalMs / 1000)) + 1;
+  if (durationSeconds < requiredSeconds || window.samples.length < minimumSampleCount) return null;
+  return {
+    label,
+    required_continuous_seconds: requiredSeconds,
+    first_sample_sequence: first.sequence,
+    admitted_sample_sequence: last.sequence,
+    sample_sequences: window.samples.map((sample) => sample.sequence),
+    sample_count: window.samples.length,
+    duration_seconds: durationSeconds,
+    tctl_min_c: window.minimumTctlC,
+    tctl_max_c: window.maximumTctlC,
+    tctl_range_c: window.maximumTctlC - window.minimumTctlC,
+  };
+}
+
+function blockGateDeadlineExceeded(sample, evaluatedMonotonicMs, deadlineMonotonicMs) {
+  return sample.monotonic_ms > evaluatedMonotonicMs ||
+    sample.monotonic_ms > deadlineMonotonicMs || evaluatedMonotonicMs > deadlineMonotonicMs;
+}
+
+function admittedBlockGate(window, label, waitStartedMonotonicMs, deadlineMonotonicMs,
+  admittedEvaluatedMonotonicMs) {
+  const gate = admittedGate(window, ENVIRONMENT_POLICY.blockAdmissionSeconds, label);
+  if (gate === null || blockGateDeadlineExceeded(
+    window.samples.at(-1), admittedEvaluatedMonotonicMs, deadlineMonotonicMs
+  )) return null;
+  return {
+    ...gate,
+    wait_started_monotonic_ms: waitStartedMonotonicMs,
+    deadline_monotonic_ms: deadlineMonotonicMs,
+    admitted_evaluated_monotonic_ms: admittedEvaluatedMonotonicMs,
+  };
 }
 
 class EnvironmentMonitor {
@@ -694,8 +829,7 @@ class EnvironmentMonitor {
       if (!Number.isFinite(sample.load1) || !Number.isFinite(sample.load5)) throw new Error("nonfinite load average");
     } catch (error) { sample.read_errors.push(`loadavg: ${error.message}`); }
     try {
-      sample.tctl_c = Number(fs.readFileSync(this.tctlPath, "utf8").trim()) / 1000;
-      if (!Number.isFinite(sample.tctl_c)) throw new Error("nonfinite Tctl");
+      sample.tctl_c = parseTctlInput(fs.readFileSync(this.tctlPath, "utf8")).celsius;
     } catch (error) { sample.read_errors.push(`Tctl: ${error.message}`); }
     try {
       const procStat = fs.readFileSync("/proc/stat", "utf8");
@@ -732,7 +866,8 @@ class EnvironmentMonitor {
       const timeout = setTimeout(() => {
         const index = this.waiters.indexOf(waiter);
         if (index >= 0) this.waiters.splice(index, 1);
-        const reason = {kind: "monitor_timeout", detail: "no environment sample arrived within 5 seconds"};
+        const reason = {kind: "monitor_timeout",
+          detail: `no environment sample arrived within ${ENVIRONMENT_POLICY.maximumMonitorGapSeconds} seconds`};
         this.setInvalid(reason);
         reject(new CampaignInvalidError(reason.detail));
       }, (ENVIRONMENT_POLICY.maximumMonitorGapSeconds * 1000) + 250);
@@ -748,47 +883,44 @@ class EnvironmentMonitor {
   async awaitAdmission() {
     this.assertValid();
     let sequence = this.samples.at(-1).sequence;
-    let streakStart = null;
+    let window = null;
     while (true) {
       const sample = await this.waitForSampleAfter(sequence);
       sequence = sample.sequence;
       this.assertValid();
-      const busyAvailable = sample.cpu2_busy_percent !== null && sample.cpu3_busy_percent !== null;
-      const acceptable = busyAvailable &&
-        sample.load1 <= ENVIRONMENT_POLICY.admissionLoad1Maximum &&
-        sample.load5 <= ENVIRONMENT_POLICY.admissionLoad5Maximum &&
-        sample.tctl_c <= ENVIRONMENT_POLICY.admissionTctlMaximumC &&
-        sample.cpu2_busy_percent <= ENVIRONMENT_POLICY.admissionCpuBusyMaximumPercent &&
-        sample.cpu3_busy_percent <= ENVIRONMENT_POLICY.admissionCpuBusyMaximumPercent;
-      if (!acceptable) {
-        streakStart = null;
-        continue;
-      }
-      if (streakStart === null) streakStart = sample.monotonic_ms;
-      if ((sample.monotonic_ms - streakStart) / 1000 >= ENVIRONMENT_POLICY.admissionSeconds) {
-        return {first_acceptable_monotonic_ms: streakStart, admitted_sample_sequence: sample.sequence};
-      }
+      window = advanceGateWindow(window, sample);
+      const admitted = admittedGate(window, ENVIRONMENT_POLICY.initialAdmissionSeconds,
+        "campaign-initial-admission");
+      if (admitted) return admitted;
     }
   }
 
-  async awaitObservationStart(label) {
+  async awaitBlockStart(label) {
     const started = performance.now();
-    const deadline = started + (ENVIRONMENT_POLICY.cooldownSeconds * 1000);
+    const deadline = started + (ENVIRONMENT_POLICY.blockGateDeadlineSeconds * 1000);
     this.assertValid();
     let sequence = this.samples.at(-1).sequence;
+    let window = null;
     while (true) {
       const sample = await this.waitForSampleAfter(sequence);
       sequence = sample.sequence;
       this.assertValid();
-      const decision = cooldownDecision(sample, deadline);
-      if (decision === "timed-out") {
-        const reason = {kind: "cooldown_timeout", detail: `${label} did not reach Tctl <= 70 C within 180 seconds`};
+      const evaluated = performance.now();
+      if (blockGateDeadlineExceeded(sample, evaluated, deadline)) {
+        const reason = {kind: "block_gate_timeout",
+          detail: `${label} did not sustain the ${ENVIRONMENT_POLICY.name} limits for ` +
+            `${ENVIRONMENT_POLICY.blockAdmissionSeconds} seconds within ` +
+            `${ENVIRONMENT_POLICY.blockGateDeadlineSeconds} seconds`,
+          wait_started_monotonic_ms: started,
+          deadline_monotonic_ms: deadline,
+          sample_monotonic_ms: sample.monotonic_ms,
+          evaluated_monotonic_ms: evaluated};
         this.setInvalid(reason);
         throw new CampaignInvalidError(reason.detail);
       }
-      if (decision === "ready") {
-        return {...sample, start_label: label};
-      }
+      window = advanceGateWindow(window, sample);
+      const admitted = admittedBlockGate(window, label, started, deadline, evaluated);
+      if (admitted) return admitted;
     }
   }
 }
@@ -1345,7 +1477,7 @@ class Campaign {
 
   definition() {
     return {
-      protocol: "fused-json-m6-tic-v1",
+      protocol: "fused-json-m6-tic-v2",
       buffer_size: BUFFER_SIZE,
       max_nesting: MAX_NESTING,
       seed: SEED,
@@ -1416,6 +1548,20 @@ class Campaign {
       manifest: serializeStat(fixture.manifestPath, {hash: true}),
       gzip: fixture.gzipInput ? serializeStat(fixture.gzipInput) : null,
     };
+    let childBoundaryBefore;
+    try {
+      childBoundaryBefore = readChildBoundary(this.monitor.tctlPath);
+    } catch (error) {
+      const reason = {kind: "child_environment_read_failure", detail: `${spec.id} before: ${error.message}`};
+      this.invalidate(reason);
+      throw new CampaignInvalidError(reason.detail);
+    }
+    if (childBoundaryBefore.tctl_c >= ENVIRONMENT_POLICY.invalidTctlMinimumC) {
+      const reason = {kind: "child_boundary_temperature",
+        detail: `${spec.id} before: Tctl ${childBoundaryBefore.tctl_c} C`};
+      this.invalidate(reason);
+      throw new CampaignInvalidError(reason.detail);
+    }
     const result = await spawnCaptured(GNU_TIME, outerArguments, {
       env: {...CHILD_ENVIRONMENT},
       cwd: this.options.fixtureDir,
@@ -1423,6 +1569,32 @@ class Campaign {
       detached: true,
       onSpawn: (child) => { this.currentChild = child; },
     });
+    let childBoundaryAfter = null;
+    let childWindow = null;
+    let childWindowInvalidReason = null;
+    try {
+      childBoundaryAfter = readChildBoundary(this.monitor.tctlPath);
+      childWindow = childEnvironmentWindow(childBoundaryBefore, childBoundaryAfter);
+      if (childBoundaryAfter.tctl_c >= ENVIRONMENT_POLICY.invalidTctlMinimumC) {
+        childWindowInvalidReason = {kind: "child_boundary_temperature",
+          detail: `${spec.id} after: Tctl ${childBoundaryAfter.tctl_c} C`};
+      } else if (!childWindow.within_busy_limit) {
+        childWindowInvalidReason = {kind: "child_window_sibling_cpu",
+          detail: `${spec.id}: CPU ${BENCHMARK_SIBLING_CPU} busy ` +
+            `${childWindow.cpu_busy_percent}% exceeded ` +
+            `${ENVIRONMENT_POLICY.childWindowSiblingBusyMaximumPercent}%`};
+      }
+    } catch (error) {
+      childWindowInvalidReason = {kind: "child_environment_read_failure",
+        detail: `${spec.id} after: ${error.message}`};
+      childWindow = {
+        cpu: BENCHMARK_SIBLING_CPU,
+        maximum_busy_percent: ENVIRONMENT_POLICY.childWindowSiblingBusyMaximumPercent,
+        before: childBoundaryBefore,
+        after: childBoundaryAfter,
+        read_error: error.message,
+      };
+    }
     this.currentChild = null;
     const completedAt = new Date().toISOString();
     const auditRaw = fs.existsSync(auditFile) ? fs.readFileSync(auditFile, "utf8") : "";
@@ -1430,6 +1602,7 @@ class Campaign {
     let receipt = null;
     let validationError = null;
     try {
+      if (childWindowInvalidReason) throw new Error(childWindowInvalidReason.detail);
       if (result.spawnError) throw result.spawnError;
       if (result.code !== 0 || result.signal) throw new Error(`child exit=${result.code} signal=${result.signal}`);
       audit = parseGnuTime(auditRaw);
@@ -1450,7 +1623,8 @@ class Campaign {
       }
       assertFixtureStable(fixture);
       if (spec.parserChild && audit.cpu_percent < ENVIRONMENT_POLICY.minimumParserTaskCpuPercent) {
-        throw new Error(`parser child task CPU ${audit.cpu_percent}% is below 99%`);
+        throw new Error(`parser child task CPU ${audit.cpu_percent}% is below ` +
+          `${ENVIRONMENT_POLICY.minimumParserTaskCpuPercent}%`);
       }
       this.monitor.assertValid();
     } catch (error) {
@@ -1478,6 +1652,7 @@ class Campaign {
       completed_at: completedAt,
       environment_start_sample_sequence: startSequence,
       environment_end_sample_sequence: this.monitor.samples.at(-1)?.sequence ?? null,
+      child_environment_window: childWindow,
       fixture_before: fixtureBefore,
       fixture_after: fixtureAfter,
       stdout: result.stdout,
@@ -1495,27 +1670,40 @@ class Campaign {
     appendDurableJsonLine(this.paths.journal, {event: "observation", observation});
     this.persist();
     if (validationError) {
-      this.invalidate({kind: "observation_invalid", detail: `${spec.id}: ${validationError}`});
+      this.invalidate(childWindowInvalidReason ??
+        {kind: "observation_invalid", detail: `${spec.id}: ${validationError}`});
       throw new CampaignInvalidError(validationError);
     }
     return observation;
   }
 
-  async startBlock(label) {
+  async startBlock(blockId, gatePosition) {
     this.assertRunnable();
-    const sample = await this.monitor.awaitObservationStart(label);
+    const label = `${blockId}:${gatePosition}`;
+    const gate = await this.monitor.awaitBlockStart(label);
     this.assertRunnable();
-    this.event("block-admitted", {label, sample_sequence: sample.sequence, tctl_c: sample.tctl_c});
-    return sample;
+    const sample = this.monitor.samples.find((candidate) =>
+      candidate.sequence === gate.admitted_sample_sequence);
+    invariant(sample, `${label}: admitted sample disappeared`);
+    this.event("block-admitted", {
+      label,
+      block_id: blockId,
+      gate_position: gatePosition,
+      sample_sequence: sample.sequence,
+      tctl_c: sample.tctl_c,
+      gate,
+    });
+    return gate;
   }
 
   async runPerformancePair(entry) {
-    await this.startBlock(entry.id);
+    await this.startBlock(entry.id, "before-warm");
     await this.runObservation({
       id: `${entry.id}-warm`, phase: "performance", category: "page-cache-warm",
       fixture: entry.fixture, command: "run", mode: "plain-drain", parserChild: false,
       blockId: entry.id,
     });
+    await this.startBlock(entry.id, "after-warm-before-side1");
     for (const side of entry.order) {
       const mode = `${side}-typed`;
       await this.runObservation({
@@ -1527,7 +1715,7 @@ class Campaign {
   }
 
   async runSingle(entry, details) {
-    await this.startBlock(entry.id);
+    await this.startBlock(entry.id, "before-measurement");
     return this.runObservation({
       id: entry.id,
       fixture: entry.fixture,
@@ -1538,7 +1726,7 @@ class Campaign {
   }
 
   async runDiagnosticPair(entry, category) {
-    await this.startBlock(entry.id);
+    await this.startBlock(entry.id, "before-measurement");
     for (const mode of entry.order) {
       await this.runObservation({
         id: `${entry.id}-${mode.startsWith("fused-") ? "fused" : "crystal"}`,
@@ -1919,6 +2107,32 @@ function runSelfAudit() {
     invariant(error && pattern.test(error.message), `expected rejection ${pattern}, got ${error?.message}`);
   };
 
+  check("durable-write-all", () => {
+    const payload = Buffer.from("partial-\u2603-write\n", "utf8");
+    const chunks = [];
+    let calls = 0;
+    const written = writeAllSync(17, payload, (descriptor, bytes, offset, remaining) => {
+      invariant(descriptor === 17 && bytes === payload, "write-all changed its descriptor or buffer");
+      const count = Math.min(1 + (calls % 3), remaining);
+      chunks.push(Buffer.from(bytes.subarray(offset, offset + count)));
+      calls += 1;
+      return count;
+    });
+    invariant(written === payload.length && calls > 1 && Buffer.concat(chunks).equals(payload),
+      "write-all lost bytes across partial writes");
+    rejects(() => writeAllSync(17, Buffer.from("x"), () => 0), /invalid synchronous write count/);
+    rejects(() => writeAllSync(17, Buffer.from("x"), (_descriptor, _bytes, _offset, remaining) => remaining + 1),
+      /invalid synchronous write count/);
+  });
+  check("strict-tctl-input", () => {
+    const parsed = parseTctlInput("94000\n");
+    invariant(parsed.rawMillidegrees === "94000" && parsed.celsius === 94,
+      "valid Tctl input was parsed incorrectly");
+    for (const malformed of ["", " \n", "-1", "+1", "1.5", "01", "NaN", "Infinity"]) {
+      rejects(() => parseTctlInput(malformed), /nonempty unsigned decimal integer/);
+    }
+    rejects(() => parseTctlInput("9007199254740992"), /safe integer range/);
+  });
   check("schedule", () => validateSchedule(buildSchedule()));
   check("verification-arguments", () => {
     const fixture = syntheticFixture();
@@ -2034,29 +2248,121 @@ function runSelfAudit() {
     }), /retained-output/);
   });
   check("environment-invalidation", () => {
-    const base = {read_errors: [], gap_seconds: 2, tctl_c: 60, load1: 1,
+    const base = {read_errors: [], gap_seconds: 2, tctl_c: 94, load1: 5,
       cpu2_busy_percent: 1};
     let state = {loadBreaches: 0, siblingBreaches: 0};
-    invariant(environmentInvalidation(state, {...base, load1: 4.1}) === null, "first load breach invalidated");
-    invariant(environmentInvalidation(state, {...base, load1: 4.1})?.kind === "load", "second load breach did not invalidate");
+    invariant(environmentInvalidation(state, {...base, load1: 7}) === null &&
+      environmentInvalidation(state, {...base, load1: 7}) === null, "load equality must not invalidate");
+    invariant(environmentInvalidation(state, {...base, load1: 7.001}) === null, "first load breach invalidated");
+    invariant(environmentInvalidation(state, {...base, load1: 7.001})?.kind === "load", "second load breach did not invalidate");
     state = {loadBreaches: 0, siblingBreaches: 0};
-    environmentInvalidation(state, {...base, cpu2_busy_percent: 21});
+    invariant(environmentInvalidation(state, {...base, cpu2_busy_percent: 35}) === null &&
+      environmentInvalidation(state, {...base, cpu2_busy_percent: 35}) === null,
+    "sibling equality must not invalidate");
+    environmentInvalidation(state, {...base, cpu2_busy_percent: 35.001});
     environmentInvalidation(state, base);
-    invariant(environmentInvalidation(state, {...base, cpu2_busy_percent: 21}) === null, "sibling breach did not reset");
-    invariant(environmentInvalidation({loadBreaches: 0, siblingBreaches: 0}, {...base, tctl_c: 95})?.kind === "temperature",
+    invariant(environmentInvalidation(state, {...base, cpu2_busy_percent: 35.001}) === null,
+      "sibling breach did not reset");
+    invariant(environmentInvalidation({loadBreaches: 0, siblingBreaches: 0}, {...base, tctl_c: 100})?.kind === "temperature",
       "thermal equality must invalidate");
+    invariant(environmentInvalidation({loadBreaches: 0, siblingBreaches: 0}, {...base, tctl_c: 99.999}) === null,
+      "temperature below the invalid boundary must pass");
+    invariant(environmentInvalidation({loadBreaches: 0, siblingBreaches: 0}, {...base, gap_seconds: 5}) === null,
+      "monitor-gap equality must pass");
     invariant(environmentInvalidation({loadBreaches: 0, siblingBreaches: 0}, {...base, gap_seconds: 5.001})?.kind === "monitor_gap",
       "monitor gap did not invalidate");
     invariant(environmentInvalidation({loadBreaches: 0, siblingBreaches: 0}, {...base, read_errors: ["x"]})?.kind === "environment_read_failure",
       "read error did not invalidate");
   });
-  check("cooldown-deadline", () => {
-    invariant(cooldownDecision({monotonic_ms: 1_180_000, tctl_c: 70}, 1_180_000) === "ready",
-      "cool sample at the deadline must be accepted");
-    invariant(cooldownDecision({monotonic_ms: 1_180_001, tctl_c: 60}, 1_180_000) === "timed-out",
-      "late cool sample must not bypass the deadline");
-    invariant(cooldownDecision({monotonic_ms: 1_100_000, tctl_c: 71}, 1_180_000) === "waiting",
-      "hot sample before the deadline must keep waiting");
+  check("busy-pinned-v2-gates", () => {
+    invariant(ENVIRONMENT_POLICY.name === "busy-pinned-v2" && ENVIRONMENT_POLICY.version === 2 &&
+      ENVIRONMENT_POLICY.sampleIntervalMs === 2_000, "wrong environment policy identity");
+    const sample = (sequence, monotonicMs, overrides = {}) => ({
+      sequence, monotonic_ms: monotonicMs, load1: 5, load5: 5, tctl_c: sequence % 2 ? 89 : 94,
+      cpu2_busy_percent: 25, cpu3_busy_percent: 10, ...overrides,
+    });
+    let window = null;
+    for (let sequence = 0; sequence <= 30; sequence += 1) {
+      window = advanceGateWindow(window, sample(sequence, sequence * 2_000));
+    }
+    const admission = admittedGate(window, 60, "campaign-initial-admission");
+    invariant(admission?.duration_seconds === 60 && admission.tctl_range_c === 5 &&
+      admission.sample_count === 31 && admission.first_sample_sequence === 0 &&
+      admission.admitted_sample_sequence === 30 &&
+      !Object.hasOwn(admission, "admitted_evaluated_monotonic_ms"),
+    "initial admission equality failed");
+    invariant(admittedGate(window, 60.001, "too-long") === null, "short admission window passed");
+    let sparseWindow = advanceGateWindow(null, sample(0, 0, {tctl_c: 94}));
+    sparseWindow = advanceGateWindow(sparseWindow, sample(1, 60_000, {tctl_c: 94}));
+    invariant(admittedGate(sparseWindow, 60, "sparse") === null,
+      "initial gate admitted fewer than 31 two-second samples");
+    invariant(!gateSampleAcceptable(sample(0, 0, {load1: 5.001})) &&
+      !gateSampleAcceptable(sample(0, 0, {load5: 5.001})) &&
+      !gateSampleAcceptable(sample(0, 0, {tctl_c: 94.001})) &&
+      !gateSampleAcceptable(sample(0, 0, {cpu2_busy_percent: 25.001})) &&
+      !gateSampleAcceptable(sample(0, 0, {cpu3_busy_percent: 10.001})),
+    "a gate accepted a strict limit breach");
+    let rangeWindow = advanceGateWindow(null, sample(0, 0, {tctl_c: 88}));
+    rangeWindow = advanceGateWindow(rangeWindow, sample(1, 2_000, {tctl_c: 94}));
+    invariant(rangeWindow.samples.length === 1 && rangeWindow.minimumTctlC === 94,
+      "Tctl range breach did not restart the window at the current sample");
+    let blockWindow = null;
+    for (let sequence = 0; sequence <= 3; sequence += 1) {
+      blockWindow = advanceGateWindow(blockWindow, sample(sequence, sequence * 2_000, {tctl_c: 94}));
+    }
+    invariant(admittedGate(blockWindow, 6, "block:before-measurement")?.duration_seconds === 6,
+      "six-second block equality failed");
+    let sparseBlock = advanceGateWindow(null, sample(0, 0, {tctl_c: 94}));
+    sparseBlock = advanceGateWindow(sparseBlock, sample(1, 6_000, {tctl_c: 94}));
+    invariant(admittedGate(sparseBlock, 6, "sparse-block") === null,
+      "block gate admitted fewer than four two-second samples");
+    let deadlineWindow = null;
+    for (let sequence = 0; sequence <= 3; sequence += 1) {
+      deadlineWindow = advanceGateWindow(deadlineWindow,
+        sample(sequence, 1_174_000 + (sequence * 2_000), {tctl_c: 94}));
+    }
+    const atDeadline = admittedBlockGate(
+      deadlineWindow, "block:before-measurement", 1_000_000, 1_180_000, 1_180_000
+    );
+    invariant(atDeadline?.wait_started_monotonic_ms === 1_000_000 &&
+      atDeadline.deadline_monotonic_ms === 1_180_000 &&
+      atDeadline.admitted_evaluated_monotonic_ms === 1_180_000,
+    "block gate at the deadline must pass and record its wait and evaluation bounds");
+    const lateWindow = advanceGateWindow(null, sample(0, 1_174_001, {tctl_c: 94}));
+    let completedLateWindow = lateWindow;
+    for (let sequence = 1; sequence <= 3; sequence += 1) {
+      completedLateWindow = advanceGateWindow(completedLateWindow,
+        sample(sequence, 1_174_001 + (sequence * 2_000), {tctl_c: 94}));
+    }
+    invariant(admittedBlockGate(
+      completedLateWindow, "late-sample", 1_000_000, 1_180_000, 1_180_001
+    ) === null && admittedBlockGate(
+      deadlineWindow, "late-evaluation", 1_000_000, 1_180_000, 1_180_000.001
+    ) === null &&
+      !blockGateDeadlineExceeded({monotonic_ms: 1_180_000}, 1_180_000, 1_180_000) &&
+      blockGateDeadlineExceeded({monotonic_ms: 1_180_000}, 1_179_999.999, 1_180_000) &&
+      blockGateDeadlineExceeded({monotonic_ms: 1_180_001}, 1_180_001, 1_180_000) &&
+      blockGateDeadlineExceeded({monotonic_ms: 1_180_000}, 1_180_000.001, 1_180_000),
+      "block deadline equality semantics changed");
+  });
+  check("child-window-boundaries", () => {
+    const boundary = (total, idle, tctl = 99_999) => ({
+      observed_at: "2026-08-24T00:00:00.000Z", monotonic_ms: Number(total),
+      proc_stat_cpu_line: `cpu2 ${total} 0 0 ${idle} 0 0 0 0 0 0`,
+      counters: [total, "0", "0", idle, "0", "0", "0", "0", "0", "0"].map(String),
+      total_ticks: String(total), idle_ticks: String(idle),
+      tctl_raw_millicelsius: String(tctl), tctl_c: tctl / 1000,
+    });
+    const equality = childEnvironmentWindow(boundary(1_000, 500), boundary(1_100, 575));
+    invariant(equality.cpu_busy_percent === 25 && equality.within_busy_limit &&
+      equality.delta_busy_ticks === "25", "child CPU equality must pass");
+    const breach = childEnvironmentWindow(boundary(1_000, 500), boundary(1_100, 574));
+    invariant(breach.cpu_busy_percent === 26 && !breach.within_busy_limit,
+      "child CPU strict breach must fail");
+    invariant(boundary(1_000, 500, 100_000).tctl_c >= ENVIRONMENT_POLICY.invalidTctlMinimumC &&
+      boundary(1_000, 500, 99_999).tctl_c < ENVIRONMENT_POLICY.invalidTctlMinimumC,
+    "child Tctl boundary semantics changed");
+    rejects(() => childEnvironmentWindow(boundary(1_100, 575), boundary(1_000, 500)), /moved backwards/);
   });
   check("interruption-wakes-monitor", () => {
     let invalid = null;
@@ -2091,7 +2397,7 @@ function runSelfAudit() {
   const schedule = buildSchedule();
   const result = {
     artifact: "fused-json-m6-tic-campaign-self-audit",
-    version: 1,
+    version: 2,
     status: "passed",
     assertions,
     performance_pairs: schedule.performance.length,
