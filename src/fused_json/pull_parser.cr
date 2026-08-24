@@ -23,6 +23,11 @@ module FusedJSON
       ObjectFirstKeyOrEnd
       ObjectValue
       ObjectCommaOrEnd
+      LimitedArrayFirstOrEnd
+      LimitedArrayCommaOrEnd
+      LimitedObjectFirstKeyOrEnd
+      LimitedObjectValue
+      LimitedObjectCommaOrEnd
     end
 
     private struct Frame
@@ -313,27 +318,6 @@ module FusedJSON
     def skip_value : Nil
       raise_error("cannot skip an object key", @byte_offset) if @object_key
 
-      if @limits_active
-        skip_value_limited
-        return
-      end
-
-      case @kind
-      when .null?, .bool?, .int?, .float?, .string?
-        advance_unlimited
-      when .begin_array?, .begin_object?
-        target_depth = @frames.size
-        while @frames.size >= target_depth
-          advance_unlimited
-        end
-        advance_unlimited
-      else
-        raise_error("expected a JSON value", @byte_offset)
-      end
-    end
-
-    @[NoInline]
-    private def skip_value_limited : Nil
       case @kind
       when .null?, .bool?, .int?, .float?, .string?
         advance
@@ -379,13 +363,8 @@ module FusedJSON
     private def advance : Nil
       release_token
 
-      if @limits_active
-        advance_limited
-        return
-      end
-
       if @frames.empty?
-        finish_document_unlimited
+        @limits_active ? finish_document : finish_document_unlimited
         return
       end
 
@@ -400,48 +379,15 @@ module FusedJSON
         next_object_value_unlimited
       when .object_comma_or_end?
         next_object_key_unlimited(first: false)
-      end
-    end
-
-    private def advance_unlimited : Nil
-      release_token
-
-      if @frames.empty?
-        finish_document_unlimited
-        return
-      end
-
-      case @frames.last.state
-      when .array_first_or_end?
-        next_array_value_unlimited(first: true)
-      when .array_comma_or_end?
-        next_array_value_unlimited(first: false)
-      when .object_first_key_or_end?
-        next_object_key_unlimited(first: true)
-      when .object_value?
-        next_object_value_unlimited
-      when .object_comma_or_end?
-        next_object_key_unlimited(first: false)
-      end
-    end
-
-    @[NoInline]
-    private def advance_limited : Nil
-      if @frames.empty?
-        finish_document
-        return
-      end
-
-      case @frames.last.state
-      when .array_first_or_end?
+      when .limited_array_first_or_end?
         next_array_value(first: true)
-      when .array_comma_or_end?
+      when .limited_array_comma_or_end?
         next_array_value(first: false)
-      when .object_first_key_or_end?
+      when .limited_object_first_key_or_end?
         next_object_key(first: true)
-      when .object_value?
+      when .limited_object_value?
         next_object_value
-      when .object_comma_or_end?
+      when .limited_object_comma_or_end?
         next_object_key(first: false)
       end
     end
@@ -630,7 +576,7 @@ module FusedJSON
         end
       end
 
-      set_top_state(FrameState::ArrayCommaOrEnd)
+      set_top_state(FrameState::LimitedArrayCommaOrEnd)
       record_container_entry
       emit_value
     end
@@ -669,7 +615,7 @@ module FusedJSON
       @kind = Kind::String
       @object_key = true
       enforce_duplicate_key(string_value, @byte_offset) if duplicate_keys?
-      set_top_state(FrameState::ObjectValue)
+      set_top_state(FrameState::LimitedObjectValue)
     end
 
     private def next_object_value : Nil
@@ -678,7 +624,7 @@ module FusedJSON
       raise_error("expected ':' after object key") unless consume_if(0x3a_u8)
       skip_whitespace
       enforce_available_byte
-      set_top_state(FrameState::ObjectCommaOrEnd)
+      set_top_state(FrameState::LimitedObjectCommaOrEnd)
       emit_value
     end
 
@@ -699,9 +645,9 @@ module FusedJSON
         @string_finish = token_position
         @kind = Kind::String
       when 0x5b_u8 # [
-        enter_container(FrameState::ArrayFirstOrEnd, Kind::BeginArray)
+        enter_container(FrameState::LimitedArrayFirstOrEnd, Kind::BeginArray)
       when 0x7b_u8 # {
-        enter_container(FrameState::ObjectFirstKeyOrEnd, Kind::BeginObject)
+        enter_container(FrameState::LimitedObjectFirstKeyOrEnd, Kind::BeginObject)
       when 0x6e_u8 # n
         consume_literal("null")
         @kind = Kind::Null
