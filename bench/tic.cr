@@ -7,6 +7,8 @@ module TICBenchmarkCLI
   TYPED_MODES      = [
     "fused-typed",
     "crystal-typed",
+    "fused-retained-typed",
+    "crystal-retained-typed",
     "fused-gzip-typed",
     "crystal-gzip-typed",
     "fused-two-pass-typed",
@@ -14,6 +16,7 @@ module TICBenchmarkCLI
   ]
   GZIP_MODES       = ["gzip-drain", "fused-gzip-typed", "crystal-gzip-typed"]
   TWO_PASS_MODES   = ["fused-two-pass-typed", "crystal-two-pass-typed"]
+  RETAINED_MODES   = ["fused-retained-typed", "crystal-retained-typed"]
   PARSER_MODES     = STRUCTURAL_MODES + TYPED_MODES
   MODES            = ["plain-drain", "gzip-drain"] + PARSER_MODES
   ENVIRONMENT_KEYS = [
@@ -274,6 +277,22 @@ module TICBenchmarkCLI
       TICBench.fused_typed_pull(input, buffer_size, max_nesting, strong_digest: false)
     when "crystal-typed"
       TICBench.crystal_typed_pull(input, buffer_size, max_nesting, strong_digest: false)
+    when "fused-retained-typed"
+      TICBench.fused_typed_pull(
+        input,
+        buffer_size,
+        max_nesting,
+        strong_digest: false,
+        retain_output: true
+      )
+    when "crystal-retained-typed"
+      TICBench.crystal_typed_pull(
+        input,
+        buffer_size,
+        max_nesting,
+        strong_digest: false,
+        retain_output: true
+      )
     when "fused-gzip-typed"
       TICBench.fused_gzip_typed_pull(
         required_gzip_input(gzip_input, mode),
@@ -370,6 +389,14 @@ module TICBenchmarkCLI
       TICBench.verify_result(result, manifest, mode, require_strong: false)
     elsif result = measurement.typed_traversal
       TICBench.verify_typed_result(result, manifest, mode, require_strong: false)
+      retained = result.retained_output
+      if RETAINED_MODES.includes?(mode)
+        unless retained && retained.total_values == result.typed_values
+          raise "#{mode} did not retain every selected typed value"
+        end
+      elsif retained
+        raise "#{mode} unexpectedly retained typed values"
+      end
     elsif result = measurement.drain
       unless result.bytes == manifest.decompressed_bytes
         raise "#{mode} processed #{result.bytes} bytes, expected #{manifest.decompressed_bytes}"
@@ -478,6 +505,7 @@ module TICBenchmarkCLI
           typed_traversal.try(&.typed_records)
         )
         nullable_field(json, "typed_values", typed_values)
+        write_retained_output(json, typed_traversal.try(&.retained_output))
         nullable_field(
           json,
           "typed_pass_wall_seconds",
@@ -536,7 +564,10 @@ module TICBenchmarkCLI
             nullable_field(json, "parser", parser_name(mode))
             json.field "transport", GZIP_MODES.includes?(mode) ? "gzip" : "plain"
             json.field "workload", workload_name(mode)
+            json.field "retained_output_policy",
+              RETAINED_MODES.includes?(mode) ? TICBench::RETAINED_OUTPUT_POLICY : "none"
             json.field "fused_cache_keys", false
+            json.field "fused_reject_duplicate_keys", false
             json.field "crystal_key_pool", "standard library always enabled"
             json.field "input_buffering", input_buffering(mode)
           end
@@ -599,6 +630,7 @@ module TICBenchmarkCLI
 
   def workload_name(mode : String) : String
     return "drain" if mode.ends_with?("-drain")
+    return "typed-retained" if RETAINED_MODES.includes?(mode)
     return "typed-two-pass" if TWO_PASS_MODES.includes?(mode)
     return "typed" if TYPED_MODES.includes?(mode)
     "structural-pull"
@@ -620,6 +652,23 @@ module TICBenchmarkCLI
       "File buffer set to benchmark buffer size; Crystal lexer buffer is internal"
     else
       raise "unknown benchmark mode #{mode.inspect}"
+    end
+  end
+
+  def write_retained_output(json : JSON::Builder,
+                            retained : TICBench::RetainedTypedOutput?) : Nil
+    json.field "retained_output" do
+      if retained
+        json.object do
+          json.field "policy", TICBench::RETAINED_OUTPUT_POLICY
+          json.field "provider_records", retained.provider_records.size
+          json.field "scalar_values", retained.scalar_values.size
+          json.field "price_records", retained.price_records.size
+          json.field "total_values", retained.total_values
+        end
+      else
+        json.null
+      end
     end
   end
 

@@ -58,7 +58,7 @@ ARGV.each do |path|
 
   job.items.each do |item|
     mib_per_second = item.mean * source.bytesize / 1_048_576.0
-    printf "  %-18s %9.2f MiB/s  (RSD %5.2f%%)\n",
+    printf "  %-18s %13.6f MiB/s  (RSD %5.2f%%)\n",
       item.label, mib_per_second, item.relative_stddev
   end
 

@@ -104,6 +104,7 @@ cross-parser verification step in the measured process.
 | `gzip-drain` | Gzip | 1 | Decompressed bytes only |
 | `fused-pull`, `crystal-pull` | Plain | 1 | Structural pull events |
 | `fused-typed`, `crystal-typed` | Plain | 1 | Nested typed values |
+| `fused-retained-typed`, `crystal-retained-typed` | Plain | 1 | Nested typed values retained by the consumer |
 | `fused-gzip-typed`, `crystal-gzip-typed` | Gzip | 1 | Decompression plus nested typed values |
 | `fused-two-pass-typed`, `crystal-two-pass-typed` | Plain | 2 | Reopened provider pass plus rate pass |
 
@@ -141,6 +142,12 @@ typed record. FusedJSON decodes provider IDs with `read_array(Int64)`; the
 Crystal baseline constructs the same typed scalars in its untyped array loop.
 This keeps the `wide-item` profile bounded by a nested price instead of
 materializing its document-scale outer item.
+
+The retained modes are RSS diagnostics, not throughput gates. They keep every
+selected provider record, provider ID, and negotiated-price record reachable
+through receipt emission under the versioned
+`all-selected-typed-values-v1` policy. Compare their process peaks with the
+ordinary typed modes as separate series; do not subtract one from another.
 
 Gzip typed modes include file opening, decompression, parsing, complete input
 validation, and trailer validation. They are end-to-end transport results, not
@@ -184,5 +191,23 @@ Gzip modes use an unbuffered compressed file and a gzip reader; drain modes use
 the explicit benchmark drain buffer instead of either parser.
 
 Typed parsing, gzip plus parsing, and the two-pass workflow are available now.
-The paired statistical release gates and multi-size RSS campaigns remain part
-of Milestone 6; do not infer them from a single shared-host run.
+The exact paired schedules, statistical gates, generated sizes, RSS ceiling,
+and shared-host validity rules are frozen in the
+[Milestone 6 validation protocol](milestone-6-protocol.md). Do not infer an
+acceptance result from a single shared-host run.
+
+## Run the formal Milestone 6 campaign
+
+The formal workflow uses four self-auditing Node tools:
+`m6_build_attestation.mjs` binds clean release artifacts,
+`tic_campaign.mjs` performs the shared semantic preflight and both
+prescheduled campaigns, `tic_campaign_audit.mjs` independently recomputes
+their gates, and `dynamic_gate.mjs` protects existing dynamic-parser
+performance. The campaign runner owns CPU pinning for children, environment
+admission, GNU-time capture, durable journals, and all 173 observations.
+
+Use the complete commands and exact fixture names in the
+[frozen protocol](milestone-6-protocol.md). Run each campaign once, in full,
+with the same preflight, binaries, fixtures, compiler, and host. An invalid or
+failed receipt is evidence to retain, not a pool from which to rerun selected
+observations.

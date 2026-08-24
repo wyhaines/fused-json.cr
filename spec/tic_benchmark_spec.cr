@@ -24,6 +24,32 @@ private class TICCountingDiscardIO < IO
   end
 end
 
+private class TICLocationTrapPullParser < JSON::PullParser
+  def location : Tuple(Int32, Int32)
+    raise "benchmark traversal used the 32-bit location API"
+  end
+end
+
+module TICBench
+  def self.structural_traversal_for_spec(pull : JSON::PullParser) : TraversalResult
+    traverse(pull, Time.instant, NormalizedTraversalProjection.new(true))
+  end
+
+  def self.typed_traversal_for_spec(pull : JSON::PullParser) : TypedTraversalResult
+    started = Time.instant
+    projection = NormalizedTraversalProjection.new(true)
+    stats = TypedTraversalStats.new
+    counts, first_item_seconds = traverse_typed(
+      pull,
+      started,
+      projection,
+      stats,
+      TypedSelection::Both
+    )
+    typed_result(projection, counts, first_item_seconds, stats, 1, [0.0])
+  end
+end
+
 private def generate_tic_memory(profile : TICBench::FixtureProfile,
                                 order : TICBench::FieldOrder,
                                 bytes = 64 * 1024_i64,
@@ -244,6 +270,49 @@ describe "TiC benchmark fixtures" do
         fused.traversal.projection_sha256.should eq(crystal_two_pass.traversal.projection_sha256)
       end
     end
+  end
+
+  it "retains every selected typed value only in retained-output mode" do
+    with_tic_file(
+      TICBench::FixtureProfile::ManySmall,
+      TICBench::FieldOrder::ProvidersFirst
+    ) do |path, generated|
+      manifest = generated.manifest
+      ordinary = TICBench.fused_typed_pull(path, 1024)
+      fused = TICBench.fused_typed_pull(path, 1024, retain_output: true)
+      crystal = TICBench.crystal_typed_pull(path, 1024, retain_output: true)
+
+      ordinary.retained_output.should be_nil
+      {"retained FusedJSON" => fused, "retained Crystal" => crystal}.each do |label, result|
+        TICBench.verify_typed_result(result, manifest, label)
+        retained = result.retained_output.should_not be_nil
+        retained.provider_records.size.should eq(result.provider_records)
+        retained.scalar_values.size.should eq(result.scalar_values)
+        retained.price_records.size.should eq(result.price_records)
+        retained.total_values.should eq(result.typed_values)
+      end
+      fused_retained = fused.retained_output.should_not be_nil
+      crystal_retained = crystal.retained_output.should_not be_nil
+      fused_retained.provider_records.should eq(crystal_retained.provider_records)
+      fused_retained.scalar_values.should eq(crystal_retained.scalar_values)
+      fused_retained.price_records.should eq(crystal_retained.price_records)
+      fused.traversal.projection_sha256.should eq(crystal.traversal.projection_sha256)
+      fused.provider_checksum.should eq(crystal.provider_checksum)
+    end
+  end
+
+  it "does not use Crystal's 32-bit object location convenience path" do
+    source, generated = generate_tic_memory(
+      TICBench::FixtureProfile::ManySmall,
+      TICBench::FieldOrder::ProvidersFirst
+    )
+    manifest = generated.manifest
+
+    structural = TICBench.structural_traversal_for_spec(TICLocationTrapPullParser.new(source))
+    typed = TICBench.typed_traversal_for_spec(TICLocationTrapPullParser.new(source))
+
+    TICBench.verify_result(structural, manifest, "location-neutral Crystal")
+    TICBench.verify_typed_result(typed, manifest, "location-neutral typed Crystal")
   end
 
   it "keeps wide outer items structural while decoding nested typed prices" do

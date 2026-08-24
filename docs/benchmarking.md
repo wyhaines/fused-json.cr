@@ -156,9 +156,12 @@ warmup/calculation duration, and sample count. The five canonical Oj corpora are
 `twitter.json`. Specialized inputs supplement rather than replace them.
 
 Dynamic parsing must retain a geometric-mean throughput of at least 1.5x
-Crystal `JSON.parse`, with no canonical corpus materially slower. Ruby Oj is
-useful cross-runtime context, not a release gate. Do not copy a local number
-into release notes unless the commit and procedure are reproducible.
+Crystal `JSON.parse`, and every canonical corpus median must be at least
+0.98x. The formal Milestone 6 runner uses five fresh, alternating-order
+processes on CPU 3 and owns admission from CPU 0; its exact command is in the
+[Milestone 6 protocol](milestone-6-protocol.md). Ruby Oj is useful
+cross-runtime context, not a release gate. Do not copy a local number into
+release notes unless the commit and procedure are reproducible.
 
 The controlled [reference results](benchmark-results.md) record the commit,
 host, commands, medians, variability, and managed allocation data used for the
@@ -167,3 +170,6 @@ Milestone 7 release review.
 The [TiC large-document benchmark guide](tic-benchmarking.md) covers generated
 streaming fixtures, semantic verification, decompression baselines, one-shot
 parser receipts, and external peak-RSS measurements.
+The [Milestone 6 validation protocol](milestone-6-protocol.md) freezes its
+formal paired schedules, generated sizes, environmental rules, statistical
+gates, and scale-RSS ceiling before observations begin.

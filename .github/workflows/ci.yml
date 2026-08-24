@@ -11,6 +11,32 @@ permissions:
   contents: read
 
 jobs:
+  milestone-6-harnesses:
+    name: Milestone 6 harnesses
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          persist-credentials: false
+
+      - name: Show tool versions
+        run: |
+          node --version
+          ruby --version
+
+      - name: Check Node harnesses
+        run: |
+          for harness in scripts/m6_build_attestation.mjs scripts/tic_campaign.mjs scripts/tic_campaign_audit.mjs scripts/dynamic_gate.mjs; do
+            node --check "$harness"
+            node "$harness" --self-audit > /dev/null
+          done
+
+      - name: Check Sunlight compatibility driver
+        run: ruby -c scripts/sunlight_compat.rb
+
   test:
     name: Crystal ${{ matrix.label }}
     runs-on: ubuntu-latest
@@ -90,6 +116,9 @@ jobs:
       - name: Compile documentation examples
         run: crystal run scripts/check_doc_examples.cr
 
+      - name: Compile large-offset check
+        run: crystal build --no-codegen --error-on-warnings scripts/check_large_offset.cr
+
       - name: Check API documentation
         run: |
           crystal docs --error-on-warnings --output=/tmp/fused-json-docs src/fused_json.cr
@@ -112,6 +141,10 @@ jobs:
       - name: Run specs with portable fallbacks
         run: crystal spec -Dfused_json_force_portable_float -Dfused_json_force_scalar_string_scan --order=random --error-on-warnings
 
+      - name: Run post-2^32 offset check
+        if: ${{ matrix.label == 'stable' && (github.event_name == 'schedule' || github.event_name == 'workflow_dispatch') }}
+        run: crystal run --release --no-debug scripts/check_large_offset.cr
+
       - name: Build release benchmarks
         if: ${{ matrix.experimental == false }}
         run: |
@@ -121,9 +154,17 @@ jobs:
           crystal build --release --no-debug bench/stream.cr -o /tmp/fused-json-stream-bench
           crystal build --release --no-debug bench/tic_fixture.cr -o /tmp/fused-json-tic-fixture
           crystal build --release --no-debug bench/tic.cr -o /tmp/fused-json-tic-bench
+          crystal build --release --no-debug bench/sunlight_compat_scan.cr -o /tmp/fused-json-sunlight-compat-scan
           crystal build --release --no-debug bench/typed_cursor_cost.cr -o /tmp/fused-json-typed-cursor-cost
           crystal build --release --no-debug -Dfused_json_limits_api bench/limits_overhead.cr -o /tmp/fused-json-limits-overhead
           crystal build --release --no-debug -Dfused_json_force_scalar_string_scan bench/parse.cr -o /tmp/fused-json-scalar-bench
+
+      - name: Smoke test Sunlight scanner
+        if: ${{ matrix.experimental == false }}
+        run: |
+          printf '%s\n' '{"reporting_entity_name":"Plan","provider_references":[{"provider_group_id":7,"provider_groups":[]}],"in_network":[{"billing_code":"123","billing_code_type":"CPT","negotiation_arrangement":"ffs","negotiated_rates":[{"provider_references":[7],"negotiated_prices":[{"negotiated_rate":1.2300e2}]}]}]}' > /tmp/fused-json-sunlight-smoke.json
+          /tmp/fused-json-sunlight-compat-scan /tmp/fused-json-sunlight-smoke.json > /tmp/fused-json-sunlight-smoke.jsonl
+          jq -e -s 'map(.scan_event) == ["meta","reference","item","rate","price","rate_end","item_end"] and .[0].scan_protocol == 1 and .[1].value.provider_group_id == 7 and .[4].value.negotiated_rate == 123' /tmp/fused-json-sunlight-smoke.jsonl > /dev/null
 
       - name: Smoke test TiC benchmark tools
         if: ${{ matrix.experimental == false }}
@@ -136,18 +177,23 @@ jobs:
           /tmp/fused-json-tic-bench run --input /tmp/fused-json-tic.json --manifest /tmp/fused-json-tic.meta.json --mode crystal-pull --commit "$GITHUB_SHA" > /tmp/fused-json-tic-crystal.json
           /tmp/fused-json-tic-bench run --input /tmp/fused-json-tic.json --manifest /tmp/fused-json-tic.meta.json --mode fused-typed --commit "$GITHUB_SHA" > /tmp/fused-json-tic-fused-typed.json
           /tmp/fused-json-tic-bench run --input /tmp/fused-json-tic.json --manifest /tmp/fused-json-tic.meta.json --mode crystal-typed --commit "$GITHUB_SHA" > /tmp/fused-json-tic-crystal-typed.json
+          /tmp/fused-json-tic-bench rss --input /tmp/fused-json-tic.json --manifest /tmp/fused-json-tic.meta.json --mode fused-retained-typed --commit "$GITHUB_SHA" > /tmp/fused-json-tic-fused-retained.json
+          /tmp/fused-json-tic-bench rss --input /tmp/fused-json-tic.json --manifest /tmp/fused-json-tic.meta.json --mode crystal-retained-typed --commit "$GITHUB_SHA" > /tmp/fused-json-tic-crystal-retained.json
           /tmp/fused-json-tic-bench run --input /tmp/fused-json-tic.json --gzip-input /tmp/fused-json-tic.json.gz --manifest /tmp/fused-json-tic.meta.json --mode fused-gzip-typed --commit "$GITHUB_SHA" > /tmp/fused-json-tic-fused-gzip-typed.json
           /tmp/fused-json-tic-bench run --input /tmp/fused-json-tic.json --gzip-input /tmp/fused-json-tic.json.gz --manifest /tmp/fused-json-tic.meta.json --mode crystal-gzip-typed --commit "$GITHUB_SHA" > /tmp/fused-json-tic-crystal-gzip-typed.json
           /tmp/fused-json-tic-bench run --input /tmp/fused-json-tic.json --manifest /tmp/fused-json-tic.meta.json --mode fused-two-pass-typed --commit "$GITHUB_SHA" > /tmp/fused-json-tic-fused-two-pass-typed.json
           /tmp/fused-json-tic-bench run --input /tmp/fused-json-tic.json --manifest /tmp/fused-json-tic.meta.json --mode crystal-two-pass-typed --commit "$GITHUB_SHA" > /tmp/fused-json-tic-crystal-two-pass-typed.json
-          jq -e '.typed_verified == true and .gzip_verified == true' /tmp/fused-json-tic-verify.json > /dev/null
+          jq -e '.receipt == "fused-json-tic-verification" and .version == 1 and .command == "verify" and .status == "verified" and .typed_verified == true and .gzip_verified == true and .raw_number_verified == true and .raw_number_checksum_algorithm == "fnv1a64-fields-raw-number-v2"' /tmp/fused-json-tic-verify.json > /dev/null
           jq -e '.input_passes == 1 and .processed_bytes == .logical_document_bytes and .counts == null and .configuration.input_buffering == "unbuffered File plus explicit benchmark drain buffer"' /tmp/fused-json-tic-plain.json > /dev/null
           jq -e '.input_passes == 1 and .processed_bytes == .logical_document_bytes and .counts == null and .configuration.transport == "gzip" and (.configuration.input_buffering | contains("gzip reader"))' /tmp/fused-json-tic-gzip.json > /dev/null
-          for m4_receipt in /tmp/fused-json-tic-fused-typed.json /tmp/fused-json-tic-crystal-typed.json /tmp/fused-json-tic-fused-gzip-typed.json /tmp/fused-json-tic-crystal-gzip-typed.json; do
-            jq -e '.input_passes == 1 and .processed_bytes == .logical_document_bytes and .typed_records == (.typed_provider_records + .typed_price_records) and .typed_values == (.typed_records + .typed_scalar_values) and (.configuration.input_buffering | length > 0)' "$m4_receipt" > /dev/null
+          for typed_receipt in /tmp/fused-json-tic-fused-typed.json /tmp/fused-json-tic-crystal-typed.json /tmp/fused-json-tic-fused-gzip-typed.json /tmp/fused-json-tic-crystal-gzip-typed.json; do
+            jq -e --arg commit "$GITHUB_SHA" '.receipt == "fused-json-tic-measurement" and .version == 1 and .command == "run" and .runtime.release_build == true and .runtime.fused_json_commit == $commit and .input_passes == 1 and .processed_bytes == .logical_document_bytes and .typed_records == (.typed_provider_records + .typed_price_records) and .typed_values == (.typed_records + .typed_scalar_values) and .configuration.retained_output_policy == "none" and .retained_output == null and .configuration.fused_cache_keys == false and .configuration.fused_reject_duplicate_keys == false and (.configuration.input_buffering | length > 0)' "$typed_receipt" > /dev/null
           done
-          for m4_receipt in /tmp/fused-json-tic-fused-two-pass-typed.json /tmp/fused-json-tic-crystal-two-pass-typed.json; do
-            jq -e '.input_passes == 2 and .processed_bytes == (.logical_document_bytes * 2) and (.typed_pass_wall_seconds | length) == 2 and .typed_records == (.typed_provider_records + .typed_price_records) and .typed_values == (.typed_records + .typed_scalar_values)' "$m4_receipt" > /dev/null
+          for typed_receipt in /tmp/fused-json-tic-fused-two-pass-typed.json /tmp/fused-json-tic-crystal-two-pass-typed.json; do
+            jq -e --arg commit "$GITHUB_SHA" '.receipt == "fused-json-tic-measurement" and .version == 1 and .command == "run" and .runtime.release_build == true and .runtime.fused_json_commit == $commit and .input_passes == 2 and .processed_bytes == (.logical_document_bytes * 2) and (.typed_pass_wall_seconds | length) == 2 and .typed_records == (.typed_provider_records + .typed_price_records) and .typed_values == (.typed_records + .typed_scalar_values) and .configuration.retained_output_policy == "none" and .retained_output == null and .configuration.fused_cache_keys == false and .configuration.fused_reject_duplicate_keys == false' "$typed_receipt" > /dev/null
+          done
+          for retained_receipt in /tmp/fused-json-tic-fused-retained.json /tmp/fused-json-tic-crystal-retained.json; do
+            jq -e --arg commit "$GITHUB_SHA" '.receipt == "fused-json-tic-measurement" and .version == 1 and .command == "rss" and (.peak_rss | contains("GNU /usr/bin/time")) and .runtime.release_build == true and .runtime.fused_json_commit == $commit and .configuration.fused_cache_keys == false and .configuration.fused_reject_duplicate_keys == false and .configuration.retained_output_policy == "all-selected-typed-values-v1" and .retained_output.policy == "all-selected-typed-values-v1" and .retained_output.total_values == .typed_values and .retained_output.provider_records == .typed_provider_records and .retained_output.scalar_values == .typed_scalar_values and .retained_output.price_records == .typed_price_records' "$retained_receipt" > /dev/null
           done
           FUSED_JSON_BENCH_COMMIT="$GITHUB_SHA" \
             FUSED_JSON_CURSOR_SCALARS=64 \

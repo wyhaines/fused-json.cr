@@ -9,6 +9,7 @@ module TICBench
   record ContentDigest, bytes : Int64, sha256 : String
 
   PROVIDER_CHECKSUM_ALGORITHM = "fnv1a64-provider-fields-v1"
+  RETAINED_OUTPUT_POLICY      = "all-selected-typed-values-v1"
 
   struct TypedTin
     include JSON::Serializable
@@ -46,6 +47,22 @@ module TICBench
     end
   end
 
+  class RetainedTypedOutput
+    getter provider_records : Array(TypedProviderReference)
+    getter scalar_values : Array(Int64)
+    getter price_records : Array(TypedNegotiatedPrice)
+
+    def initialize
+      @provider_records = [] of TypedProviderReference
+      @scalar_values = [] of Int64
+      @price_records = [] of TypedNegotiatedPrice
+    end
+
+    def total_values : Int64
+      provider_records.size.to_i64 + scalar_values.size + price_records.size
+    end
+  end
+
   class TypedTraversalResult
     getter traversal : TraversalResult
     getter provider_records : Int64
@@ -54,10 +71,11 @@ module TICBench
     getter provider_checksum : String
     getter input_passes : Int32
     getter pass_wall_seconds : Array(Float64)
+    getter retained_output : RetainedTypedOutput?
 
     def initialize(@traversal, @provider_records, @price_records,
                    @scalar_values, @provider_checksum, @input_passes,
-                   @pass_wall_seconds)
+                   @pass_wall_seconds, @retained_output = nil)
     end
 
     def typed_records : Int64
@@ -73,25 +91,30 @@ module TICBench
     getter provider_records : Int64
     getter price_records : Int64
     getter scalar_values : Int64
+    getter retained_output : RetainedTypedOutput?
 
-    def initialize
+    def initialize(*, retain_output = false)
       @provider_records = 0_i64
       @price_records = 0_i64
       @scalar_values = 0_i64
       @provider_checksum = ProviderChecksum.new
+      @retained_output = retain_output ? RetainedTypedOutput.new : nil
     end
 
     def add_provider(reference : TypedProviderReference) : Nil
       @provider_checksum.add(@provider_records, reference)
       @provider_records += 1
+      @retained_output.try(&.provider_records.<<(reference))
     end
 
-    def add_price : Nil
+    def add_price(price : TypedNegotiatedPrice) : Nil
       @price_records += 1
+      @retained_output.try(&.price_records.<<(price))
     end
 
-    def add_scalar : Nil
+    def add_scalar(value : Int64) : Nil
       @scalar_values += 1
+      @retained_output.try(&.scalar_values.<<(value))
     end
 
     def provider_checksum : String
@@ -297,10 +320,11 @@ module TICBench
 
   def fused_typed_pull(path : String, buffer_size : Int32,
                        max_nesting : Int32 = 512,
-                       strong_digest : Bool = true) : TypedTraversalResult
+                       strong_digest : Bool = true,
+                       retain_output : Bool = false) : TypedTraversalResult
     started = Time.instant
     projection = NormalizedTraversalProjection.new(strong_digest)
-    stats = TypedTraversalStats.new
+    stats = TypedTraversalStats.new(retain_output: retain_output)
     pass_started = Time.instant
     counts, first_item_seconds = File.open(path) do |file|
       file.read_buffering = false
@@ -324,10 +348,11 @@ module TICBench
 
   def crystal_typed_pull(path : String, buffer_size : Int32,
                          max_nesting : Int32 = 512,
-                         strong_digest : Bool = true) : TypedTraversalResult
+                         strong_digest : Bool = true,
+                         retain_output : Bool = false) : TypedTraversalResult
     started = Time.instant
     projection = NormalizedTraversalProjection.new(strong_digest)
-    stats = TypedTraversalStats.new
+    stats = TypedTraversalStats.new(retain_output: retain_output)
     pass_started = Time.instant
     counts, first_item_seconds = File.open(path) do |file|
       file.buffer_size = buffer_size
@@ -559,6 +584,14 @@ module TICBench
            result.pass_wall_seconds.size == result.input_passes
       raise "#{implementation} typed pass metadata is inconsistent"
     end
+    if retained = result.retained_output
+      unless retained.provider_records.size == result.provider_records &&
+             retained.price_records.size == result.price_records &&
+             retained.scalar_values.size == result.scalar_values &&
+             retained.total_values == result.typed_values
+        raise "#{implementation} retained output is inconsistent"
+      end
+    end
   end
 
   private def typed_result(projection : NormalizedTraversalProjection,
@@ -572,7 +605,8 @@ module TICBench
       stats.scalar_values,
       stats.provider_checksum,
       input_passes,
-      pass_wall_seconds
+      pass_wall_seconds,
+      stats.retained_output
     )
   end
 
@@ -593,7 +627,7 @@ module TICBench
     counts = Counts.new
     first_item_seconds = nil.as(Float64?)
 
-    pull.read_object do |key|
+    read_object_fields(pull) do |key|
       case key
       when "provider_references"
         if selection.both? || selection.providers?
@@ -648,7 +682,7 @@ module TICBench
       billing_code = nil.as(String?)
       description = nil.as(String?)
 
-      pull.read_object do |key|
+      read_object_fields(pull) do |key|
         case key
         when "negotiation_arrangement"
           arrangement = pull.read_string
@@ -696,13 +730,13 @@ module TICBench
       provider_group_id = nil.as(Int64?)
       references = 0_i32
 
-      pull.read_object do |key|
+      read_object_fields(pull) do |key|
         case key
         when "provider_references"
           read_typed_array(pull, Int64) do |reference|
             provider_group_id = reference
             references += 1
-            stats.add_scalar
+            stats.add_scalar(reference)
           end
           raise "fixture rate must contain exactly one provider reference" unless references == 1
         when "negotiated_prices"
@@ -754,7 +788,7 @@ module TICBench
         price.service_code.first
       )
       counts.negotiated_prices += 1
-      stats.add_price
+      stats.add_price(price)
       yield (Time.instant - started).total_seconds if sequence == 0
       price_index += 1
     end
@@ -770,12 +804,20 @@ module TICBench
     pull.read_array { yield T.new(pull) }
   end
 
+  private def read_object_fields(pull : P, & : String ->) : Nil forall P
+    pull.read_begin_object
+    until pull.kind.end_object?
+      yield pull.read_object_key
+    end
+    pull.read_end_object
+  end
+
   private def traverse(pull : P, started : Time::Instant,
                        projection : S) forall P, S
     counts = Counts.new
     first_item_seconds = nil.as(Float64?)
 
-    pull.read_object do |key|
+    read_object_fields(pull) do |key|
       case key
       when "provider_references"
         read_provider_references(pull, counts)
@@ -797,7 +839,7 @@ module TICBench
   private def read_provider_references(pull : P, counts : Counts) : Nil forall P
     pull.read_array do
       counts.provider_references += 1
-      pull.read_object do |key|
+      read_object_fields(pull) do |key|
         case key
         when "provider_groups"
           pull.read_array do
@@ -823,7 +865,7 @@ module TICBench
       billing_code = nil.as(String?)
       description = nil.as(String?)
 
-      pull.read_object do |key|
+      read_object_fields(pull) do |key|
         case key
         when "negotiation_arrangement"
           arrangement = pull.read_string
@@ -868,7 +910,7 @@ module TICBench
       counts.negotiated_rates += 1
       provider_group_id = nil.as(Int64?)
 
-      pull.read_object do |key|
+      read_object_fields(pull) do |key|
         case key
         when "provider_references"
           references = 0_i32
@@ -909,7 +951,7 @@ module TICBench
       billing_class = nil.as(String?)
       service_code = nil.as(String?)
 
-      pull.read_object do |key|
+      read_object_fields(pull) do |key|
         case key
         when "negotiated_type"
           negotiated_type = pull.read_string
