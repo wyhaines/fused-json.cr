@@ -100,12 +100,12 @@ semantic checksums, compiler and host details, arguments, and all relevant
 environment settings in each JSON receipt.
 
 The Milestone 5 acceptance campaign uses all eight workloads with 10,000
-records, a 32 KiB IO buffer, 0.5 seconds of warmup per configuration, 1.5
-seconds of measurement per configuration, and 20 operations per allocation
-sample. The M4 comparison uses 20 prescheduled two-process AB/BA pairs per
-workload. The API comparison uses the 20 paired children per workload described
-below. Every child is fresh and CPU-pinned with `GC_NPROCS=1` and
-`GC_MARKERS=1`.
+records, a 32 KiB IO buffer, and 20 operations per allocation sample. The M4
+comparison uses 0.5 seconds of warmup, 1.5 seconds of measurement, and 20
+prescheduled two-process AB/BA pairs per workload. Each side of the paired API
+comparison uses 0.5 seconds of warmup and 0.75 seconds of interleaved timed
+batches. It uses the 20 paired children per workload described below. Every
+child is fresh and CPU-pinned with `GC_NPROCS=1` and `GC_MARKERS=1`.
 
 The shared-host protocol pins the runner to CPU 0, the benchmark to CPU 3, and
 watches its sibling CPU 2. Admit the M4 campaign only after 60 continuous
