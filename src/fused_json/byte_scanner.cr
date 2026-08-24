@@ -297,25 +297,23 @@ module FusedJSON
       start = @pos
       negative = consume_if_unlimited(0x2d_u8)
       raise_error("expected digit after '-'") if eof?
+      integer_start = @pos
       limit = negative ? 9_223_372_036_854_775_808_u64 : 9_223_372_036_854_775_807_u64
       value = 0_u64
-      digit_count = 0
 
       if current_byte == 0x30_u8
         @pos += 1
         raise_error("leading zero in number") if !eof? && digit?(current_byte)
       elsif nonzero_digit?(current_byte)
         loop do
-          if digit_count < 19
-            value = value * 10_u64 + (current_byte - 0x30_u8).to_u64
-          end
-          digit_count += 1
+          value = value &* 10_u64 &+ (current_byte - 0x30_u8).to_u64
           @pos += 1
           break if eof? || !digit?(current_byte)
         end
       else
         raise_error("invalid number")
       end
+      integer_finish = @pos
 
       floating = false
       if consume_if_unlimited(0x2e_u8) # .
@@ -339,7 +337,7 @@ module FusedJSON
       if floating
         number_to_float64(NumberToken.new(start, @pos, negative, floating))
       else
-        if digit_count > 19 || value > limit
+        if integer_finish - integer_start > 19 || value > limit
           raise_error("integer is outside Int64 range", start)
         end
         if negative
