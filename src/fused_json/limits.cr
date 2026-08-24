@@ -101,7 +101,9 @@ module FusedJSON
       )
     end
 
-    def initialize(limits : Limits, *, @max_token_bytes : Int32?)
+    # String-backed scanners store this state in their source-retention slot,
+    # so this reference must keep the memory behind ByteScanner#@bytes alive.
+    def initialize(@source_anchor : String, limits : Limits, *, @max_token_bytes : Int32?)
       @max_document_bytes = limits.max_document_bytes
       @max_typed_value_bytes = limits.max_typed_value_bytes
       @max_total_values = limits.max_total_values
@@ -113,18 +115,6 @@ module FusedJSON
       @total_values = 0_i64
       @selected_value_frame_id = 0_i64
       @containers = [] of ContainerState if @max_container_entries || @reject_duplicate_keys
-    end
-
-    def limits_active? : Bool
-      !!(
-        @max_token_bytes ||
-          @max_document_bytes ||
-          @max_typed_value_bytes ||
-          @max_total_values ||
-          @max_container_entries ||
-          @max_cached_keys ||
-          @reject_duplicate_keys
-      )
     end
 
     def record_value? : Bool

@@ -82,6 +82,29 @@ module FusedJSON
       prime_reader
     end
 
+    @[AlwaysInline]
+    def string_value : String
+      if @kind.string? && !@string_materialized
+        @string_value = if @string_escaped
+                          materialize_string(
+                            @string_start,
+                            @string_finish,
+                            true,
+                            key: @object_key
+                          )
+                        else
+                          bytes = token_bytes
+                          if @object_key && @key_pool
+                            materialize_cached_unescaped_string(bytes)
+                          else
+                            String.new(bytes.to_unsafe + 1, bytes.size - 2)
+                          end
+                        end
+        @string_materialized = true
+      end
+      @string_value
+    end
+
     def location_i64 : Tuple(Int64, Int64)
       {@event_line, @event_column}
     end
@@ -102,7 +125,7 @@ module FusedJSON
 
     @[AlwaysInline]
     protected def enforce_available_byte : Nil
-      state = @resource_limits || return
+      state = resource_limits || return
       limit = state.byte_limit || return
       return if @stream_offset < limit
 
@@ -171,7 +194,7 @@ module FusedJSON
     end
 
     protected def skip_whitespace : Nil
-      if @resource_limits.try(&.byte_limit)
+      if resource_limits.try(&.byte_limit)
         skip_whitespace_with_byte_limit
         return
       end
@@ -317,6 +340,11 @@ module FusedJSON
               end
 
       key && @key_pool ? cache_key(value, @token_offset) : value
+    end
+
+    @[NoInline]
+    private def materialize_cached_unescaped_string(bytes : Bytes) : String
+      cache_key(bytes.to_unsafe + 1, bytes.size - 2, @token_offset)
     end
 
     protected def scan_number : NumberToken
@@ -562,7 +590,7 @@ module FusedJSON
 
     @[AlwaysInline]
     private def advance_ascii_span(count : Int32) : Nil
-      state = @resource_limits
+      state = resource_limits
       byte_limit = state.try(&.byte_limit)
       byte_distance = byte_limit.try { |limit| limit - @stream_offset }
       token_limit = max_token_bytes
@@ -969,7 +997,7 @@ module FusedJSON
 
     @[AlwaysInline]
     private def enforce_stream_byte : Nil
-      state = @resource_limits || return
+      state = resource_limits || return
       limit = state.byte_limit || return
       if @stream_offset >= limit
         raise_stream_byte_limit(state, limit, @stream_line, @stream_column)

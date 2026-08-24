@@ -1,9 +1,9 @@
 require "./spec_helper"
 require "./support/pull_helpers"
 
-private def pull_from_ephemeral_source : FusedJSON::PullParser
+private def pull_from_ephemeral_source(*, limits : FusedJSON::Limits = FusedJSON::Limits::DEFAULT) : FusedJSON::PullParser
   source = String.new(%q(["plain","line\nλ\uD834\uDD1E"]).to_slice)
-  pull = FusedJSON::PullParser.new(source)
+  pull = FusedJSON::PullParser.new(source, limits: limits)
   pull.read_begin_array
   pull
 end
@@ -94,6 +94,18 @@ describe FusedJSON::PullParser do
     pull = pull_from_ephemeral_source
     GC.collect
     Array.new(1_000) { |index| "source-churn-#{index}" }
+
+    pull.read_string.should eq("plain")
+    pull.read_string.should eq("line\nλ𝄞")
+    pull.read_end_array
+  end
+
+  it "retains an ephemeral source when resource limits are active" do
+    source_size = %q(["plain","line\nλ\uD834\uDD1E"]).bytesize
+    pull = pull_from_ephemeral_source(
+      limits: FusedJSON::Limits.new(max_document_bytes: source_size)
+    )
+    GC.collect
 
     pull.read_string.should eq("plain")
     pull.read_string.should eq("line\nλ𝄞")

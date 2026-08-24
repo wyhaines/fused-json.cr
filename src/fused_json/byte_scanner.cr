@@ -34,9 +34,11 @@ module FusedJSON
     @max_nesting : Int32
     @limits_active : Bool
     @key_pool : StringPool?
-    @resource_limits : ResourceLimitState?
+    # Retains the source directly in default mode. When limits are active, the
+    # state occupies the same slot and retains the source through its anchor.
+    @source_or_limits : String | ResourceLimitState
 
-    def initialize(@source : String, *, max_nesting : Int = MAX_NESTING,
+    def initialize(source : String, *, max_nesting : Int = MAX_NESTING,
                    cache_keys : Bool = false, limits : Limits = Limits::DEFAULT,
                    max_token_bytes : Int? = nil)
       unless max_nesting > 0 && max_nesting <= MAX_NESTING
@@ -46,7 +48,7 @@ module FusedJSON
         raise ArgumentError.new("max_token_bytes must be between 1 and #{Int32::MAX}")
       end
 
-      @bytes = @source.to_slice
+      @bytes = source.to_slice
       @size = @bytes.size
       @pos = 0
       @max_nesting = Math.min(max_nesting.to_i64, limits.max_nesting.to_i64).to_i32
@@ -58,12 +60,21 @@ module FusedJSON
                                 limits.max_token_bytes
                               end
       if ResourceLimitState.required?(limits, effective_token_limit)
-        @resource_limits = ResourceLimitState.new(
+        @source_or_limits = ResourceLimitState.new(
+          source,
           limits,
           max_token_bytes: effective_token_limit
         )
+        @limits_active = true
+      else
+        @source_or_limits = source
+        @limits_active = false
       end
-      @limits_active = @resource_limits.try(&.limits_active?) || false
+    end
+
+    @[AlwaysInline]
+    protected def resource_limits : ResourceLimitState?
+      @source_or_limits.as?(ResourceLimitState)
     end
 
     protected def parse_string(*, key : Bool = false) : String
@@ -211,6 +222,12 @@ module FusedJSON
       ensure
         @pos = saved_position
       end
+    end
+
+    @[NoInline]
+    private def materialize_cached_unescaped_string(start : Int32, content_start : Int32,
+                                                    content_size : Int32) : String
+      cache_key(@bytes.to_unsafe + content_start, content_size, start.to_i64)
     end
 
     protected def scan_number : NumberToken
@@ -403,6 +420,7 @@ module FusedJSON
       end
     end
 
+    @[AlwaysInline]
     protected def current_byte : UInt8
       @bytes[@pos]
     end
@@ -456,7 +474,7 @@ module FusedJSON
 
     @[AlwaysInline]
     protected def enforce_available_byte : Nil
-      state = @resource_limits || return
+      state = resource_limits || return
       limit = state.byte_limit || return
       if current_offset >= limit && @pos < @size
         raise_byte_limit(state, limit)
@@ -465,14 +483,14 @@ module FusedJSON
 
     @[AlwaysInline]
     protected def enforce_consumed_bytes : Nil
-      state = @resource_limits || return
+      state = resource_limits || return
       limit = state.byte_limit || return
       raise_byte_limit(state, limit) if current_offset > limit
     end
 
     @[AlwaysInline]
     protected def record_value : Nil
-      state = @resource_limits || return
+      state = resource_limits || return
       unless state.record_value?
         raise_error("document exceeds max_total_values of #{state.max_total_values}", current_offset)
       end
@@ -480,34 +498,34 @@ module FusedJSON
 
     @[AlwaysInline]
     protected def enter_limit_container(*, object : Bool) : Nil
-      @resource_limits.try &.enter_container(object)
+      resource_limits.try &.enter_container(object)
     end
 
     @[AlwaysInline]
     protected def leave_limit_container : Nil
-      @resource_limits.try &.leave_container
+      resource_limits.try &.leave_container
     end
 
     @[AlwaysInline]
     protected def record_container_entry : Nil
-      state = @resource_limits || return
+      state = resource_limits || return
       unless state.record_entry?
         raise_error("container exceeds max_container_entries of #{state.max_container_entries}", current_offset)
       end
     end
 
     protected def enforce_duplicate_key(key : String, position : Int64) : Nil
-      state = @resource_limits || return
+      state = resource_limits || return
       raise_error("duplicate object key", position) if state.duplicate_key?(key)
     end
 
     @[AlwaysInline]
     protected def duplicate_keys? : Bool
-      @resource_limits.try(&.duplicate_keys?) || false
+      resource_limits.try(&.duplicate_keys?) || false
     end
 
     protected def begin_typed_value_limit(start : Int64) : Bool
-      state = @resource_limits || return false
+      state = resource_limits || return false
       return false unless state.max_typed_value_bytes
       state.begin_typed_value(start)
       enforce_consumed_bytes
@@ -515,12 +533,12 @@ module FusedJSON
     end
 
     protected def end_typed_value_limit : Nil
-      @resource_limits.try &.end_typed_value
+      resource_limits.try &.end_typed_value
     end
 
     @[AlwaysInline]
     protected def max_token_bytes : Int32?
-      @resource_limits.try &.max_token_bytes
+      resource_limits.try &.max_token_bytes
     end
 
     protected def location_at(position : Int64) : Tuple(Int64, Int64)
@@ -917,7 +935,7 @@ module FusedJSON
       if token_limit = max_token_bytes
         limit = Math.min(limit, token_start.to_i64 + token_limit)
       end
-      if byte_limit = @resource_limits.try(&.byte_limit)
+      if byte_limit = resource_limits.try(&.byte_limit)
         limit = Math.min(limit, byte_limit)
       end
       limit.to_i32
@@ -929,7 +947,7 @@ module FusedJSON
       position = @pos.to_i64
       token_limit = max_token_bytes
       token_boundary = token_limit.try { |limit| token_start.to_i64 + limit }
-      state = @resource_limits
+      state = resource_limits
       byte_boundary = state.try(&.byte_limit)
 
       if state && byte_boundary && position >= byte_boundary &&
@@ -955,7 +973,7 @@ module FusedJSON
 
     @[AlwaysInline]
     private def resource_byte_limit? : Bool
-      !!@resource_limits.try(&.byte_limit)
+      !!resource_limits.try(&.byte_limit)
     end
 
     private def enforce_token_size(size : Int32, position : Int64) : Nil
@@ -966,7 +984,7 @@ module FusedJSON
 
     protected def cache_key(pointer : UInt8*, size : Int32, position : Int64) : String
       pool = @key_pool || raise "key cache is not enabled"
-      if limit = @resource_limits.try(&.max_cached_keys)
+      if limit = resource_limits.try(&.max_cached_keys)
         if existing = pool.get?(pointer, size)
           return existing
         end
@@ -979,7 +997,7 @@ module FusedJSON
 
     protected def cache_key(value : String, position : Int64) : String
       pool = @key_pool || raise "key cache is not enabled"
-      if limit = @resource_limits.try(&.max_cached_keys)
+      if limit = resource_limits.try(&.max_cached_keys)
         if existing = pool.get?(value)
           return existing
         end

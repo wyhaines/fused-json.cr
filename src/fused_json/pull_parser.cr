@@ -142,14 +142,29 @@ module FusedJSON
 
     # Returns the current decoded string. Materialization is lazy so skipping a
     # string does not allocate its contents.
+    @[AlwaysInline]
     def string_value : String
       if @kind.string? && !@string_materialized
-        @string_value = materialize_string(
-          @string_start,
-          @string_finish,
-          @string_escaped,
-          key: @object_key
-        )
+        @string_value = if @string_escaped
+                          materialize_string(
+                            @string_start,
+                            @string_finish,
+                            true,
+                            key: @object_key
+                          )
+                        else
+                          content_start = @string_start + 1
+                          content_size = @string_finish - content_start - 1
+                          if @object_key && @key_pool
+                            materialize_cached_unescaped_string(
+                              @string_start,
+                              content_start,
+                              content_size
+                            )
+                          else
+                            String.new(@bytes.to_unsafe + content_start, content_size)
+                          end
+                        end
         @string_materialized = true
       end
       @string_value
@@ -298,22 +313,27 @@ module FusedJSON
     def skip_value : Nil
       raise_error("cannot skip an object key", @byte_offset) if @object_key
 
-      unless @limits_active
-        case @kind
-        when .null?, .bool?, .int?, .float?, .string?
-          advance_unlimited
-        when .begin_array?, .begin_object?
-          target_depth = @frames.size
-          while @frames.size >= target_depth
-            advance_unlimited
-          end
-          advance_unlimited
-        else
-          raise_error("expected a JSON value", @byte_offset)
-        end
+      if @limits_active
+        skip_value_limited
         return
       end
 
+      case @kind
+      when .null?, .bool?, .int?, .float?, .string?
+        advance_unlimited
+      when .begin_array?, .begin_object?
+        target_depth = @frames.size
+        while @frames.size >= target_depth
+          advance_unlimited
+        end
+        advance_unlimited
+      else
+        raise_error("expected a JSON value", @byte_offset)
+      end
+    end
+
+    @[NoInline]
+    private def skip_value_limited : Nil
       case @kind
       when .null?, .bool?, .int?, .float?, .string?
         advance
@@ -732,7 +752,7 @@ module FusedJSON
       @event_context_id = frame_id
       advance_byte
       leave_limit_container
-      if (state = @resource_limits) && state.selected_value_frame_id == frame_id
+      if (state = resource_limits) && state.selected_value_frame_id == frame_id
         end_typed_value_limit
         state.selected_value_frame_id = 0_i64
       end
@@ -778,7 +798,7 @@ module FusedJSON
       return unless begin_typed_value_limit(@byte_offset)
 
       if @kind.begin_array? || @kind.begin_object?
-        state = @resource_limits || raise "missing resource-limit state"
+        state = resource_limits || raise "missing resource-limit state"
         state.selected_value_frame_id = @frames.last.id
       else
         end_typed_value_limit
