@@ -47,6 +47,19 @@ module FusedJSON
   # This unbounded form serves whole-document `from_json` without cursor-boundary
   # bookkeeping on its hot path.
   private abstract class NativeJSONPullAdapter(N) < JSON::PullParser
+    {% unless FusedJSON::PullParser::Kind::Null == JSON::PullParser::Kind::Null &&
+                FusedJSON::PullParser::Kind::Bool == JSON::PullParser::Kind::Bool &&
+                FusedJSON::PullParser::Kind::Int == JSON::PullParser::Kind::Int &&
+                FusedJSON::PullParser::Kind::Float == JSON::PullParser::Kind::Float &&
+                FusedJSON::PullParser::Kind::String == JSON::PullParser::Kind::String &&
+                FusedJSON::PullParser::Kind::BeginArray == JSON::PullParser::Kind::BeginArray &&
+                FusedJSON::PullParser::Kind::EndArray == JSON::PullParser::Kind::EndArray &&
+                FusedJSON::PullParser::Kind::BeginObject == JSON::PullParser::Kind::BeginObject &&
+                FusedJSON::PullParser::Kind::EndObject == JSON::PullParser::Kind::EndObject &&
+                FusedJSON::PullParser::Kind::EOF == JSON::PullParser::Kind::EOF %}
+      {% raise "native and standard JSON pull kinds must have matching values" %}
+    {% end %}
+
     @native : N
 
     protected def initialize(@native : N, *, max_nesting : Int)
@@ -57,6 +70,10 @@ module FusedJSON
 
     def int_value : Int64
       @native.int_value
+    end
+
+    def bool_value : Bool
+      @native.bool_value
     end
 
     def float_value : Float64
@@ -77,6 +94,11 @@ module FusedJSON
       @kind
     end
 
+    def read_bool : Bool
+      expect_kind(JSON::PullParser::Kind::Bool)
+      bool_value.tap { read_next }
+    end
+
     def read_object_key : String
       @native.read_object_key.tap { sync_kind }
     end
@@ -91,7 +113,7 @@ module FusedJSON
         read_next
         "null"
       when .bool?
-        @bool_value.to_s.tap { read_next }
+        bool_value.to_s.tap { read_next }
       when .int?, .float?
         raw_value.tap { read_next }
       when .string?
@@ -109,7 +131,7 @@ module FusedJSON
         json.null
         read_next
       when .bool?
-        json.bool(@bool_value)
+        json.bool(bool_value)
         read_next
       when .int?, .float?
         json.raw(raw_value)
@@ -177,20 +199,8 @@ module FusedJSON
     end
 
     private def sync_kind : Nil
-      @kind = case @native.kind
-              when .null?         then JSON::PullParser::Kind::Null
-              when .bool?         then JSON::PullParser::Kind::Bool
-              when .int?          then JSON::PullParser::Kind::Int
-              when .float?        then JSON::PullParser::Kind::Float
-              when .string?       then JSON::PullParser::Kind::String
-              when .begin_array?  then JSON::PullParser::Kind::BeginArray
-              when .end_array?    then JSON::PullParser::Kind::EndArray
-              when .begin_object? then JSON::PullParser::Kind::BeginObject
-              when .end_object?   then JSON::PullParser::Kind::EndObject
-              when .eof?          then JSON::PullParser::Kind::EOF
-              else                     raise("unknown native pull-parser kind")
-              end
-      @bool_value = @native.bool_value if @kind.bool?
+      # Both enums are kept value-compatible by the compile-time check above.
+      @kind = @native.kind.unsafe_as(JSON::PullParser::Kind)
     end
   end
 
@@ -242,6 +252,7 @@ module FusedJSON
       @boundary_byte_offset = 0_i64
       @boundary_location = nil
       super(native, max_nesting: max_nesting)
+      @bool_value = @native.bool_value if @kind.bool?
     end
 
     def int_value : Int64
