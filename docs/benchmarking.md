@@ -17,14 +17,16 @@ $ crystal build --release --no-debug -Dfused_json_limits_api \
     bench/limits_overhead.cr -o bin/limits-overhead-limits-api
 ```
 
-For in-process microbenchmarks, use a quiet host, pin one CPU, and set
-`GC_NPROCS=1` and `GC_MARKERS=1` so Boehm GC does not place its helper threads
-on that CPU. Allow at least one second of warmup and take multiple sustained
-samples in independent processes. Alternate comparison order by setting
-`FUSED_JSON_BENCH_REVERSE=1` on every other sample. Report medians, MiB/s,
-relative standard deviation, and managed bytes per operation; use a separate
-process-level RSS tool for peak memory. The one-shot TiC modes intentionally
-have no internal warmup and rely on a separately warmed page cache.
+Prefer a quiet host for in-process microbenchmarks. When that is unavailable,
+freeze campaign-specific admission and invalidation rules before collecting
+results. Pin one CPU and set `GC_NPROCS=1` and `GC_MARKERS=1` so Boehm GC does
+not place helper threads on that CPU. Allow at least one second of warmup and
+take multiple sustained samples in independent processes. Alternate comparison
+order by setting `FUSED_JSON_BENCH_REVERSE=1` on every other sample. Report
+medians, MiB/s, relative standard deviation, and managed bytes per operation;
+use a separate process-level RSS tool for peak memory. The one-shot TiC modes
+intentionally have no internal warmup and rely on a separately warmed page
+cache.
 
 `typed-cursor-cost` compares native structural reads, repeated `read(T)`, and
 `read_array(T)` for scalar and representative record arrays over streaming
@@ -43,13 +45,14 @@ Control its fixture sizes with `FUSED_JSON_CURSOR_SCALARS` and
 large-document release gate; use the end-to-end TiC modes for Crystal
 comparisons.
 
-`limits-overhead` measures the cost of introducing the Milestone 5 API when no
-extended limit is enabled. Both configurations avoid allocating counter and
-duplicate-key state. The tool generates and verifies one deterministic
-mixed-value fixture, then runs one workload and one configuration per process.
-Pair `default` (the `limits` keyword omitted) with `explicit-empty` (`limits:
-FusedJSON::Limits.new`) for each String and IO variant of dynamic, pull, skip,
-and typed parsing:
+`limits-overhead` measures the cost of carrying a disabled limits policy. Both
+configurations avoid allocating counter and duplicate-key state. The tool
+generates and verifies one deterministic mixed-value fixture. The Milestone 4
+comparison runs one workload and one default configuration in each fresh
+process. The same-commit API comparison runs both `default` (the `limits`
+keyword omitted) and `explicit-empty` (`limits: FusedJSON::Limits.new`) in one
+fresh child and emits one paired receipt. Both comparisons cover each String
+and IO variant of dynamic, pull, skip, and typed parsing:
 `string-dynamic`, `io-dynamic`, `string-pull`, `io-pull`, `string-skip`,
 `io-skip`, `string-typed`, and `io-typed`.
 
@@ -73,38 +76,54 @@ $ GC_NPROCS=1 GC_MARKERS=1 \
 $ GC_NPROCS=1 GC_MARKERS=1 \
     FUSED_JSON_BENCH_COMMIT=$(git rev-parse HEAD) taskset -c 4 \
     bin/limits-overhead-limits-api \
-    --workload=io-pull --configuration=explicit-empty >empty.json
+    --workload=io-pull --configuration=paired \
+    --paired-order=default,explicit-empty --pair-id=0 >pair.json
 ```
 
-Repeat pairs in fresh processes and alternate which configuration runs first.
-For same-commit default/explicit-empty pairs, require the receipt `pairing_key`,
-build, host, and environment to agree. For Milestone 4/candidate default pairs,
-require the pairing key, compiler, host, and environment to agree; build commit
-is the intentional difference, and both receipts must report `limits_api:
-false`. Compare median iterations per second and managed bytes per operation.
+For Milestone 4/candidate comparisons, pair separate fresh default-only
+processes and require matching pairing keys, compiler, host, and environment;
+the build commit is the intentional difference and both receipts report
+`limits_api: false`. For the same-commit API comparison, require both
+measurements to come from one flagged binary, fixture, process, and atomic
+paired receipt. The child calibrates both operations with the same sink-clear
+and full-GC treatment, then measures approximately 100 ms batches in repeating
+ABBA cycles. The requested A/B mapping is balanced across children. Allocation
+probes are primed, cleared, collected, and measured symmetrically. One paired
+child, not an internal batch, is an independent observation.
+
 The timing estimator divides total timed iterations by total timed batch
-elapsed; the approximately 100 ms batch rates are used only for the reported
-relative standard deviation. Control fixture size and IO buffering with
-`FUSED_JSON_LIMITS_RECORDS` and
-`FUSED_JSON_LIMITS_BUFFER`; the standard `FUSED_JSON_BENCH_*` variables control
-sampling. The tool records source and semantic checksums, compiler and host
-details, arguments, and all relevant environment settings in each JSON receipt.
+elapsed; batch rates are used only for the reported relative standard
+deviation. Control fixture size and IO buffering with
+`FUSED_JSON_LIMITS_RECORDS` and `FUSED_JSON_LIMITS_BUFFER`; the standard
+`FUSED_JSON_BENCH_*` variables control sampling. The tool records source and
+semantic checksums, compiler and host details, arguments, and all relevant
+environment settings in each JSON receipt.
 
 The Milestone 5 acceptance campaign uses all eight workloads with 10,000
-records, a 32 KiB IO buffer, 0.5 seconds of warmup, 1.5 seconds of measurement,
-and 20 allocation-sample operations. Run every observation in a fresh,
-CPU-pinned process on one quiet host with `GC_NPROCS=1` and `GC_MARKERS=1`.
-Preschedule a balanced AB/BA order.
+records, a 32 KiB IO buffer, 0.5 seconds of warmup per configuration, 1.5
+seconds of measurement per configuration, and 20 operations per allocation
+sample. The M4 comparison uses 20 prescheduled two-process AB/BA pairs per
+workload. The API comparison uses the 20 paired children per workload described
+below. Every child is fresh and CPU-pinned with `GC_NPROCS=1` and
+`GC_MARKERS=1`.
 
-Admit the reference host only after 60 continuous seconds of two-second
-samples with one- and five-minute load averages no greater than 0.5 and 1.0,
-no more than two runnable tasks, and CPU `Tctl` no greater than 70 C. Start
-within ten seconds. Continue sampling from a non-benchmark CPU and invalidate
-the complete campaign if `Tctl` reaches 85 C, the one-minute load exceeds 1.5
-twice consecutively, runnable tasks exceed three twice consecutively, or the
-monitor loses its temperature source or has a gap longer than five seconds.
-Keep the complete environment log. Never retain only the quiet pairs from an
-invalid campaign; receipt RSD is diagnostic and is not an exclusion rule.
+The shared-host protocol pins the runner to CPU 0, the benchmark to CPU 3, and
+watches its sibling CPU 2. Admit the M4 campaign only after 60 continuous
+seconds of two-second samples with one- and five-minute load averages no
+greater than 2.5, `Tctl` no greater than 70 C, and CPU 2 and CPU 3 each no more
+than 10% busy. Start within ten seconds. Start every later M4 child from a
+fresh post-observation sample at or below 70 C, allowing at most 60 seconds to
+cool. Because a paired API child runs both configurations, its corresponding
+thermal admission and start ceiling is 60 C and its cooldown allowance is 180
+seconds. All other environmental limits are shared.
+
+Invalidate the complete campaign if `Tctl` reaches 95 C, one-minute load
+exceeds 4.0 twice consecutively, CPU 2 exceeds 20% busy twice consecutively, a
+required environment read fails, the monitor has a gap longer than five
+seconds, or a child reports less than 99% task CPU. Keep the complete
+environment and task-audit logs. Never retain only quiet pairs from an invalid
+campaign; receipt RSD and CPU-frequency samples are diagnostic and are not
+exclusion or normalization rules.
 
 For each workload, collect 20 paired M4-default and candidate-default samples.
 Both the median and geometric mean of the paired candidate/M4 throughput ratios
@@ -114,11 +133,15 @@ resamples. Candidate median managed B/op must not exceed the M4 median by more
 than `max(4096 B, 0.1% of the M4 median)`. This allocation gate rejects hidden
 per-element growth while allowing fixed measurement noise.
 
-For each candidate-default and explicit-empty workload, collect 10 fresh paired
-samples. Both the median and geometric mean of the paired explicit/default
-throughput ratios must be at least 0.99. The same bootstrap procedure must give
-a lower bound of at least 0.98. Apply the same allocation tolerance, using the
-candidate-default median as the baseline. Record every receipt, the complete
+For each candidate-default and explicit-empty workload, collect 20 fresh paired
+children: ten begin with `default` as A and ten with `explicit-empty` as A in a
+frozen balanced schedule. Analyze one explicit-empty/default throughput ratio
+per child and bootstrap those 20 ratios. Both the median and geometric mean
+must be at least 0.99, and the same fixed-seed bootstrap procedure must give a
+lower bound of at least 0.98. Apply the same allocation tolerance, using the
+candidate-default median as the baseline. Record CPU 3 `scaling_cur_freq` as
+diagnostic metadata only; it is not an admission, invalidation, exclusion,
+normalization, or adjustment rule. Record every paired receipt, the complete
 prescheduled order, bootstrap seed, analysis output, and pass/fail result.
 
 Every published result must identify the FusedJSON commit, Crystal version and

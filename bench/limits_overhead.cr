@@ -21,10 +21,11 @@ module LimitsOverheadBenchmark
     "io-typed",
   ]
   {% if flag?(:fused_json_limits_api) %}
-    CONFIGURATIONS = ["default", "explicit-empty"]
+    CONFIGURATIONS = ["default", "explicit-empty", "paired"]
   {% else %}
     CONFIGURATIONS = ["default"]
   {% end %}
+  PAIRED_ORDERS    = ["default,explicit-empty", "explicit-empty,default"]
   ENVIRONMENT_KEYS = [
     "CRYSTAL_WORKERS",
     "FUSED_JSON_BENCH_ALLOCATIONS",
@@ -42,17 +43,19 @@ module LimitsOverheadBenchmark
     "OMP_NUM_THREADS",
   ]
 
-  RELEASE_BUILD        = {{ flag?(:release) }}
-  LIMITS_API_BUILD     = {{ flag?(:fused_json_limits_api) }}
-  INVOCATION_ARGUMENTS = ARGV.dup
-  RECEIPT_VERSION      = 2
-  PAIRING_VERSION      = 2
-  FIXTURE_FORMAT       = "fused-json-limits-overhead"
-  FIXTURE_VERSION      = 1
-  TIMING_ESTIMATOR     = "total-iterations-over-total-elapsed-v1"
-  BATCH_TARGET         = 100.milliseconds
-  FNV_OFFSET           = 14_695_981_039_346_656_037_u64
-  FNV_PRIME            =          1_099_511_628_211_u64
+  RELEASE_BUILD          = {{ flag?(:release) }}
+  LIMITS_API_BUILD       = {{ flag?(:fused_json_limits_api) }}
+  INVOCATION_ARGUMENTS   = ARGV.dup
+  RECEIPT_VERSION        = 2
+  PAIRED_RECEIPT_VERSION = 1
+  PAIRING_VERSION        = 2
+  PAIRED_PAIRING_VERSION = 3
+  FIXTURE_FORMAT         = "fused-json-limits-overhead"
+  FIXTURE_VERSION        = 1
+  TIMING_ESTIMATOR       = "total-iterations-over-total-elapsed-v1"
+  BATCH_TARGET           = 100.milliseconds
+  FNV_OFFSET             = 14_695_981_039_346_656_037_u64
+  FNV_PRIME              =          1_099_511_628_211_u64
 
   record Observer, count : Int64, checksum : UInt64
 
@@ -71,6 +74,10 @@ module LimitsOverheadBenchmark
     mib_per_second : Float64,
     managed_bytes_per_operation : UInt64,
     managed_bytes_per_input_byte : Float64
+
+  record PairedMeasurement,
+    ordered_measurements : Array(Tuple(String, Measurement)),
+    measurement_order : Array(String)
 
   struct FixtureMetadata
     include JSON::Serializable
@@ -505,6 +512,90 @@ module LimitsOverheadBenchmark
     )
   end
 
+  def measure_pair(source : String,
+                   ordered_operations : Array(Tuple(String, Proc(Nil))),
+                   warmup : Time::Span, calculation : Time::Span,
+                   allocation_iterations : Int32) : PairedMeasurement
+    unless ordered_operations.size == 2
+      raise ArgumentError.new("paired measurement requires exactly two operations")
+    end
+
+    batch_iterations = ordered_operations.map do |_, operation|
+      Sink.clear_retained
+      GC.collect
+      calibrated_batch_iterations(operation, warmup)
+    end
+
+    Sink.clear_retained
+    GC.collect
+    batch_rates = ordered_operations.map { [] of Float64 }
+    iterations = Array(Int64).new(ordered_operations.size, 0_i64)
+    elapsed = Array(Time::Span).new(ordered_operations.size, Time::Span.zero)
+    measurement_order = [] of String
+
+    measure_batch = ->(index : Int32) do
+      operation = ordered_operations[index][1]
+      count = batch_iterations[index]
+      batch_elapsed = Time.measure do
+        count.times { operation.call }
+      end
+      batch_rates[index] << count.to_f / batch_elapsed.total_seconds
+      iterations[index] += count
+      elapsed[index] += batch_elapsed
+      measurement_order << ordered_operations[index][0]
+    end
+
+    loop do
+      # AB followed by BA gives both configurations equal batch counts and an
+      # equal number of first and second positions in every complete cycle.
+      {0, 1, 1, 0}.each { |index| measure_batch.call(index) }
+      break if elapsed.all? { |duration| duration >= calculation }
+    end
+
+    # Prime both allocation probes before collecting either result so one-time
+    # Benchmark.memory setup cannot be charged to the requested first side.
+    ordered_operations.each do |_, operation|
+      Sink.clear_retained
+      GC.collect
+      Benchmark.memory { operation.call }
+    end
+
+    allocated_bytes = Array(Float64).new(ordered_operations.size, 0.0)
+    {0, 1, 1, 0}.each do |index|
+      operation = ordered_operations[index][1]
+      Sink.clear_retained
+      GC.collect
+      allocated = Benchmark.memory do
+        allocation_iterations.times { operation.call }
+      end
+      allocated_bytes[index] += allocated.to_f
+    end
+    allocation_operation_count = allocation_iterations.to_i64 * 2
+    allocated_per_operation = allocated_bytes.map do |allocated|
+      (allocated / allocation_operation_count).round.to_u64
+    end
+
+    ordered_measurements = ordered_operations.map_with_index do |configuration_operation, index|
+      configuration = configuration_operation[0]
+      iterations_per_second = iterations[index].to_f / elapsed[index].total_seconds
+      allocated = allocated_per_operation[index]
+      {
+        configuration,
+        Measurement.new(
+          iterations_per_second,
+          relative_stddev_percent(batch_rates[index]),
+          iterations[index],
+          batch_rates[index].size.to_i32,
+          elapsed[index].total_seconds,
+          iterations_per_second * source.bytesize / 1_048_576.0,
+          allocated,
+          allocated.to_f / source.bytesize
+        ),
+      }
+    end
+    PairedMeasurement.new(ordered_measurements, measurement_order)
+  end
+
   private def calibrated_batch_iterations(operation : Proc(Nil),
                                           warmup : Time::Span) : Int64
     iterations = 0_i64
@@ -583,10 +674,7 @@ module LimitsOverheadBenchmark
                     allocation_iterations : Int32,
                     expected : Expectations,
                     measurement : Measurement) : Nil
-    observer_name, observer = receipt_observer(workload, expected)
-    host = host_metadata
     source_sha256 = Digest::SHA256.hexdigest(source)
-    semantic_sha256 = expected.dynamic_sha256
 
     JSON.build(STDOUT) do |json|
       json.object do
@@ -595,104 +683,100 @@ module LimitsOverheadBenchmark
         json.field "recorded_at", Time.utc.to_rfc3339
         json.field "workload", workload
         json.field "configuration", configuration
-        json.field "call_style", configuration == "default" ? "limits keyword omitted" : "limits: FusedJSON::Limits.new"
+        json.field "call_style", call_style(configuration)
         json.field "pairing_key", "v#{PAIRING_VERSION}:#{workload}:#{source_sha256}"
-        json.field "fixture" do
-          json.object do
-            json.field "format", FIXTURE_FORMAT
-            json.field "version", FIXTURE_VERSION
-            json.field "records", record_count
-            json.field "bytes", source.bytesize
-            json.field "sha256", source_sha256
-            json.field "semantic_sha256", semantic_sha256
-          end
-        end
-        json.field "semantic_verification" do
-          json.object do
-            json.field "status", "verified"
-            json.field "observer", observer_name
-            json.field "count", observer.count
-            json.field "checksum", hex_checksum(observer.checksum)
-            json.field "default_string_io_pull_parity", true
-            json.field "default_string_io_skip_parity", true
-          end
-        end
-        json.field "disabled_limits" do
-          {% if flag?(:fused_json_limits_api) %}
-            json.object do
-              json.field "max_nesting", 512
-              nullable_field(json, "max_token_bytes")
-              nullable_field(json, "max_document_bytes")
-              nullable_field(json, "max_typed_value_bytes")
-              nullable_field(json, "max_total_values")
-              nullable_field(json, "max_container_entries")
-              nullable_field(json, "max_cached_keys")
-              json.field "reject_duplicate_keys", false
-            end
-          {% else %}
-            json.null
-          {% end %}
-        end
-        json.field "parser_options" do
-          json.object do
-            json.field "cache_keys", false
-            if workload.starts_with?("io-")
-              json.field "transport", "IO::Memory"
-              json.field "buffer_size", buffer_size
-            else
-              json.field "transport", "String"
-              json.field "buffer_size" { json.null }
-            end
-          end
-        end
+        write_input_receipt_fields(
+          json,
+          workload,
+          source,
+          record_count,
+          buffer_size,
+          expected,
+          source_sha256
+        )
         json.field "measurement" do
-          json.object do
-            json.field "estimator", TIMING_ESTIMATOR
-            json.field "iterations_per_second", measurement.iterations_per_second
-            json.field "relative_stddev_percent", measurement.relative_stddev_percent
-            json.field "iterations", measurement.iterations
-            json.field "batches", measurement.batches
-            json.field "elapsed_seconds", measurement.elapsed_seconds
-            json.field "mib_per_second", measurement.mib_per_second
-            json.field "managed_bytes_per_operation", measurement.managed_bytes_per_operation
-            json.field "managed_bytes_per_input_byte", measurement.managed_bytes_per_input_byte
-            json.field "warmup_seconds", warmup.total_seconds
-            json.field "calculation_seconds", calculation.total_seconds
-            json.field "allocation_iterations", allocation_iterations
-          end
+          write_measurement(json, measurement, warmup, calculation, allocation_iterations)
         end
-        json.field "build" do
+        write_runtime_receipt_fields(json, commit)
+      end
+    end
+    STDOUT << '\n'
+  end
+
+  def write_paired_receipt(workload : String,
+                           paired_measurement : PairedMeasurement,
+                           pair_id : String,
+                           source : String, record_count : Int32,
+                           buffer_size : Int32, commit : String,
+                           warmup : Time::Span, calculation : Time::Span,
+                           allocation_iterations : Int32,
+                           expected : Expectations) : Nil
+    source_sha256 = Digest::SHA256.hexdigest(source)
+    ordered_measurements = paired_measurement.ordered_measurements
+    requested_order = ordered_measurements.map(&.[0])
+    observed_order = paired_measurement.measurement_order.first(2)
+    allocation_order = [
+      requested_order[0],
+      requested_order[1],
+      requested_order[1],
+      requested_order[0],
+    ]
+
+    JSON.build(STDOUT) do |json|
+      json.object do
+        json.field "receipt", "fused-json-limits-overhead-paired"
+        json.field "version", PAIRED_RECEIPT_VERSION
+        json.field "recorded_at", Time.utc.to_rfc3339
+        json.field "workload", workload
+        json.field "pair_id", pair_id
+        json.field "process_pid", Process.pid
+        json.field "pairing_key", "v#{PAIRED_PAIRING_VERSION}:#{workload}:#{source_sha256}"
+        json.field "paired_protocol" do
           json.object do
-            json.field "fused_json_version", FusedJSON::VERSION
-            json.field "fused_json_commit", commit
-            json.field "crystal_version", Crystal::VERSION
-            json.field "crystal_build_commit", Crystal::BUILD_COMMIT
-            json.field "llvm_version", Crystal::LLVM_VERSION
-            json.field "target", Crystal::TARGET_TRIPLE
-            json.field "release", RELEASE_BUILD
-            json.field "limits_api", LIMITS_API_BUILD
-          end
-        end
-        json.field "host" do
-          json.object do
-            json.field "os", host[:os]
-            json.field "cpu_model", host[:cpu_model]
-            json.field "cpu_count", host[:cpu_count]
-            json.field "cpu_affinity", host[:cpu_affinity]
-          end
-        end
-        json.field "environment" do
-          json.object do
-            ENVIRONMENT_KEYS.each do |key|
-              nullable_field(json, key, ENV[key]?)
+            json.field "version", 1
+            json.field "common_process", true
+            json.field "interleaved_batches", true
+            json.field "batch_pattern", "ABBA"
+            json.field "requested_initial_order" do
+              write_string_array(json, requested_order)
+            end
+            json.field "observed_initial_order" do
+              write_string_array(json, observed_order)
+            end
+            json.field "allocation_order" do
+              write_string_array(json, allocation_order)
+            end
+            json.field "allocation_samples_per_configuration", 2
+            json.field "measurement_order" do
+              write_string_array(json, paired_measurement.measurement_order)
             end
           end
         end
-        json.field "arguments" do
-          json.array do
-            INVOCATION_ARGUMENTS.each { |argument| json.string(argument) }
+        json.field "measurements" do
+          json.object do
+            ordered_measurements.each do |configuration, measurement|
+              json.field configuration do
+                json.object do
+                  json.field "configuration", configuration
+                  json.field "call_style", call_style(configuration)
+                  json.field "measurement" do
+                    write_measurement(json, measurement, warmup, calculation, allocation_iterations)
+                  end
+                end
+              end
+            end
           end
         end
+        write_input_receipt_fields(
+          json,
+          workload,
+          source,
+          record_count,
+          buffer_size,
+          expected,
+          source_sha256
+        )
+        write_runtime_receipt_fields(json, commit)
       end
     end
     STDOUT << '\n'
@@ -800,10 +884,134 @@ module LimitsOverheadBenchmark
     end
   end
 
+  private def call_style(configuration : String) : String
+    configuration == "default" ? "limits keyword omitted" : "limits: FusedJSON::Limits.new"
+  end
+
+  private def write_measurement(json : JSON::Builder, measurement : Measurement,
+                                warmup : Time::Span, calculation : Time::Span,
+                                allocation_iterations : Int32) : Nil
+    json.object do
+      json.field "estimator", TIMING_ESTIMATOR
+      json.field "iterations_per_second", measurement.iterations_per_second
+      json.field "relative_stddev_percent", measurement.relative_stddev_percent
+      json.field "iterations", measurement.iterations
+      json.field "batches", measurement.batches
+      json.field "elapsed_seconds", measurement.elapsed_seconds
+      json.field "mib_per_second", measurement.mib_per_second
+      json.field "managed_bytes_per_operation", measurement.managed_bytes_per_operation
+      json.field "managed_bytes_per_input_byte", measurement.managed_bytes_per_input_byte
+      json.field "warmup_seconds", warmup.total_seconds
+      json.field "calculation_seconds", calculation.total_seconds
+      json.field "allocation_iterations", allocation_iterations
+    end
+  end
+
+  private def write_string_array(json : JSON::Builder, values : Array(String)) : Nil
+    json.array do
+      values.each { |value| json.string(value) }
+    end
+  end
+
+  private def write_input_receipt_fields(json : JSON::Builder,
+                                         workload : String,
+                                         source : String,
+                                         record_count : Int32,
+                                         buffer_size : Int32,
+                                         expected : Expectations,
+                                         source_sha256 : String) : Nil
+    observer_name, observer = receipt_observer(workload, expected)
+    json.field "fixture" do
+      json.object do
+        json.field "format", FIXTURE_FORMAT
+        json.field "version", FIXTURE_VERSION
+        json.field "records", record_count
+        json.field "bytes", source.bytesize
+        json.field "sha256", source_sha256
+        json.field "semantic_sha256", expected.dynamic_sha256
+      end
+    end
+    json.field "semantic_verification" do
+      json.object do
+        json.field "status", "verified"
+        json.field "observer", observer_name
+        json.field "count", observer.count
+        json.field "checksum", hex_checksum(observer.checksum)
+        json.field "default_string_io_pull_parity", true
+        json.field "default_string_io_skip_parity", true
+      end
+    end
+    json.field "disabled_limits" do
+      {% if flag?(:fused_json_limits_api) %}
+        json.object do
+          json.field "max_nesting", 512
+          nullable_field(json, "max_token_bytes")
+          nullable_field(json, "max_document_bytes")
+          nullable_field(json, "max_typed_value_bytes")
+          nullable_field(json, "max_total_values")
+          nullable_field(json, "max_container_entries")
+          nullable_field(json, "max_cached_keys")
+          json.field "reject_duplicate_keys", false
+        end
+      {% else %}
+        json.null
+      {% end %}
+    end
+    json.field "parser_options" do
+      json.object do
+        json.field "cache_keys", false
+        if workload.starts_with?("io-")
+          json.field "transport", "IO::Memory"
+          json.field "buffer_size", buffer_size
+        else
+          json.field "transport", "String"
+          json.field "buffer_size" { json.null }
+        end
+      end
+    end
+  end
+
+  private def write_runtime_receipt_fields(json : JSON::Builder,
+                                           commit : String) : Nil
+    host = host_metadata
+    json.field "build" do
+      json.object do
+        json.field "fused_json_version", FusedJSON::VERSION
+        json.field "fused_json_commit", commit
+        json.field "crystal_version", Crystal::VERSION
+        json.field "crystal_build_commit", Crystal::BUILD_COMMIT
+        json.field "llvm_version", Crystal::LLVM_VERSION
+        json.field "target", Crystal::TARGET_TRIPLE
+        json.field "release", RELEASE_BUILD
+        json.field "limits_api", LIMITS_API_BUILD
+      end
+    end
+    json.field "host" do
+      json.object do
+        json.field "os", host[:os]
+        json.field "cpu_model", host[:cpu_model]
+        json.field "cpu_count", host[:cpu_count]
+        json.field "cpu_affinity", host[:cpu_affinity]
+      end
+    end
+    json.field "environment" do
+      json.object do
+        ENVIRONMENT_KEYS.each do |key|
+          nullable_field(json, key, ENV[key]?)
+        end
+      end
+    end
+    json.field "arguments" do
+      json.array do
+        INVOCATION_ARGUMENTS.each { |argument| json.string(argument) }
+      end
+    end
+  end
+
   private def host_metadata
     {
       os:           command_output("uname", ["-srmo"]) || runtime_os,
-      cpu_model:    ENV["FUSED_JSON_BENCH_CPU"]? || linux_cpu_model || "unknown",
+      cpu_model:    linux_cpu_model || "unknown",
       cpu_count:    System.cpu_count,
       cpu_affinity: linux_status_value("Cpus_allowed_list") || "unknown",
     }
@@ -857,6 +1065,8 @@ end
 
 workload = nil.as(String?)
 configuration = nil.as(String?)
+paired_order = nil.as(String?)
+pair_id = nil.as(String?)
 record_count = 20_000
 buffer_size = FusedJSON::StreamingPullParser::DEFAULT_BUFFER_SIZE
 warmup_seconds = 1.0
@@ -898,6 +1108,12 @@ options = OptionParser.new do |parser|
   parser.on("--configuration=NAME", LimitsOverheadBenchmark::CONFIGURATIONS.join(", ")) do |value|
     configuration = value
   end
+  parser.on("--paired-order=ORDER", LimitsOverheadBenchmark::PAIRED_ORDERS.join(" or ")) do |value|
+    paired_order = value
+  end
+  parser.on("--pair-id=ID", "Paired schedule identity echoed in the receipt") do |value|
+    pair_id = value
+  end
   parser.on("--records=N", "Generated record count (default: #{record_count})") do |value|
     record_count = LimitsOverheadBenchmark.positive_i32(value, "record count")
   end
@@ -923,8 +1139,7 @@ options = OptionParser.new do |parser|
   parser.on("-h", "--help", "Show this help") do
     puts parser
     puts
-    puts "Run each workload in separate default and explicit-empty processes."
-    puts "Alternate process order across samples and compare matching pairing_key values."
+    puts "Use --configuration=paired with --paired-order and --pair-id in a limits-API build."
     exit
   end
 end
@@ -947,36 +1162,94 @@ begin
 
   source = LimitsOverheadBenchmark.fixture_source(record_count)
   expected = LimitsOverheadBenchmark.expectations(source, buffer_size)
-  operation = LimitsOverheadBenchmark.operation(
-    selected_workload,
-    selected_configuration,
-    source,
-    buffer_size
-  )
+  if selected_configuration == "paired"
+    {% unless flag?(:fused_json_limits_api) %}
+      raise ArgumentError.new("paired measurement requires a build with -Dfused_json_limits_api")
+    {% end %}
+    selected_paired_order = LimitsOverheadBenchmark.required_option(paired_order, "paired-order")
+    unless LimitsOverheadBenchmark::PAIRED_ORDERS.includes?(selected_paired_order)
+      raise ArgumentError.new("unknown paired order #{selected_paired_order.inspect}")
+    end
+    selected_pair_id = LimitsOverheadBenchmark.required_option(pair_id, "pair-id")
+    unless selected_pair_id.matches?(/\A[A-Za-z0-9][A-Za-z0-9._:-]{0,127}\z/)
+      raise ArgumentError.new("pair ID must be 1 to 128 safe ASCII characters")
+    end
 
-  operation.call
-  LimitsOverheadBenchmark::Sink.verify(selected_workload, expected)
-  measurement = LimitsOverheadBenchmark.measure(
-    source,
-    operation,
-    warmup_seconds.seconds,
-    calculation_seconds.seconds,
-    allocation_iterations
-  )
-  LimitsOverheadBenchmark::Sink.verify(selected_workload, expected)
-  LimitsOverheadBenchmark.write_receipt(
-    selected_workload,
-    selected_configuration,
-    source,
-    record_count,
-    buffer_size,
-    selected_commit,
-    warmup_seconds.seconds,
-    calculation_seconds.seconds,
-    allocation_iterations,
-    expected,
-    measurement
-  )
+    configurations = selected_paired_order.split(',')
+    operations = configurations.map do |selected_configuration|
+      {
+        selected_configuration,
+        LimitsOverheadBenchmark.operation(
+          selected_workload,
+          selected_configuration,
+          source,
+          buffer_size
+        ),
+      }
+    end
+    operations.each do |_, operation|
+      operation.call
+      LimitsOverheadBenchmark::Sink.verify(selected_workload, expected)
+    end
+    paired_measurement = LimitsOverheadBenchmark.measure_pair(
+      source,
+      operations,
+      warmup_seconds.seconds,
+      calculation_seconds.seconds,
+      allocation_iterations
+    )
+    operations.each do |_, operation|
+      operation.call
+      LimitsOverheadBenchmark::Sink.verify(selected_workload, expected)
+    end
+    LimitsOverheadBenchmark.write_paired_receipt(
+      selected_workload,
+      paired_measurement,
+      selected_pair_id,
+      source,
+      record_count,
+      buffer_size,
+      selected_commit,
+      warmup_seconds.seconds,
+      calculation_seconds.seconds,
+      allocation_iterations,
+      expected
+    )
+  else
+    if paired_order || pair_id
+      raise ArgumentError.new("--paired-order and --pair-id require --configuration=paired")
+    end
+    operation = LimitsOverheadBenchmark.operation(
+      selected_workload,
+      selected_configuration,
+      source,
+      buffer_size
+    )
+
+    operation.call
+    LimitsOverheadBenchmark::Sink.verify(selected_workload, expected)
+    measurement = LimitsOverheadBenchmark.measure(
+      source,
+      operation,
+      warmup_seconds.seconds,
+      calculation_seconds.seconds,
+      allocation_iterations
+    )
+    LimitsOverheadBenchmark::Sink.verify(selected_workload, expected)
+    LimitsOverheadBenchmark.write_receipt(
+      selected_workload,
+      selected_configuration,
+      source,
+      record_count,
+      buffer_size,
+      selected_commit,
+      warmup_seconds.seconds,
+      calculation_seconds.seconds,
+      allocation_iterations,
+      expected,
+      measurement
+    )
+  end
 rescue error
   STDERR.puts "error: #{error.message || error.class.to_s}"
   STDERR.puts options
