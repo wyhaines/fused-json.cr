@@ -177,6 +177,10 @@ The [accepted Milestone 6 results](milestone-6-benchmark-results.md) preserve
 both complete campaigns, the independent audit, additional gates, and every
 invalid attempt. They are comparative measurements from a hot shared host,
 not quiet-host or peak-throughput estimates.
+The [Milestone 7 stable release review](milestone-7-release-review.md) records
+the 0.2.0 candidate's stable-compiler correctness, bounded-RSS gate, exact
+offset check, and diagnostic three-pair timing. It does not replace Milestone
+6's formal throughput evidence.
 
 ## Reproduce a Large-document Release Review
 
@@ -186,14 +190,17 @@ Use three distinct levels of evidence:
    raw-number, typed, retained, and two-pass paths. This is a correctness smoke,
    not a performance result.
 2. The scheduled `Large-document reports` workflow runs a 256 MiB typed fixture
-   on Linux x86-64, Linux ARM64, and macOS ARM64 and retains its manifest and
-   JSON receipts. These moving shared runners are report-only: never gate a
-   release or compare runs from different hosts as if they were paired samples.
+   on Linux x86-64, Linux ARM64, and macOS ARM64 and retains its manifest, JSON
+   receipts, and platform metadata. These moving shared runners are report-only:
+   never gate a release or compare runs from different hosts as if they were
+   paired samples.
 3. Publishable x86-64 measurements use the complete attested builds, fixture
    sizes, CPU pinning, paired schedules, RSS rules, and commands in the
    [Milestone 6 protocol](milestone-6-protocol.md). The dedicated release host
    must use the stable supported Crystal compiler and run 256 MiB, 1 GiB, and
-   greater-than-4-GiB no-retention profiles.
+   greater-than-4-GiB no-retention profiles. Freeze the release-specific
+   procedure before measuring, as in the
+   [Milestone 7 review](milestone-7-release-review.md).
 
 For a quick local check, build the two tools, verify semantics, then run each
 backend in a fresh process. One pair is diagnostic, not an acceptance result:

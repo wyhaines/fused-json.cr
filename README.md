@@ -221,31 +221,36 @@ RSS did not mean lower cumulative allocation: typed FusedJSON allocated about
 about 84-85 MiB versus Crystal's 57-59 MiB. Reducing that typed-adapter churn is
 post-release optimization work.
 
+Milestone 7 rechecked candidate `fbe44913` with Crystal 1.21.0
+`[57cf7da50]`, LLVM 20.1.8, and `x86_64-unknown-linux-gnu`. Its abbreviated
+three-pair review found diagnostic geometric-mean ratios of 2.921x on
+many-small and 2.180x on wide-item. The stable no-retention baseline peaked at
+9,736 KiB, setting a 26,120 KiB ceiling; all three 4,362,076,160-byte runs
+stayed at or below 9,720 KiB, and the exact post-`2^32` offset check passed.
+See the [stable release review](docs/milestone-7-release-review.md) and its
+checksummed receipts. Milestone 6, not this abbreviated review, remains the
+formal throughput evidence.
+
 `bench/parse.cr` verifies complete result equality before timing and reports MiB/s, relative standard deviation, and managed bytes per operation. Repeat the executable in independent processes before drawing conclusions on another machine.
 
 ## Roadmap
 
-Version 0.1.0 contains the core dynamic, pull, typed, and streaming parsers.
-Large-document Milestones 1 through 6 add raw-number access, typed cursor and
-array reads, TiC workflows, and one resource policy across all parsing APIs.
-Milestones 5 and 6 passed their controlled overhead, throughput, scale-memory,
-dynamic-parser, and compatibility gates. The
-[Milestone 6 evidence](docs/milestone-6-benchmark-results.md) includes two
-complete campaigns and all invalid attempts.
+Large-document Milestones 1 through 7 are complete for the 0.2.0 candidate.
+They add raw-number access, typed cursor and array reads, TiC workflows, one
+resource policy across all parsing APIs, and stable-compiler release evidence.
+See the [Milestone 5 resource results](docs/milestone-5-benchmark-results.md),
+[Milestone 6 performance results](docs/milestone-6-benchmark-results.md), and
+[Milestone 7 stable review](docs/milestone-7-release-review.md).
 Current priorities are:
 
-- Complete the Milestone 7 documentation and release review. This includes a
-  contract audit across the API, typed, streaming, limits, and migration
-  guides; compile-checked small TiC cases in CI; and reproducible release
-  measurements on stable Crystal. The
-  [large-document specification](docs/large-document-processing.md) and
-  [implementation plan](docs/large-document-plan.md) define the remaining
-  review work.
 - Add a separate reader for NDJSON or repeated JSON documents, with buffer
   reuse between records. `load` and `parse` will remain eager, strict,
   single-document operations.
 - An opt-in dynamic value type that can hold integers beyond `Int64`, exact decimals, or the original number spelling. The existing `JSON::Any` API will keep its Crystal-compatible numeric behavior. Explicit typed decoding already supports `BigInt`, `BigFloat`, and `BigDecimal` after loading `big/json`.
-- Fewer allocations in dynamic and typed decoding. Streaming tree construction will build values directly from `IO` instead of routing them through pull events. Reproducible release benchmarks will cover stable Crystal on x86-64, then expand to ARM64 when suitable runners are available.
+- Fewer allocations in dynamic and typed decoding. Streaming tree construction
+  will build values directly from `IO` instead of routing them through pull
+  events. Future work must be rechecked on stable x86-64 and consult the
+  report-only ARM64 and macOS workflow results.
 - Expanded fuzz testing and broader platform coverage, beginning with ARM64 and macOS. The word scanner will be tested on real 32-bit and big-endian hardware when practical CI runners are available. The compiler-private float hook will either be replaced or moved behind a stable upstream API, while the tested public fallback remains available.
 
 Application feedback will shape the typed and pull interfaces before 1.0. The 1.0 release will define stable contracts for limits, numbers, errors, and compiler compatibility.

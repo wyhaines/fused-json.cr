@@ -14,11 +14,14 @@ protection rules.
 3. Move the relevant changelog entries under a dated version heading.
 4. Run `crystal run scripts/check_release.cr -- X.Y.Z`, the full CI matrix,
    documentation checks, the small generated TiC verification, and release
-   benchmark builds.
+   benchmark builds. Run `actionlint .github/workflows/*.yml` when workflows
+   changed.
 5. On the dedicated release host and stable supported Crystal, run the 256 MiB,
    1 GiB, and greater-than-4-GiB no-retention profiles described in
    [`benchmarking.md`](benchmarking.md). Confirm every release-facing claim names
-   its commit and procedure. Scheduled ARM64 and macOS artifacts are report-only.
+   its commit and procedure. The
+   [Milestone 7 review](milestone-7-release-review.md) is the 0.2.0 example.
+   Scheduled ARM64 and macOS artifacts are report-only.
 6. Push the reviewed commit, then manually run the `Release` workflow with the
    version (without `v`) and exact commit SHA. Approve the protected `release`
    environment only after both supported-compiler validation jobs pass.

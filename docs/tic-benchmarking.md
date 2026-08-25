@@ -197,6 +197,9 @@ and shared-host validity rules are frozen in the
 [accepted results](milestone-6-benchmark-results.md) come from two complete
 campaigns and an independent audit. Do not infer a new acceptance result from
 a single shared-host run.
+The [Milestone 7 stable review](milestone-7-release-review.md) records the
+0.2.0 candidate's stable-compiler bounded-RSS result and diagnostic throughput
+follow-up; Milestone 6 remains the formal comparison.
 
 ## Run the formal Milestone 6 campaign
 

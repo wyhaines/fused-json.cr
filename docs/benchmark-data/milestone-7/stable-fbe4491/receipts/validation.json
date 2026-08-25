@@ -1,0 +1,90 @@
+{
+  "schema": "fused-json-milestone-7-validation-v1",
+  "candidate_commit": "fbe44913e6ebc8fc19bf627254a56806e50e622e",
+  "compiler": "Crystal 1.21.0 [57cf7da50], LLVM 20.1.8, x86_64-unknown-linux-gnu",
+  "checks": [
+    {
+      "name": "dependencies",
+      "result": "passed",
+      "detail": "shards check reported that dependencies are satisfied"
+    },
+    {
+      "name": "format",
+      "result": "passed",
+      "detail": "Crystal formatter check covered src, spec, bench, examples, and scripts"
+    },
+    {
+      "name": "release metadata",
+      "result": "passed",
+      "detail": "scripts/check_release.cr synchronized shard, constant, README, and dated changelog at 0.2.0"
+    },
+    {
+      "name": "stable specs",
+      "result": "passed",
+      "detail": "default 235, portable-float 236, scalar-string 235, combined fallbacks 236; zero failures and errors"
+    },
+    {
+      "name": "documentation",
+      "result": "passed",
+      "detail": "14 examples compiled with Crystal 1.21 first on PATH; API docs had all required public and hidden pages"
+    },
+    {
+      "name": "static analysis",
+      "result": "passed",
+      "detail": "Ameba inspected 55 files with zero failures; four public examples compiled without code generation"
+    },
+    {
+      "name": "benchmark harnesses",
+      "result": "passed",
+      "detail": "all four Node harness syntax checks and self-audits passed; Ruby compatibility driver syntax passed"
+    },
+    {
+      "name": "workflow lint",
+      "result": "passed",
+      "detail": "actionlint 1.7.12 checked ci.yml, large-document-reports.yml, and release.yml with no findings",
+      "archive_sha256": "8aca8db96f1b94770f1b0d72b6dddcb1ebb8123cb3712530b08cc387b349a3d8",
+      "binary_sha256": "c872d6db8c6bf83a8eaa704fc93999f027d55dffbc63b8a6abdccb47df5f4cd4"
+    },
+    {
+      "name": "generated release fixture",
+      "result": "passed",
+      "detail": "65,537-byte many-small fixture verified typed, raw-number, and gzip paths; stable Sunlight scanner built"
+    },
+    {
+      "name": "Sunlight compatibility self-test",
+      "result": "passed",
+      "detail": "Ruby/Oj and stable Crystal scanner matched the generated in-network, wide-number, classification, malformed-input, and 309/310-byte cap cases"
+    },
+    {
+      "name": "clean consumer",
+      "result": "passed",
+      "detail": "Shards installed dependency fused_json 0.2.0 by path; Crystal 1.21 compiled and ran require fused_json, printing 0.2.0"
+    }
+  ],
+  "setup_attempts": [
+    {
+      "area": "Sunlight self-test",
+      "result": "failed before test",
+      "reason": "Default Ruby 3.3 inherited Ruby 3.4 native gems."
+    },
+    {
+      "area": "Sunlight self-test",
+      "result": "failed before test",
+      "reason": "Ruby 3.4 installation did not have a usable Oj native extension."
+    },
+    {
+      "area": "Sunlight self-test",
+      "result": "failed before test",
+      "reason": "The clean Ruby 3.3 invocation omitted the required SUNLIGHT_ROOT."
+    },
+    {
+      "area": "clean consumer",
+      "result": "failed before execution",
+      "reason": "Crystal 1.21 code generation failed with long temporary cache paths; a fresh short /tmp/fjc cache completed successfully."
+    }
+  ],
+  "closeout_tree_validation": {
+    "result": "passed",
+    "detail": "After documentation and evidence-only closeout changes, the four stable spec configurations, dependency and format checks, release metadata, 14 documentation examples, API docs, four public examples, Ameba, workflow lint, harness audits, archive checksums, and local Markdown links all passed again."
+  }
+}

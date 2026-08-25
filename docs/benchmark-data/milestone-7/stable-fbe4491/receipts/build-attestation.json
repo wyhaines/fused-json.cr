@@ -1,0 +1,139 @@
+{
+  "artifact": "fused-json-m6-build-attestation",
+  "version": 1,
+  "created_at": "2026-08-25T04:45:31.892Z",
+  "commit": "fbe44913e6ebc8fc19bf627254a56806e50e622e",
+  "git": {
+    "root": "/media/wyhaines/home/wyhaines/ghq/github.com/wyhaines/fused-json.cr",
+    "head": "fbe44913e6ebc8fc19bf627254a56806e50e622e",
+    "tree": "d452f715d6406380146adeb3881fd8d50d0ed1ea",
+    "branch": "main",
+    "clean": true,
+    "status_porcelain": ""
+  },
+  "commands": [
+    "/tmp/fused-json-crystal-1.21.0-dist/crystal-1.21.0-1/bin/crystal build --release --no-debug bench/tic_fixture.cr -o /tmp/fused-json-m7-stable-fbe4491/bin/tic-fixture",
+    "/tmp/fused-json-crystal-1.21.0-dist/crystal-1.21.0-1/bin/crystal build --release --no-debug bench/tic.cr -o /tmp/fused-json-m7-stable-fbe4491/bin/tic-bench",
+    "/tmp/fused-json-crystal-1.21.0-dist/crystal-1.21.0-1/bin/crystal build --release --no-debug bench/parse.cr -o /tmp/fused-json-m7-stable-fbe4491/bin/parse-bench"
+  ],
+  "command_artifacts": {
+    "tic_fixture": 0,
+    "tic_bench": 1,
+    "parse_bench": 2
+  },
+  "toolchain": {
+    "crystal_version": "1.21.0",
+    "crystal_build_commit": "57cf7da50",
+    "llvm_version": "20.1.8",
+    "target": "x86_64-unknown-linux-gnu",
+    "version_output": "Crystal 1.21.0 [57cf7da50] (2026-07-16)\n\nLLVM: 20.1.8\nDefault target: x86_64-unknown-linux-gnu"
+  },
+  "source": {
+    "git_tree": "d452f715d6406380146adeb3881fd8d50d0ed1ea",
+    "entrypoints": {
+      "tic_fixture": {
+        "path": "bench/tic_fixture.cr",
+        "bytes": 9100,
+        "sha256": "5a6689957781e2070ab4d6ff141aa91032bff7af7449c77ea9e6276868759ff8"
+      },
+      "tic_bench": {
+        "path": "bench/tic.cr",
+        "bytes": 31055,
+        "sha256": "13d6f1e2ea748e6bb6aa3d543b2c99ed07af04d5c33717f69b64b293207a2bf6"
+      },
+      "parse_bench": {
+        "path": "bench/parse.cr",
+        "bytes": 2789,
+        "sha256": "0437c8c1d589eed0ddd5ef3ea52908d9568f41f6fd1e373eb56a882147d2ff55"
+      }
+    }
+  },
+  "artifacts": {
+    "tic_fixture": {
+      "path": "/tmp/fused-json-m7-stable-fbe4491/bin/tic-fixture",
+      "realpath": "/tmp/fused-json-m7-stable-fbe4491/bin/tic-fixture",
+      "device": "64513",
+      "inode": "42888566",
+      "bytes": 2103544,
+      "mtime_ns": "1787633085609097669",
+      "ctime_ns": "1787633085609097669",
+      "mode_octal": "0775",
+      "sha256": "4b2f2cdcc133b9e3af08253dae9700ee348fc699d55b25d7534d6ec9d1ed7993",
+      "executable": true
+    },
+    "tic_bench": {
+      "path": "/tmp/fused-json-m7-stable-fbe4491/bin/tic-bench",
+      "realpath": "/tmp/fused-json-m7-stable-fbe4491/bin/tic-bench",
+      "device": "64513",
+      "inode": "42888572",
+      "bytes": 2341688,
+      "mtime_ns": "1787633103178998957",
+      "ctime_ns": "1787633103178998957",
+      "mode_octal": "0775",
+      "sha256": "109011606e5cb7366199662e51425fd5775568a6e6ca48ca704ad4a47c74d17a",
+      "executable": true
+    },
+    "parse_bench": {
+      "path": "/tmp/fused-json-m7-stable-fbe4491/bin/parse-bench",
+      "realpath": "/tmp/fused-json-m7-stable-fbe4491/bin/parse-bench",
+      "device": "64513",
+      "inode": "42888578",
+      "bytes": 1210936,
+      "mtime_ns": "1787633115850927763",
+      "ctime_ns": "1787633115850927763",
+      "mode_octal": "0775",
+      "sha256": "7052777c2e8002251b4c3edf4b5e1b4d393af6bcefcca004875908b62d006883",
+      "executable": true
+    }
+  },
+  "tools": {
+    "generator": {
+      "path": "/media/wyhaines/home/wyhaines/ghq/github.com/wyhaines/fused-json.cr/scripts/m6_build_attestation.mjs",
+      "realpath": "/media/wyhaines/home/wyhaines/ghq/github.com/wyhaines/fused-json.cr/scripts/m6_build_attestation.mjs",
+      "device": "66309",
+      "inode": "17622559",
+      "bytes": 17249,
+      "mtime_ns": "1787580593023580988",
+      "ctime_ns": "1787580593023580988",
+      "mode_octal": "0664",
+      "sha256": "721615fa06f4edf81fd47323cc8db41f03530461c5456e4e8a995a8512d21bbe"
+    },
+    "node": {
+      "path": "/media/wyhaines/home/wyhaines/.nvm/versions/node/v24.13.0/bin/node",
+      "realpath": "/media/wyhaines/home/wyhaines/.nvm/versions/node/v24.13.0/bin/node",
+      "device": "66309",
+      "inode": "57455130",
+      "bytes": 121158216,
+      "mtime_ns": "1768240979000000000",
+      "ctime_ns": "1770156391033722190",
+      "mode_octal": "0755",
+      "sha256": "53fb205ae78805130177e24bcb459a69a1518c8d98f8965f31d85aae7ea840fc",
+      "executable": true
+    },
+    "crystal": {
+      "path": "/tmp/fused-json-crystal-1.21.0-dist/crystal-1.21.0-1/bin/crystal",
+      "realpath": "/tmp/fused-json-crystal-1.21.0-dist/crystal-1.21.0-1/bin/crystal",
+      "device": "64513",
+      "inode": "42878045",
+      "bytes": 143806136,
+      "mtime_ns": "1784208353000000000",
+      "ctime_ns": "1787632957574816974",
+      "mode_octal": "0755",
+      "sha256": "7dc591ee59502bcb00af893eeab95fdb1c4a98e53e107b4df4e4ba29942e3dc8",
+      "executable": true
+    },
+    "git": {
+      "path": "/usr/bin/git",
+      "realpath": "/usr/bin/git",
+      "device": "64513",
+      "inode": "21758208",
+      "bytes": 3710360,
+      "mtime_ns": "1772135393000000000",
+      "ctime_ns": "1772649664469506334",
+      "mode_octal": "0755",
+      "sha256": "587ef21868c948b883993e23209b86a72a6ddc06aab1545c697ffc31075acd4a",
+      "executable": true
+    },
+    "node_version": "v24.13.0"
+  }
+}

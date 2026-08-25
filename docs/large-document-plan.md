@@ -1,8 +1,8 @@
 # Large-document typed streaming implementation plan
 
-Status: in progress. Milestones 1 through 6 are implemented and accepted.
-Milestone 7 documentation and release review is now in progress. This plan
-implements the requirements in the
+Status: complete. Milestones 1 through 7 are implemented and accepted. The
+[Milestone 7 stable release review](milestone-7-release-review.md) records the
+closeout. This plan implements the requirements in the
 [Large-document typed streaming specification](large-document-processing.md).
 
 ## Working rules
@@ -235,7 +235,7 @@ gate, exact offset check, and local Sunlight parity check also passed. The
 [Milestone 6 results](milestone-6-benchmark-results.md) retain the accepted
 statistics and every invalid attempt.
 
-## Milestone 7: Documentation and release review (in progress)
+## Milestone 7: Documentation and release review (implemented)
 
 Update `README.md`, `docs/api.md`, `docs/design.md`, `docs/streaming.md`,
 `docs/typed-decoding.md`, `docs/benchmarking.md`, and `CHANGELOG.md`. Document
@@ -246,9 +246,19 @@ benchmark commands.
 CI should run small generated cases and all correctness suites. A scheduled
 job may run a 256 MiB generated case and retain measurement artifacts, but
 shared-runner timing does not gate releases. The dedicated release host runs
-256 MiB, 1 GiB, and greater-than-4-GiB profiles. Add ARM64 and macOS as
-reported measurements until dedicated baselines exist.
+256 MiB, 1 GiB, and greater-than-4-GiB profiles. Define ARM64 and macOS as
+scheduled report-only jobs until dedicated baselines exist; their first
+observations may follow the candidate push and do not gate this local review.
 
 Close the work only after the documented API, tests, examples, and benchmark
 receipts agree. Repeated-document and NDJSON support then returns as a separate
 roadmap item.
+
+Outcome: public contracts and release metadata agree; stable correctness,
+generated TiC, bounded-RSS, and exact-offset checks passed at `fbe44913`.
+Diagnostic stable throughput was recorded without replacing the formal
+Milestone 6 campaign. CI contains a small generated regression, and the
+scheduled Linux x86-64, Linux ARM64, and macOS ARM64 workflow is defined but
+has not run for the unpushed candidate. The
+[Milestone 7 review](milestone-7-release-review.md) retains the results and
+checksummed evidence; future platform observations remain report-only.

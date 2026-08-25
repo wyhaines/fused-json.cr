@@ -1,9 +1,10 @@
 # Large-document typed streaming specification
 
-Status: accepted. Milestones 1 through 6 are implemented. The
+Status: accepted. Milestones 1 through 7 are implemented. The
 [Milestone 5 resource-limit evidence](milestone-5-benchmark-results.md) and
 [Milestone 6 performance and scale evidence](milestone-6-benchmark-results.md)
-are recorded; Milestone 7 documentation and release review is in progress.
+are joined by the
+[Milestone 7 stable release review](milestone-7-release-review.md).
 
 ## Purpose
 

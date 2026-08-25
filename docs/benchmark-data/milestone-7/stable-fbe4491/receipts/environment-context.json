@@ -1,0 +1,42 @@
+{
+  "schema": "fused-json-milestone-7-environment-context-v1",
+  "candidate_commit": "fbe44913e6ebc8fc19bf627254a56806e50e622e",
+  "measurement_window_utc": {
+    "first_receipt": "2026-08-25T04:46:58Z",
+    "last_receipt": "2026-08-25T04:51:04Z"
+  },
+  "host": {
+    "os": "Linux 7.0.11-76070011-generic x86_64 GNU/Linux",
+    "cpu_model": "AMD Ryzen 9 7940HS w/ Radeon 780M Graphics",
+    "logical_cpu_count": 16,
+    "measured_cpu_affinity": "3"
+  },
+  "child_environment": {
+    "GC_NPROCS": "1",
+    "GC_MARKERS": "1",
+    "CRYSTAL_WORKERS": "1",
+    "OMP_NUM_THREADS": "1"
+  },
+  "load_snapshots": [
+    {
+      "context": "after throughput and before RSS baselines",
+      "observed_at_local": "2026-08-24T22:49:25-06:00",
+      "load_1m": 2.54,
+      "load_5m": 3.21,
+      "load_15m": 2.92
+    },
+    {
+      "context": "after RSS series",
+      "observed_at_local": "2026-08-24T22:51:16-06:00",
+      "load_1m": 2.92,
+      "load_5m": 3.14,
+      "load_15m": 2.93
+    }
+  ],
+  "thermal_snapshot": {
+    "context": "post-measurement review snapshot",
+    "observed_at_local": "2026-08-24T22:56:13-06:00",
+    "k10temp_tctl_c": 63.4
+  },
+  "caveat": "Load and temperature were manually sampled around the suite, not continuously. Every GNU-time child reported 99% task CPU. The abbreviated throughput review has no environment or performance gate, and no observation was excluded."
+}

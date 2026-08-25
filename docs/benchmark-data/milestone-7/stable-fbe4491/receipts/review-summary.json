@@ -1,0 +1,135 @@
+{
+  "schema": "fused-json-milestone-7-stable-review-v1",
+  "status": "passed",
+  "candidate_commit": "fbe44913e6ebc8fc19bf627254a56806e50e622e",
+  "recorded_at_utc": "2026-08-25",
+  "toolchain": {
+    "crystal_version": "1.21.0",
+    "crystal_build_commit": "57cf7da50",
+    "llvm_version": "20.1.8",
+    "target": "x86_64-unknown-linux-gnu",
+    "crystal_archive_sha256": "cc407bd071915cc7b5d9348281e669a911d20a1f4b9fac52a62088660eb22208"
+  },
+  "strong_verification": {
+    "many_small_256m": {
+      "document_bytes": 268435456,
+      "typed": true,
+      "raw_number": true,
+      "gzip": true
+    },
+    "wide_item_256m": {
+      "document_bytes": 268435456,
+      "typed": true,
+      "raw_number": true,
+      "gzip": false,
+      "gzip_note": "No gzip input was supplied for this profile."
+    }
+  },
+  "diagnostic_throughput": {
+    "disposition": "report-only; no Milestone 7 throughput threshold",
+    "formal_authority": "docs/milestone-6-benchmark-results.md",
+    "profiles": {
+      "many-small": {
+        "pairs": [
+          {
+            "order": ["fused", "crystal"],
+            "fused_mib_per_second": 243.61192090002768,
+            "crystal_mib_per_second": 82.58940512643291,
+            "ratio": 2.949675209878212
+          },
+          {
+            "order": ["crystal", "fused"],
+            "fused_mib_per_second": 237.12931195662978,
+            "crystal_mib_per_second": 81.4401942226981,
+            "ratio": 2.9116987529302794
+          },
+          {
+            "order": ["fused", "crystal"],
+            "fused_mib_per_second": 234.92358507027396,
+            "crystal_mib_per_second": 80.98969936526471,
+            "ratio": 2.9006600458011973
+          }
+        ],
+        "geometric_mean_ratio": 2.920603,
+        "median_managed_allocated_bytes": {
+          "fused": 1475502544,
+          "crystal": 293109088,
+          "ratio": 5.033970
+        },
+        "median_managed_bytes_per_typed_value": {
+          "fused": 1168.0376557908603,
+          "crystal": 232.0310821765123
+        },
+        "peak_process_rss_kib": {
+          "fused": [9548, 9672, 9724],
+          "crystal": [9576, 9664, 9728]
+        }
+      },
+      "wide-item": {
+        "pairs": [
+          {
+            "order": ["fused", "crystal"],
+            "fused_mib_per_second": 176.24653138994958,
+            "crystal_mib_per_second": 77.12493115263011,
+            "ratio": 2.28520828162761
+          },
+          {
+            "order": ["crystal", "fused"],
+            "fused_mib_per_second": 176.00405668450176,
+            "crystal_mib_per_second": 77.49106284977672,
+            "ratio": 2.2712820061030934
+          },
+          {
+            "order": ["fused", "crystal"],
+            "fused_mib_per_second": 154.6891921877866,
+            "crystal_mib_per_second": 77.51535746828128,
+            "ratio": 1.9955941279259957
+          }
+        ],
+        "geometric_mean_ratio": 2.179832,
+        "median_managed_allocated_bytes": {
+          "fused": 1998410224,
+          "crystal": 387780848,
+          "ratio": 5.153452
+        },
+        "median_managed_bytes_per_typed_value": {
+          "fused": 1072.0302724693906,
+          "crystal": 208.02175806915375
+        },
+        "peak_process_rss_kib": {
+          "fused": [9668, 9604, 9732],
+          "crystal": [9556, 9624, 9640]
+        },
+        "variability_note": "The third FusedJSON observation was about 12% below the first two. It had 99% task CPU and no receipt or configuration anomaly, so it is retained."
+      }
+    }
+  },
+  "stable_rss_gate": {
+    "units": "GNU-time maximum resident set size in KiB",
+    "many_small_256m_peaks": [9580, 9564, 9612],
+    "many_small_1g_peaks": [9560, 9604, 9736],
+    "baseline_maximum": 9736,
+    "minimum_headroom": 16384,
+    "twenty_five_percent_ceiling_component": 2434,
+    "frozen_ceiling": 26120,
+    "many_small_4g_plus_document_bytes": 4362076160,
+    "many_small_4g_plus_peaks": [9592, 9720, 9552],
+    "result": "passed"
+  },
+  "large_offset": {
+    "offset": 4294967333,
+    "bytes_read": 4294967337,
+    "read_calls": 257,
+    "result": "passed"
+  },
+  "measurement_attempts": {
+    "throughput_observations": 12,
+    "rss_observations": 9,
+    "failed_or_interrupted_measurement_observations": 0
+  },
+  "platform_reports": {
+    "workflow": ".github/workflows/large-document-reports.yml",
+    "status": "defined but not run at this unpushed candidate",
+    "disposition": "report-only"
+  }
+}

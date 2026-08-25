@@ -1,0 +1,63 @@
+{
+  "schema": "fused-json-milestone-7-artifact-manifest-v1",
+  "milestone": 7,
+  "status": "passed",
+  "candidate_commit": "fbe44913e6ebc8fc19bf627254a56806e50e622e",
+  "protocol": "docs/milestone-7-release-review.md",
+  "recorded_at_utc": "2026-08-25",
+  "receipt_root": "stable-fbe4491/receipts",
+  "fixture_manifest_root": "stable-fbe4491/manifests",
+  "receipt_checksums": "SHA256SUMS",
+  "archive": {
+    "receipt_and_context_files": 49,
+    "fixture_manifests": 4,
+    "hash_algorithm": "sha256"
+  },
+  "accepted_evidence": {
+    "build_attestation": "stable-fbe4491/receipts/build-attestation.json",
+    "environment_context": "stable-fbe4491/receipts/environment-context.json",
+    "review_summary": "stable-fbe4491/receipts/review-summary.json",
+    "validation": "stable-fbe4491/receipts/validation.json",
+    "large_offset": "stable-fbe4491/receipts/large-offset.txt",
+    "strong_verification": [
+      "stable-fbe4491/receipts/verify-many-small-256m.json",
+      "stable-fbe4491/receipts/verify-wide-item-256m.json"
+    ],
+    "diagnostic_throughput_pattern": "stable-fbe4491/receipts/throughput-*.{json,time}",
+    "stable_rss_pattern": "stable-fbe4491/receipts/rss-*.{json,time}"
+  },
+  "measurement_attempts": {
+    "completed_throughput_observations": 12,
+    "completed_rss_observations": 9,
+    "failed_or_interrupted_measurement_observations": 0,
+    "validation_setup_attempts": "stable-fbe4491/receipts/validation.json"
+  },
+  "preservation": {
+    "included": [
+      "four immutable fixture manifests",
+      "build attestation",
+      "two strong semantic verification receipts",
+      "all 12 diagnostic throughput JSON and GNU-time records",
+      "all nine stable RSS JSON and GNU-time records",
+      "stable offset output",
+      "environment context, validation, and calculated summary"
+    ],
+    "omitted": [
+      "generated fixture payloads and gzip payload",
+      "compiled benchmark and compatibility binaries",
+      "Crystal and actionlint archives and executables",
+      "temporary consumer and generated smoke-test files"
+    ],
+    "omission_reason": "Payloads and executables are large or reproducible. Their cryptographic identities, source commit, build commands, and toolchain identities remain in the archive."
+  },
+  "disclosure_review": {
+    "credential_markers_detected": false,
+    "raw_measurement_build_and_verification_receipts_redacted_or_modified": false,
+    "derived_validation_summary_updated_after_archive_copy": true,
+    "absolute_machine_paths_present": true,
+    "host_and_cpu_metadata_present": true,
+    "environment_context_present": true,
+    "corpus_payloads_present": false,
+    "external_corpus_filename_inventory_present": false
+  }
+}
