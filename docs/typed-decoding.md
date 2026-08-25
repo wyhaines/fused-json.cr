@@ -41,8 +41,8 @@ pull.read_array(type : T.class, & : T ->) : Nil
 ```
 
 `from_json` decodes a complete document. `PullParser#read(T)` applies the same
-typed constructor to exactly one value at the current cursor, which can be
-nested inside an array or object:
+typed semantics to exactly one value at the current cursor, which can be nested
+inside an array or object:
 
 ```crystal
 require "fused_json"
@@ -84,21 +84,26 @@ pull.finish
 ```
 
 After a successful `read(T)`, the native cursor is on the next sibling,
-enclosing end event, or EOF. The compatibility adapter shows the constructor an
-isolated one-value document, preventing it from consuming a sibling. Object
-keys and end events are not values. Constructors that consume nothing or only
-part of the value are rejected.
+enclosing end event, or EOF. Compatible built-in scalar events use native
+reads, for which consuming exactly one event provides the boundary. For other
+values, the compatibility adapter shows the constructor an isolated one-value
+document, preventing it from consuming a sibling. Object keys and end events
+are not values. Constructors that consume nothing or only part of the value
+are rejected.
 
 `max_typed_value_bytes` limits the selected raw JSON span. It includes
 container punctuation and internal whitespace but excludes surrounding
 whitespace and sibling lookahead. `read_array(T)` gives each element a fresh
 budget. The root passed to `from_json` is one selected value.
 
-The implementation uses internal `JSON::PullParser` compatibility adapters, so
-standard Crystal constructors, generated `JSON::Serializable` code, and
-converters that accept `JSON::PullParser` can consume native FusedJSON events.
-Separate concrete adapters keep the `String` and `IO` native parser types
-statically known.
+The implementation uses equivalent native reads for compatible built-in
+scalars and internal `JSON::PullParser` compatibility adapters for other
+values. Standard Crystal constructors, generated `JSON::Serializable` code,
+and converters that accept `JSON::PullParser` can therefore consume native
+FusedJSON events. Separate concrete adapters keep the `String` and `IO` native
+parser types statically known. Fresh adapter objects are shallow copies of
+valid initialized prototypes, avoiding repeated allocation of unused stdlib
+parser internals while preserving adapter identity.
 
 ## Supported Features
 
@@ -144,7 +149,10 @@ preserve a valid token outside that range. Direct and union `Float32`
 conversions intentionally follow their respective Crystal stdlib paths.
 `BigInt`, `BigFloat`, and `BigDecimal` consume the exact raw token rather than a
 prior `Int64` or `Float64` conversion. `cache_keys` remains local to one native
-reader and is useful for documents with repeated object keys. With duplicate
+reader and is useful for documents with repeated object keys. It can reduce
+temporary key allocation and GC heap growth materially when many typed records
+are retained. Pair it with `max_cached_keys` for untrusted repeated-schema
+input; a cache-only bound stays on the fast traversal path. With duplicate
 rejection off, structural skipping leaves keys inside the skipped value
 unmaterialized. Duplicate rejection is a separate per-object check, applies to
 unknown and skipped data, and must decode those keys. If caching is also on,

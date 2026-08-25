@@ -4,6 +4,17 @@ All notable changes to FusedJSON are recorded here. The project follows semantic
 
 ## Unreleased
 
+### Changed
+
+- Compatible built-in scalar `PullParser#read(T)` calls now avoid allocating a
+  per-value `JSON::PullParser` adapter on both String and IO cursors.
+- Adapter-backed typed reads now copy valid initialized prototypes, preserving
+  fresh adapter identity without repeatedly allocating unused stdlib parser
+  internals.
+- A standalone `max_cached_keys` bound now stays on the fast traversal path and
+  checks capacity only when materializing a key; the bound remains inert when
+  key caching is disabled.
+
 ## 0.2.0 - 2026-08-24
 
 ### Added

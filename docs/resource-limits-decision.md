@@ -32,7 +32,9 @@ value, entry, or cached key.
 compatible. When a legacy keyword and `limits` both constrain the same
 resource, the smaller value wins; neither form can loosen the other. Every
 supplied option is validated before an `IO` is read. A cache limit is already
-satisfied and has no effect when `cache_keys` is false.
+satisfied and has no effect when `cache_keys` is false. When it is the only
+extended control, `max_cached_keys` is enforced at key materialization without
+enabling the general per-event limit traversal.
 
 ## Counting rules
 
@@ -91,6 +93,12 @@ but nested sets add together, and `max_cached_keys` does not bound them. Token,
 document, and typed-value byte limits describe source spans, not Crystal heap
 usage. Returned values, raw converters, parser and decompressor buffers,
 caller retention, allocator capacity, and GC timing remain separate.
+
+A cache-only bound retains one small parser-local limit state but continues to
+use the dedicated fast traversal. Before the pool reaches its bound, insertion
+uses one lookup; at capacity, a lookup still permits an existing decoded key
+and rejects only a new distinct key. With `cache_keys: false`, the inert bound
+does not allocate that state.
 
 Streaming byte limits must stop before appending forbidden bytes to token or
 raw-value scratch. A scalar event is already scanned when `read(T)` selects it,

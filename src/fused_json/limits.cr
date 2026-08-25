@@ -89,14 +89,25 @@ module FusedJSON
     @total_values : Int64
     @containers : Array(ContainerState)?
 
-    def self.required?(limits : Limits, max_token_bytes : Int32?) : Bool
+    def self.required?(limits : Limits, max_token_bytes : Int32?, *, cache_keys : Bool) : Bool
       !!(
         max_token_bytes ||
           limits.max_document_bytes ||
           limits.max_typed_value_bytes ||
           limits.max_total_values ||
           limits.max_container_entries ||
-          limits.max_cached_keys ||
+          (cache_keys && limits.max_cached_keys) ||
+          limits.reject_duplicate_keys
+      )
+    end
+
+    def self.traversal_required?(limits : Limits, max_token_bytes : Int32?) : Bool
+      !!(
+        max_token_bytes ||
+          limits.max_document_bytes ||
+          limits.max_typed_value_bytes ||
+          limits.max_total_values ||
+          limits.max_container_entries ||
           limits.reject_duplicate_keys
       )
     end

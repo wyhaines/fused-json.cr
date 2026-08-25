@@ -138,21 +138,24 @@ Each `read_array` or `read_object` yield must consume at least one complete
 value and stay within that container. Reading the wrong kind or violating a
 block contract raises `ParseError`; a wrong-kind read does not advance.
 
-`read(T)` constructs exactly one current value through Crystal's standard
-typed pull interface. A value-boundary adapter presents synthetic EOF after
-that value while the native cursor advances to its sibling, enclosing end, or
-document EOF. It rejects object keys and end events before construction and
-rejects constructors that return after consuming zero or only part of a value.
-Typed-read failures do not return a partial value, but they cannot roll back
-constructor side effects or native input consumption; the reader must then be
-discarded.
+`read(T)` decodes exactly one current value with Crystal's typed semantics. A
+compatible built-in `Nil`, `Bool`, `String`, fixed-width integer, `Float32`, or
+`Float64` event uses an equivalent native scalar read and does not allocate an
+adapter. Other values, including wrong-kind scalar calls, use Crystal's
+standard typed pull interface. Their value-boundary adapter presents synthetic
+EOF after that value while the native cursor advances to its sibling,
+enclosing end, or document EOF. It rejects object keys and end events before
+construction and rejects constructors that return after consuming zero or
+only part of a value. Typed-read failures do not return a partial value, but
+they cannot roll back constructor side effects or native input consumption;
+the reader must then be discarded.
 
 The typed `read_array(T)` overload delegates structural iteration to the
 untyped array loop and decodes each element with `read(T)`. It rejects a
 normally returning callback that advances the native cursor. Early block exit
 or an exception does not drain the remainder; the reader is discard-only.
-Each element receives a fresh bounded adapter because a custom constructor may
-retain it after returning.
+Each adapter-backed element receives a fresh bounded adapter because a custom
+constructor may retain it after returning.
 
 The pull API is strict about the complete document. It does not reproduce
 Crystal's current behavior of silently ignoring a second scalar root. It uses
@@ -294,8 +297,10 @@ or number may copy that current token into error-reporting scratch. Set
 `max_token_bytes` to bound both the initial scan and this copy.
 
 When no token or extended resource limit is enabled, the parser allocates no
-counter or duplicate-key state and uses its dedicated default scan paths. The
-normal nesting limit and all strict JSON checks remain active.
+counter or duplicate-key state and uses its dedicated default scan paths. A
+standalone active `max_cached_keys` bound allocates its cache-limit state but
+uses the same traversal, enforcing capacity only when a key is materialized.
+The normal nesting limit and all strict JSON checks remain active.
 
 After an event advances, streaming scratch is reused while the completed raw
 token is no larger than `max(2 * buffer_size, 64 KiB)` and replaced otherwise.
@@ -383,26 +388,31 @@ Crystal's generated constructors.
 ## Typed and Streaming Integration
 
 Typed decoding reuses each pull engine through private adapters for Crystal's
-nominal `JSON::PullParser`; the public pull type remains independent. Owning,
-unbounded adapters preserve the existing whole-document `from_json` hot path.
-Separate borrowed adapters add the one-value boundary needed by cursor reads,
-so whole-document decoding does not pay its depth tracking or boundary state.
-Concrete String and IO forms avoid adding union dispatch to either path.
-Adapter dispatch, annotations, raw replay, converters, discriminators, and
-strict trailing content remain tested on every supported compiler.
+nominal `JSON::PullParser`; the public pull type remains independent.
+Compatible built-in scalar cursor reads use equivalent native operations
+instead. Owning, unbounded adapters preserve the existing whole-document
+`from_json` hot path. Separate borrowed adapters add the one-value boundary
+needed by other cursor reads, so whole-document decoding does not pay its depth
+tracking or boundary state. Concrete String and IO forms avoid adding union
+dispatch to either path. Adapter dispatch, annotations, raw replay,
+converters, discriminators, and strict trailing content remain tested on every
+supported compiler.
 
-For a cursor read, the adapter tracks structural depth relative to the selected
-value. It lets the native reader perform its normal one-event lookahead, then
-publishes EOF when that value closes instead of mirroring the next native event.
-All delegated getters, raw operations, key reads, and skips honor that boundary,
-including if a custom constructor retains the adapter. A fresh adapter is
-required per typed read because retained references must remain permanently
-bounded. In-memory boundary locations are reconstructed only if queried, so a
-normal successful typed read does not add a second pass over consumed input;
-streaming boundary locations are captured from incremental state. The fresh
-adapter's fixed allocation and initialization cost is a performance target for
-typed array blocks, but adapters cannot be reused while retained references are
-part of the constructor contract.
+For an adapter-backed cursor read, the adapter tracks structural depth relative
+to the selected value. It lets the native reader perform its normal one-event
+lookahead, then publishes EOF when that value closes instead of mirroring the
+next native event. All delegated getters, raw operations, key reads, and skips
+honor that boundary, including if a custom constructor retains the adapter. A
+fresh adapter is required per adapter-backed typed read because retained
+references must remain permanently bounded. In-memory boundary locations are
+reconstructed only if queried, so a normal successful typed read does not add
+a second pass over consumed input, while streaming boundary locations are
+captured from incremental state. The fresh adapter object cannot be reused
+while retained references are part of the
+constructor contract. Each concrete adapter therefore shallow-copies a valid,
+initialized prototype and resets only its native reader and boundary state.
+This preserves fresh identity without repeatedly allocating the unused stdlib
+lexer and support objects initialized by `JSON::PullParser`.
 
 Streaming scanning preserves tokens split at any byte boundary, including
 UTF-8 sequences, escapes, literals, and exponents. It retains parser state, a

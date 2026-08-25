@@ -176,6 +176,17 @@ private class PullTypedSmallRecord
   getter name : String
 end
 
+private struct PullTypedScalarOracle(T)
+  getter value : T
+
+  private def initialize(@value : T)
+  end
+
+  def self.new(pull : JSON::PullParser) : self
+    new(T.new(pull))
+  end
+end
+
 private def pull_typed_from_array(source : String, type : T.class) : T forall T
   pull = FusedJSON::PullParser.new("[false,#{source},\"tail\"]")
   pull.read_begin_array
@@ -185,6 +196,46 @@ private def pull_typed_from_array(source : String, type : T.class) : T forall T
   pull.read_end_array
   pull.finish
   value
+end
+
+private def pull_typed_from_stream_array(source : String, type : T.class) : T forall T
+  io = StreamSpecSupport::ChunkedIO.new("[false,#{source},\"tail\"]", max_chunk: 1)
+  pull = FusedJSON::PullParser.new(io, buffer_size: 1)
+  pull.read_begin_array
+  pull.read(Bool).should be_false
+  value = pull.read(T)
+  pull.read(String).should eq("tail")
+  pull.read_end_array
+  pull.finish
+  io.closed_called.should be_false
+  value
+end
+
+private def capture_typed_parse_error(&) : JSON::ParseException
+  yield
+  raise "expected typed decoding to fail"
+rescue ex : JSON::ParseException
+  ex
+end
+
+private def assert_scalar_error_parity(source : String, type : T.class) : Nil forall T
+  expected = capture_typed_parse_error do
+    FusedJSON::PullParser.new(source).read(PullTypedScalarOracle(T))
+  end
+  actual = capture_typed_parse_error { FusedJSON::PullParser.new(source).read(type) }
+  {actual.class, actual.message, actual.location_i64, actual.cause.try(&.class)}.should eq(
+    {expected.class, expected.message, expected.location_i64, expected.cause.try(&.class)}
+  )
+
+  expected = capture_typed_parse_error do
+    FusedJSON::PullParser.new(IO::Memory.new(source), buffer_size: 1).read(PullTypedScalarOracle(T))
+  end
+  actual = capture_typed_parse_error do
+    FusedJSON::PullParser.new(IO::Memory.new(source), buffer_size: 1).read(type)
+  end
+  {actual.class, actual.message, actual.location_i64, actual.cause.try(&.class)}.should eq(
+    {expected.class, expected.message, expected.location_i64, expected.cause.try(&.class)}
+  )
 end
 
 describe "FusedJSON::PullParser#read" do
@@ -217,6 +268,48 @@ describe "FusedJSON::PullParser#read" do
     pull_typed_from_array("42", Int32 | String).should eq(42)
     pull_typed_from_array(%q("forty-two"), Int32 | String).should eq("forty-two")
     pull_typed_from_array(%q({"nested":[1,true,null]}), JSON::Any)["nested"][1].as_bool.should be_true
+  end
+
+  it "decodes every built-in scalar through a one-byte streaming cursor" do
+    pull_typed_from_stream_array("null", Nil).should be_nil
+    pull_typed_from_stream_array("true", Bool).should be_true
+    pull_typed_from_stream_array(%q("line\nλ"), String).should eq("line\nλ")
+
+    {% for type in [Int8, Int16, Int32, Int64, Int128] %}
+      pull_typed_from_stream_array({{ type }}::MIN.to_s, {{ type }}).should eq({{ type }}::MIN)
+      pull_typed_from_stream_array({{ type }}::MAX.to_s, {{ type }}).should eq({{ type }}::MAX)
+    {% end %}
+    {% for type in [UInt8, UInt16, UInt32, UInt64, UInt128] %}
+      pull_typed_from_stream_array({{ type }}::MIN.to_s, {{ type }}).should eq({{ type }}::MIN)
+      pull_typed_from_stream_array({{ type }}::MAX.to_s, {{ type }}).should eq({{ type }}::MAX)
+    {% end %}
+
+    pull_typed_from_stream_array("1.25e2", Float32).should eq(125_f32)
+    pull_typed_from_stream_array("42", Float32).should eq(42_f32)
+    pull_typed_from_stream_array("42", Float64).should eq(42_f64)
+    pull_typed_from_stream_array("-0.0", Float64).unsafe_as(UInt64).should eq(0x8000_0000_0000_0000_u64)
+  end
+
+  it "preserves standard scalar conversion and wrong-kind errors" do
+    assert_scalar_error_parity("128", Int8)
+    assert_scalar_error_parity("32768", Int16)
+    assert_scalar_error_parity("2147483648", Int32)
+    assert_scalar_error_parity("9223372036854775808", Int64)
+    assert_scalar_error_parity("-1", UInt8)
+    assert_scalar_error_parity("65536", UInt16)
+    assert_scalar_error_parity("4294967296", UInt32)
+    assert_scalar_error_parity("18446744073709551616", UInt64)
+    assert_scalar_error_parity("170141183460469231731687303715884105728", Int128)
+    assert_scalar_error_parity("340282366920938463463374607431768211456", UInt128)
+    assert_scalar_error_parity("1.5", UInt64)
+    assert_scalar_error_parity("1e309", Float64)
+
+    assert_scalar_error_parity("false", Nil)
+    assert_scalar_error_parity("null", Bool)
+    assert_scalar_error_parity("1", String)
+    assert_scalar_error_parity("1.5", Int32)
+    assert_scalar_error_parity("true", Float32)
+    assert_scalar_error_parity("[1,2]", UInt64)
   end
 
   it "preserves arbitrary-precision and exact decimal number paths" do

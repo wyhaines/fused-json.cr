@@ -73,6 +73,29 @@ private class AdapterCompatConvertedRecord
   getter tail : Int32
 end
 
+private class AdapterCompatRetainsParser
+  @@retained = [] of JSON::PullParser
+
+  getter value : Int32
+
+  private def initialize(@value : Int32)
+  end
+
+  def self.new(pull : JSON::PullParser) : self
+    value = pull.read_int.to_i32
+    @@retained << pull
+    new(value)
+  end
+
+  def self.reset : Nil
+    @@retained.clear
+  end
+
+  def self.retained : Array(JSON::PullParser)
+    @@retained
+  end
+end
+
 abstract class AdapterCompatShape
   include JSON::Serializable
 
@@ -91,6 +114,25 @@ class AdapterCompatCircle < AdapterCompatShape
 end
 
 describe "typed JSON adapter compatibility" do
+  it "uses a fresh whole-document adapter for every String and IO decode" do
+    AdapterCompatRetainsParser.reset
+    values = [
+      FusedJSON.from_json("1", AdapterCompatRetainsParser).value,
+      FusedJSON.from_json(IO::Memory.new("2"), AdapterCompatRetainsParser, buffer_size: 1).value,
+      FusedJSON.from_json("3", AdapterCompatRetainsParser).value,
+      FusedJSON.from_json(IO::Memory.new("4"), AdapterCompatRetainsParser, buffer_size: 1).value,
+    ]
+
+    values.should eq([1, 2, 3, 4])
+    retained = AdapterCompatRetainsParser.retained
+    retained.map(&.object_id).uniq!.size.should eq(4)
+    retained.each do |adapter|
+      adapter.kind.should eq(JSON::PullParser::Kind::EOF)
+      adapter.read_next.should eq(JSON::PullParser::Kind::EOF)
+      expect_raises(FusedJSON::ParseError) { adapter.read_int }
+    end
+  end
+
   it "supports String::RawConverter through both raw traversal overloads" do
     source = %q({"raw":{"wide":340282366920938463463374607431768211455,"float":1.2300e+04,"huge":1e309,"tiny":2e-324,"array":[null,true,"line\n\u03bb",{"x":-0}]},"tail":7})
     record = FusedJSON.from_json(source, AdapterCompatRawRecord)

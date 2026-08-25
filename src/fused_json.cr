@@ -62,7 +62,7 @@ module FusedJSON
   # constructors, without first building a `JSON::Any` tree.
   def self.from_json(source : String, type : T.class, *, max_nesting : Int = 512,
                      cache_keys : Bool = false, limits : Limits = Limits::DEFAULT) : T forall T
-    pull = JSONPullAdapter.new(
+    pull = JSONPullAdapter.build(
       source,
       max_nesting: max_nesting,
       cache_keys: cache_keys,
@@ -79,7 +79,7 @@ module FusedJSON
                      max_nesting : Int = 512, cache_keys : Bool = false,
                      max_token_bytes : Int? = nil,
                      limits : Limits = Limits::DEFAULT) : T forall T
-    pull = StreamingJSONPullAdapter.new(
+    pull = StreamingJSONPullAdapter.build(
       source,
       buffer_size: buffer_size,
       max_nesting: max_nesting,

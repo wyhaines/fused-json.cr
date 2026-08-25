@@ -32,10 +32,12 @@ module FusedJSON
     @size : Int32
     @pos : Int32
     @max_nesting : Int32
+    # Selects traversal with per-event limit hooks. A cache-only limit keeps
+    # its state without moving otherwise unlimited parsing onto that path.
     @limits_active : Bool
     @key_pool : StringPool?
-    # Retains the source directly in default mode. When limits are active, the
-    # state occupies the same slot and retains the source through its anchor.
+    # Retains the source directly when no extended state is needed. Otherwise,
+    # the state occupies the same slot and retains the source through its anchor.
     @source_or_limits : String | ResourceLimitState
 
     def initialize(source : String, *, max_nesting : Int = MAX_NESTING,
@@ -59,13 +61,13 @@ module FusedJSON
                               else
                                 limits.max_token_bytes
                               end
-      if ResourceLimitState.required?(limits, effective_token_limit)
+      if ResourceLimitState.required?(limits, effective_token_limit, cache_keys: cache_keys)
         @source_or_limits = ResourceLimitState.new(
           source,
           limits,
           max_token_bytes: effective_token_limit
         )
-        @limits_active = true
+        @limits_active = ResourceLimitState.traversal_required?(limits, effective_token_limit)
       else
         @source_or_limits = source
         @limits_active = false
@@ -123,7 +125,11 @@ module FusedJSON
         byte = @bytes[@pos]
         if byte == 0x22_u8 # "
           value = if key && (pool = @key_pool)
-                    pool.get(@bytes.to_unsafe + start, @pos - start)
+                    if resource_limits
+                      cache_key(@bytes.to_unsafe + start, @pos - start, (start - 1).to_i64)
+                    else
+                      pool.get(@bytes.to_unsafe + start, @pos - start)
+                    end
                   else
                     String.new(@bytes.to_unsafe + start, @pos - start)
                   end
@@ -639,7 +645,10 @@ module FusedJSON
         when 0x22_u8 # "
           @pos += 1
           value = builder.to_s
-          return key && (pool = @key_pool) ? pool.get(value) : value
+          if key && (pool = @key_pool)
+            return resource_limits ? cache_key(value, (start - 1).to_i64) : pool.get(value)
+          end
+          return value
         when 0x5c_u8 # \
           append_escape(builder)
         else
@@ -1005,10 +1014,10 @@ module FusedJSON
     protected def cache_key(pointer : UInt8*, size : Int32, position : Int64) : String
       pool = @key_pool || raise "key cache is not enabled"
       if limit = resource_limits.try(&.max_cached_keys)
-        if existing = pool.get?(pointer, size)
-          return existing
-        end
         if pool.size.to_i64 >= limit
+          if existing = pool.get?(pointer, size)
+            return existing
+          end
           raise_error("key cache exceeds max_cached_keys of #{limit}", position)
         end
       end
@@ -1018,10 +1027,10 @@ module FusedJSON
     protected def cache_key(value : String, position : Int64) : String
       pool = @key_pool || raise "key cache is not enabled"
       if limit = resource_limits.try(&.max_cached_keys)
-        if existing = pool.get?(value)
-          return existing
-        end
         if pool.size.to_i64 >= limit
+          if existing = pool.get?(value)
+            return existing
+          end
           raise_error("key cache exceeds max_cached_keys of #{limit}", position)
         end
       end

@@ -45,7 +45,8 @@ module FusedJSON
 
   # Shared nominal stdlib adapter specialized for one concrete native reader.
   # This unbounded form serves whole-document `from_json` without cursor-boundary
-  # bookkeeping on its hot path.
+  # bookkeeping on its hot path. Concrete factories duplicate a valid
+  # initialized prototype so `super("")` runs only once per adapter class.
   private abstract class NativeJSONPullAdapter(N) < JSON::PullParser
     {% unless FusedJSON::PullParser::Kind::Null == JSON::PullParser::Kind::Null &&
                 FusedJSON::PullParser::Kind::Bool == JSON::PullParser::Kind::Bool &&
@@ -66,6 +67,12 @@ module FusedJSON
       super("")
       self.max_nesting = max_nesting.to_i32
       sync_kind
+    end
+
+    protected def reset_native(@native : N, *, max_nesting : Int) : self
+      self.max_nesting = max_nesting.to_i32
+      sync_kind
+      self
     end
 
     def int_value : Int64
@@ -206,6 +213,8 @@ module FusedJSON
 
   # Adapts an owned in-memory reader for whole-document typed decoding.
   private class JSONPullAdapter < NativeJSONPullAdapter(TypedPullParser)
+    private PROTOTYPE_SOURCE = "null"
+
     def initialize(source : String, *, max_nesting : Int, cache_keys : Bool, limits : Limits)
       super(
         TypedPullParser.new(
@@ -217,10 +226,34 @@ module FusedJSON
         max_nesting: max_nesting
       )
     end
+
+    def self.build(source : String, *, max_nesting : Int,
+                   cache_keys : Bool, limits : Limits) : self
+      adapter = PROTOTYPE.dup
+      adapter.reset_native(
+        TypedPullParser.new(
+          source,
+          max_nesting: max_nesting,
+          cache_keys: cache_keys,
+          limits: limits
+        ),
+        max_nesting: max_nesting
+      )
+      adapter
+    end
+
+    private PROTOTYPE = new(
+      PROTOTYPE_SOURCE,
+      max_nesting: PullParser::MAX_NESTING,
+      cache_keys: false,
+      limits: Limits::DEFAULT
+    )
   end
 
   # Adapts an owned streaming reader for whole-document typed decoding.
   private class StreamingJSONPullAdapter < NativeJSONPullAdapter(StreamingTypedPullParser)
+    private PROTOTYPE_SOURCE = "null"
+
     def initialize(source : IO, *, buffer_size : Int = StreamingPullParser::DEFAULT_BUFFER_SIZE,
                    max_nesting : Int, cache_keys : Bool, max_token_bytes : Int?,
                    limits : Limits)
@@ -236,6 +269,33 @@ module FusedJSON
         max_nesting: max_nesting
       )
     end
+
+    def self.build(source : IO, *, buffer_size : Int = StreamingPullParser::DEFAULT_BUFFER_SIZE,
+                   max_nesting : Int, cache_keys : Bool, max_token_bytes : Int?,
+                   limits : Limits) : self
+      adapter = PROTOTYPE.dup
+      adapter.reset_native(
+        StreamingTypedPullParser.new(
+          source,
+          buffer_size: buffer_size,
+          max_nesting: max_nesting,
+          cache_keys: cache_keys,
+          max_token_bytes: max_token_bytes,
+          limits: limits
+        ),
+        max_nesting: max_nesting
+      )
+      adapter
+    end
+
+    private PROTOTYPE = new(
+      IO::Memory.new(PROTOTYPE_SOURCE),
+      buffer_size: 1,
+      max_nesting: PullParser::MAX_NESTING,
+      cache_keys: false,
+      max_token_bytes: nil,
+      limits: Limits::DEFAULT
+    )
   end
 
   # Adds a permanent one-value boundary only to adapters that borrow a public
@@ -253,6 +313,16 @@ module FusedJSON
       @boundary_location = nil
       super(native, max_nesting: max_nesting)
       @bool_value = @native.bool_value if @kind.bool?
+    end
+
+    protected def reset_bounded(native : N, *, max_nesting : Int) : self
+      @value_depth = 0
+      @value_complete = false
+      @boundary_byte_offset = 0_i64
+      @boundary_location = nil
+      reset_native(native, max_nesting: max_nesting)
+      @bool_value = @native.bool_value if @kind.bool?
+      self
     end
 
     def int_value : Int64
@@ -452,8 +522,26 @@ module FusedJSON
   private class BoundedJSONPullAdapter < BoundedNativeJSONPullAdapter(PullParser)
     @source_bytes : Bytes
 
+    private PROTOTYPE_SOURCE = "null"
+    private PROTOTYPE        = new(
+      PullParser.new(PROTOTYPE_SOURCE),
+      PROTOTYPE_SOURCE.to_slice,
+      max_nesting: PullParser::MAX_NESTING
+    )
+
     def initialize(native : PullParser, @source_bytes : Bytes, *, max_nesting : Int)
       super(native, max_nesting: max_nesting)
+    end
+
+    def self.borrow(native : PullParser, source_bytes : Bytes, *, max_nesting : Int) : self
+      adapter = PROTOTYPE.dup
+      adapter.reset(native, source_bytes, max_nesting: max_nesting)
+      adapter
+    end
+
+    protected def reset(native : PullParser, @source_bytes : Bytes, *, max_nesting : Int) : self
+      reset_bounded(native, max_nesting: max_nesting)
+      self
     end
 
     protected def capture_boundary_location : Tuple(Int64, Int64)?
@@ -495,8 +583,19 @@ module FusedJSON
 
   # Borrows a streaming reader and exposes only its current value.
   private class BoundedStreamingJSONPullAdapter < BoundedNativeJSONPullAdapter(StreamingPullParser)
+    private PROTOTYPE = new(
+      StreamingPullParser.new(IO::Memory.new("null"), buffer_size: 1),
+      max_nesting: PullParser::MAX_NESTING
+    )
+
     def initialize(native : StreamingPullParser, *, max_nesting : Int)
       super(native, max_nesting: max_nesting)
+    end
+
+    def self.borrow(native : StreamingPullParser, *, max_nesting : Int) : self
+      adapter = PROTOTYPE.dup
+      adapter.reset_bounded(native, max_nesting: max_nesting)
+      adapter
     end
 
     protected def capture_boundary_location : Tuple(Int64, Int64)?
@@ -509,12 +608,16 @@ module FusedJSON
   end
 
   class PullParser
-    # Decodes the complete value under the cursor through Crystal's standard
-    # `new(pull : JSON::PullParser)` constructor and advances to its sibling.
+    # Decodes the complete value under the cursor and advances to its sibling.
+    # Built-in scalar types use equivalent native reads; other types use
+    # Crystal's standard `new(pull : JSON::PullParser)` constructor.
     def read(type : T.class) : T forall T
       ensure_typed_value
       begin_current_typed_value_limit
-      adapter = BoundedJSONPullAdapter.new(self, @bytes, max_nesting: @max_nesting)
+      {% if T == Nil || T == Bool || T == String || Number::Primitive.union_types.includes?(T) %}
+        return read_typed_scalar(type) if typed_scalar_kind?(type)
+      {% end %}
+      adapter = BoundedJSONPullAdapter.borrow(self, @bytes, max_nesting: @max_nesting)
       value = T.new(adapter)
       adapter.finish_value
       value
@@ -546,14 +649,111 @@ module FusedJSON
         raise_error("expected a JSON value, found #{@kind}", @byte_offset)
       end
     end
+
+    @[AlwaysInline]
+    private def typed_scalar_kind?(_type : Nil.class) : Bool
+      @kind.null?
+    end
+
+    @[AlwaysInline]
+    private def typed_scalar_kind?(_type : Bool.class) : Bool
+      @kind.bool?
+    end
+
+    @[AlwaysInline]
+    private def typed_scalar_kind?(_type : String.class) : Bool
+      @kind.string?
+    end
+
+    {% for type in [Int8, Int16, Int32, Int64, UInt8, UInt16, UInt32] %}
+      @[AlwaysInline]
+      private def typed_scalar_kind?(_type : {{ type }}.class) : Bool
+        @kind.int?
+      end
+    {% end %}
+
+    {% for type in [Int128, UInt64, UInt128, Float32, Float64] %}
+      @[AlwaysInline]
+      private def typed_scalar_kind?(_type : {{ type }}.class) : Bool
+        @kind.int? || @kind.float?
+      end
+    {% end %}
+
+    @[AlwaysInline]
+    private def read_typed_scalar(_type : Nil.class) : Nil
+      read_null
+    end
+
+    @[AlwaysInline]
+    private def read_typed_scalar(_type : Bool.class) : Bool
+      read_bool
+    end
+
+    @[AlwaysInline]
+    private def read_typed_scalar(_type : String.class) : String
+      read_string
+    end
+
+    {% for type, method in {
+                             "Int8"    => "i8",
+                             "Int16"   => "i16",
+                             "Int32"   => "i32",
+                             "Int64"   => "i64",
+                             "Int128"  => "i128",
+                             "UInt8"   => "u8",
+                             "UInt16"  => "u16",
+                             "UInt32"  => "u32",
+                             "UInt64"  => "u64",
+                             "UInt128" => "u128",
+                           } %}
+      private def read_typed_scalar(_type : {{ type.id }}.class) : {{ type.id }}
+        location = location_i64
+        value =
+          {% if type == "UInt64" || type == "UInt128" || type == "Int128" %}
+            read_raw_number
+          {% else %}
+            read_int
+          {% end %}
+        begin
+          value.to_{{ method.id }}
+        rescue ex : OverflowError | ArgumentError
+          raise JSON::ParseException.new("Can't read {{ type.id }}", *location, ex)
+        end
+      end
+    {% end %}
+
+    @[AlwaysInline]
+    private def read_typed_scalar(_type : Float32.class) : Float32
+      if @kind.int?
+        value = int_value.to_f32
+        read_next
+        value
+      else
+        read_float.to_f32
+      end
+    end
+
+    @[AlwaysInline]
+    private def read_typed_scalar(_type : Float64.class) : Float64
+      if @kind.int?
+        value = int_value.to_f64
+        read_next
+        value
+      else
+        read_float.to_f64
+      end
+    end
   end
 
   class StreamingPullParser
-    # Uses the streaming-specialized stdlib adapter for typed cursor reads.
+    # Uses native scalar reads or the streaming-specialized stdlib adapter.
     def read(type : T.class) : T forall T
       ensure_typed_value
       begin_current_typed_value_limit
-      adapter = BoundedStreamingJSONPullAdapter.new(self, max_nesting: @max_nesting)
+      {% if T == Nil || T == Bool || T == String || Number::Primitive.union_types.includes?(T) %}
+        return read_typed_scalar(type) if typed_scalar_kind?(type)
+      {% end %}
+      adapter = BoundedStreamingJSONPullAdapter.borrow(self, max_nesting: @max_nesting)
       value = T.new(adapter)
       adapter.finish_value
       value

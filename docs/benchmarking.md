@@ -30,9 +30,13 @@ intentionally have no internal warmup and rely on a separately warmed page
 cache.
 
 `typed-cursor-cost` compares native structural reads, repeated `read(T)`, and
-`read_array(T)` for scalar and representative record arrays over streaming
-`IO::Memory`. It verifies equal counts and checksums, then reports time and
-managed bytes per element:
+`read_array(T)` for scalar and representative record arrays. It measures both
+an owned `String` reader and `IO::Memory` through the streaming reader; record
+profiles run with key caching disabled, enabled, and enabled with an exact
+`max_cached_keys` bound. It verifies equal counts and checksums, then reports
+time and managed bytes per element. The scalar profile exposes scalar fast-path
+overhead; the record profiles expose the remaining fresh adapter-object cost
+and its interaction with key caching:
 
 ```console
 $ FUSED_JSON_BENCH_COMMIT=$(git rev-parse HEAD) \
@@ -40,9 +44,11 @@ $ FUSED_JSON_BENCH_COMMIT=$(git rev-parse HEAD) \
 ```
 
 Control its fixture sizes with `FUSED_JSON_CURSOR_SCALARS` and
-`FUSED_JSON_CURSOR_RECORDS`, its parser buffer with
+`FUSED_JSON_CURSOR_RECORDS`, its streaming parser buffer with
 `FUSED_JSON_CURSOR_BUFFER`, and sampling with the standard
-`FUSED_JSON_BENCH_*` variables. This is an adapter-cost diagnostic, not the
+`FUSED_JSON_BENCH_*` variables. Each transport and cache policy is reported as
+a separate shape so adapter allocation can be distinguished from input-buffer
+and key-allocation costs. This is an adapter-cost diagnostic, not the
 large-document release gate; use the end-to-end TiC modes for Crystal
 comparisons.
 

@@ -62,16 +62,19 @@ Duplicate comparison is case-sensitive and does not normalize Unicode.
 ## Typed Pull Reads
 
 `PullParser#read(type : T.class) : T` decodes exactly one value at the current
-cursor through `T.new(pull : JSON::PullParser)`. It accepts root values and
-values nested in arrays or objects, then leaves the native cursor on the next
-sibling, enclosing end event, or document EOF. Object keys, container ends,
-and EOF are not value positions and raise `ParseError` without advancing.
+cursor with Crystal's typed semantics. Compatible built-in scalar events use a
+native fast path; other values use `T.new(pull : JSON::PullParser)`. It accepts
+root values and values nested in arrays or objects, then leaves the native
+cursor on the next sibling, enclosing end event, or document EOF. Object keys,
+container ends, and EOF are not value positions and raise `ParseError` without
+advancing.
 
-The private compatibility adapter presents EOF immediately after the selected
-value, so a custom constructor cannot inspect or consume its sibling. Returning
-without consuming the complete value is an error. Advancement still performs
-the pull reader's normal one-event lookahead, so a malformed or oversized next
-string or number can fail the current read before it returns.
+For adapter-backed values, the private compatibility adapter presents EOF
+immediately after the selected value, so a custom constructor cannot inspect
+or consume its sibling. Returning without consuming the complete value is an
+error. Scalar fast paths and adapters both perform the pull reader's normal
+one-event lookahead, so a malformed or oversized next string or number can
+fail the current read before it returns.
 
 `max_typed_value_bytes` counts the selected value's raw span, including
 container punctuation and internal whitespace. It excludes surrounding
@@ -80,9 +83,9 @@ element. Structural and scalar reads do not select a typed value.
 
 The native reader scans a scalar event before `from_json` or `read(T)` starts
 its typed-value budget. The typed limit is then checked retrospectively before
-`T.new`. A syntax, document, or token failure encountered during that initial
-scan therefore wins before the typed-value check, even if the typed boundary
-would have been earlier.
+conversion or `T.new`. A syntax, document, or token failure encountered during
+that initial scan therefore wins before the typed-value check, even if the
+typed boundary would have been earlier.
 
 A failed typed read never returns a partial `T`, but it is not transactional:
 constructor side effects and bytes already consumed cannot be rolled back.

@@ -49,8 +49,9 @@ still validate the complete skipped value.
 `read(T)` materializes one typed value at the current cursor without requiring
 document EOF, then leaves the native reader on the next sibling or enclosing
 end event. This supports structural navigation around selected typed values.
-The typed constructor cannot cross that value boundary. If it raises or does
-not consume exactly one complete value, discard the reader.
+Compatible built-in scalar events use native reads; other typed constructors
+receive an adapter that cannot cross that value boundary. If construction
+raises or does not consume exactly one complete value, discard the reader.
 
 `read_array(T)` consumes a current array and synchronously yields each decoded
 element without retaining it. The callback must not advance the shared reader.
@@ -191,7 +192,9 @@ buffers are outside this limit.
   `skip` leaves keys inside the skipped value unmaterialized and does not insert
   them. Duplicate rejection must decode skipped keys; with caching also on,
   they enter the pool. `max_cached_keys` bounds pool insertions, not the
-  duplicate sets.
+  duplicate sets. When this is the only extended limit, enforcement happens at
+  key materialization without moving the rest of traversal onto the general
+  limit path.
 - Duplicate rejection retains one decoded key per distinct member in each open
   object until that object closes. `max_container_entries` bounds each set,
   but nested sets add together. Pair it with `max_token_bytes` when the input

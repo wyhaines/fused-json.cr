@@ -149,6 +149,26 @@ through receipt emission under the versioned
 `all-selected-typed-values-v1` policy. Compare their process peaks with the
 ordinary typed modes as separate series; do not subtract one from another.
 
+For allocation attribution, add `--retained-memory-snapshots` to an `rss`
+invocation using either retained mode. The receipt then records managed heap,
+free, unmapped, collection-count, and current Linux RSS snapshots immediately
+before parsing, immediately after parsing, and after a full collection while
+the complete typed result remains reachable:
+
+```console
+$ /usr/bin/time -v bin/tic-bench rss \
+    --input /tmp/tic-64m.json --manifest /tmp/tic-64m.meta.json \
+    --mode fused-retained-typed --retained-memory-snapshots \
+    --commit "$FUSED_JSON_COMMIT" >fused-retained-memory.json \
+    2>fused-retained-memory.time
+```
+
+Run the matching Crystal mode in a fresh process. Snapshot collection and the
+forced collection occur after measured parser timing, but they can affect the
+process peak; compare these diagnostics only with matching snapshot-enabled
+runs. `current_rss_bytes` is `null` when the platform does not expose Linux
+`/proc/self/status`.
+
 Gzip typed modes include file opening, decompression, parsing, complete input
 validation, and trailer validation. They are end-to-end transport results, not
 parser-only measurements. Two-pass modes reopen the plain file, select

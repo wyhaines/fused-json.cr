@@ -46,8 +46,64 @@ module TypedCursorCost
     end
   end
 
-  def scalar_native(source : String, buffer_size : Int32) : Result
-    pull = streaming_pull(source, buffer_size)
+  def scalar_native_string(source : String) : Result
+    scalar_native(in_memory_pull(source, cache_keys: false))
+  end
+
+  def scalar_read_string(source : String) : Result
+    scalar_read(in_memory_pull(source, cache_keys: false))
+  end
+
+  def scalar_read_array_string(source : String) : Result
+    scalar_read_array(in_memory_pull(source, cache_keys: false))
+  end
+
+  def scalar_native_stream(source : String, buffer_size : Int32) : Result
+    scalar_native(streaming_pull(source, buffer_size, cache_keys: false))
+  end
+
+  def scalar_read_stream(source : String, buffer_size : Int32) : Result
+    scalar_read(streaming_pull(source, buffer_size, cache_keys: false))
+  end
+
+  def scalar_read_array_stream(source : String, buffer_size : Int32) : Result
+    scalar_read_array(streaming_pull(source, buffer_size, cache_keys: false))
+  end
+
+  def price_native_string(source : String, cache_keys : Bool,
+                          limits : FusedJSON::Limits = FusedJSON::Limits::DEFAULT) : Result
+    price_native(in_memory_pull(source, cache_keys: cache_keys, limits: limits))
+  end
+
+  def price_read_string(source : String, cache_keys : Bool,
+                        limits : FusedJSON::Limits = FusedJSON::Limits::DEFAULT) : Result
+    price_read(in_memory_pull(source, cache_keys: cache_keys, limits: limits))
+  end
+
+  def price_read_array_string(source : String, cache_keys : Bool,
+                              limits : FusedJSON::Limits = FusedJSON::Limits::DEFAULT) : Result
+    price_read_array(in_memory_pull(source, cache_keys: cache_keys, limits: limits))
+  end
+
+  def price_native_stream(source : String, buffer_size : Int32,
+                          cache_keys : Bool,
+                          limits : FusedJSON::Limits = FusedJSON::Limits::DEFAULT) : Result
+    price_native(streaming_pull(source, buffer_size, cache_keys: cache_keys, limits: limits))
+  end
+
+  def price_read_stream(source : String, buffer_size : Int32,
+                        cache_keys : Bool,
+                        limits : FusedJSON::Limits = FusedJSON::Limits::DEFAULT) : Result
+    price_read(streaming_pull(source, buffer_size, cache_keys: cache_keys, limits: limits))
+  end
+
+  def price_read_array_stream(source : String, buffer_size : Int32,
+                              cache_keys : Bool,
+                              limits : FusedJSON::Limits = FusedJSON::Limits::DEFAULT) : Result
+    price_read_array(streaming_pull(source, buffer_size, cache_keys: cache_keys, limits: limits))
+  end
+
+  private def scalar_native(pull : P) : Result forall P
     count = 0_i64
     checksum = TICBench::FNV_OFFSET
     pull.read_array do
@@ -58,8 +114,7 @@ module TypedCursorCost
     Result.new(count, checksum)
   end
 
-  def scalar_read(source : String, buffer_size : Int32) : Result
-    pull = streaming_pull(source, buffer_size)
+  private def scalar_read(pull : P) : Result forall P
     count = 0_i64
     checksum = TICBench::FNV_OFFSET
     pull.read_begin_array
@@ -72,8 +127,7 @@ module TypedCursorCost
     Result.new(count, checksum)
   end
 
-  def scalar_read_array(source : String, buffer_size : Int32) : Result
-    pull = streaming_pull(source, buffer_size)
+  private def scalar_read_array(pull : P) : Result forall P
     count = 0_i64
     checksum = TICBench::FNV_OFFSET
     pull.read_array(Int64) do |value|
@@ -84,8 +138,7 @@ module TypedCursorCost
     Result.new(count, checksum)
   end
 
-  def price_native(source : String, buffer_size : Int32) : Result
-    pull = streaming_pull(source, buffer_size)
+  private def price_native(pull : P) : Result forall P
     count = 0_i64
     checksum = TICBench::FNV_OFFSET
     pull.read_array do
@@ -96,8 +149,7 @@ module TypedCursorCost
     Result.new(count, checksum)
   end
 
-  def price_read(source : String, buffer_size : Int32) : Result
-    pull = streaming_pull(source, buffer_size)
+  private def price_read(pull : P) : Result forall P
     count = 0_i64
     checksum = TICBench::FNV_OFFSET
     pull.read_begin_array
@@ -110,8 +162,7 @@ module TypedCursorCost
     Result.new(count, checksum)
   end
 
-  def price_read_array(source : String, buffer_size : Int32) : Result
-    pull = streaming_pull(source, buffer_size)
+  private def price_read_array(pull : P) : Result forall P
     count = 0_i64
     checksum = TICBench::FNV_OFFSET
     pull.read_array(TICBench::TypedNegotiatedPrice) do |price|
@@ -170,12 +221,24 @@ module TypedCursorCost
     Sink.verify(expected)
   end
 
-  private def streaming_pull(source : String, buffer_size : Int32)
+  private def in_memory_pull(source : String, *, cache_keys : Bool,
+                             limits : FusedJSON::Limits = FusedJSON::Limits::DEFAULT)
+    FusedJSON::PullParser.new(
+      source,
+      max_nesting: 512,
+      cache_keys: cache_keys,
+      limits: limits
+    )
+  end
+
+  private def streaming_pull(source : String, buffer_size : Int32, *, cache_keys : Bool,
+                             limits : FusedJSON::Limits = FusedJSON::Limits::DEFAULT)
     FusedJSON::PullParser.new(
       IO::Memory.new(source),
       buffer_size: buffer_size,
       max_nesting: 512,
-      cache_keys: false
+      cache_keys: cache_keys,
+      limits: limits
     )
   end
 
@@ -278,7 +341,7 @@ price_source = TypedCursorCost.price_source(price_count)
 receipt = JSON.build do |json|
   json.object do
     json.field "receipt", "fused-json-typed-cursor-cost"
-    json.field "version", 1
+    json.field "version", 3
     json.field "recorded_at", Time.utc.to_rfc3339
     json.field "fused_json_version", FusedJSON::VERSION
     json.field "fused_json_commit", commit
@@ -287,7 +350,17 @@ receipt = JSON.build do |json|
     json.field "llvm_version", Crystal::LLVM_VERSION
     json.field "target", Crystal::TARGET_TRIPLE
     json.field "release_build", true
-    json.field "transport", "IO::Memory through StreamingPullParser"
+    json.field "transports", [
+      "String through PullParser",
+      "IO::Memory through StreamingPullParser",
+    ]
+    json.field "cache_keys_profiles", [false, true]
+    json.field "bounded_cache_profile" do
+      json.object do
+        json.field "cache_keys", true
+        json.field "max_cached_keys", 5
+      end
+    end
     json.field "buffer_size", buffer_size
     json.field "scalar_elements", scalar_count
     json.field "scalar_source_bytes", scalar_source.bytesize
@@ -303,34 +376,71 @@ receipt = JSON.build do |json|
 end
 puts receipt
 
-scalar_operations = [
-  {"native cursor", -> { TypedCursorCost.scalar_native(scalar_source, buffer_size) }},
-  {"read(T) loop", -> { TypedCursorCost.scalar_read(scalar_source, buffer_size) }},
-  {"read_array(T)", -> { TypedCursorCost.scalar_read_array(scalar_source, buffer_size) }},
-] of TypedCursorCost::Operation
-price_operations = [
-  {"native cursor", -> { TypedCursorCost.price_native(price_source, buffer_size) }},
-  {"read(T) loop", -> { TypedCursorCost.price_read(price_source, buffer_size) }},
-  {"read_array(T)", -> { TypedCursorCost.price_read_array(price_source, buffer_size) }},
-] of TypedCursorCost::Operation
-
 TypedCursorCost.run_shape(
-  "scalar array",
+  "scalar array / String",
   scalar_source,
   scalar_count,
-  scalar_operations,
+  [
+    {"native cursor", -> { TypedCursorCost.scalar_native_string(scalar_source) }},
+    {"read(T) loop", -> { TypedCursorCost.scalar_read_string(scalar_source) }},
+    {"read_array(T)", -> { TypedCursorCost.scalar_read_array_string(scalar_source) }},
+  ] of TypedCursorCost::Operation,
   warmup,
   calculation,
   allocation_iterations,
   reverse_order
 )
 TypedCursorCost.run_shape(
-  "negotiated-price records",
-  price_source,
-  price_count,
-  price_operations,
+  "scalar array / streaming IO::Memory",
+  scalar_source,
+  scalar_count,
+  [
+    {"native cursor", -> { TypedCursorCost.scalar_native_stream(scalar_source, buffer_size) }},
+    {"read(T) loop", -> { TypedCursorCost.scalar_read_stream(scalar_source, buffer_size) }},
+    {"read_array(T)", -> { TypedCursorCost.scalar_read_array_stream(scalar_source, buffer_size) }},
+  ] of TypedCursorCost::Operation,
   warmup,
   calculation,
   allocation_iterations,
   reverse_order
 )
+
+cache_profiles = [
+  {"uncached keys", false, FusedJSON::Limits::DEFAULT},
+  {"cached keys", true, FusedJSON::Limits::DEFAULT},
+  {
+    "cached keys / max_cached_keys=5",
+    true,
+    FusedJSON::Limits.new(max_cached_keys: 5),
+  },
+]
+cache_profiles.each do |cache_label, cache_keys, limits|
+  TypedCursorCost.run_shape(
+    "negotiated-price records / String / #{cache_label}",
+    price_source,
+    price_count,
+    [
+      {"native cursor", -> { TypedCursorCost.price_native_string(price_source, cache_keys, limits) }},
+      {"read(T) loop", -> { TypedCursorCost.price_read_string(price_source, cache_keys, limits) }},
+      {"read_array(T)", -> { TypedCursorCost.price_read_array_string(price_source, cache_keys, limits) }},
+    ] of TypedCursorCost::Operation,
+    warmup,
+    calculation,
+    allocation_iterations,
+    reverse_order
+  )
+  TypedCursorCost.run_shape(
+    "negotiated-price records / streaming IO::Memory / #{cache_label}",
+    price_source,
+    price_count,
+    [
+      {"native cursor", -> { TypedCursorCost.price_native_stream(price_source, buffer_size, cache_keys, limits) }},
+      {"read(T) loop", -> { TypedCursorCost.price_read_stream(price_source, buffer_size, cache_keys, limits) }},
+      {"read_array(T)", -> { TypedCursorCost.price_read_array_stream(price_source, buffer_size, cache_keys, limits) }},
+    ] of TypedCursorCost::Operation,
+    warmup,
+    calculation,
+    allocation_iterations,
+    reverse_order
+  )
+end

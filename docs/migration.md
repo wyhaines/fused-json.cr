@@ -73,16 +73,17 @@ methods can return values wider than every fixed-width Crystal integer.
 ## Typed Cursor Reads
 
 Use `pull.read(T)` to decode one selected value while navigating a larger
-document with FusedJSON's pull API. It uses the same Crystal typed constructors
-as `from_json`, but completion means the selected value ended rather than the
+document with FusedJSON's pull API. It uses the same Crystal typed semantics as
+`from_json`, but completion means the selected value ended rather than the
 whole document ended. The cursor then points at the next sibling or enclosing
 end event.
 
 Do not pass the native FusedJSON reader directly to code expecting a
-`JSON::PullParser`; `read(T)` supplies the private compatibility adapter and
-prevents the constructor from crossing into a sibling. A typed-read error is
-not recoverable: discard the reader because parsing and constructor side
-effects cannot be rolled back.
+`JSON::PullParser`; adapter-backed `read(T)` calls supply the private
+compatibility adapter and prevent the constructor from crossing into a
+sibling. Built-in scalar fast paths consume exactly one event. A typed-read
+error is not recoverable: discard the reader because parsing and constructor
+side effects cannot be rolled back.
 
 Use `pull.read_array(T)` when the current value is an array that should be
 processed element by element. It preserves source order and does not retain

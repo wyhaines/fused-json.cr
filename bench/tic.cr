@@ -34,6 +34,19 @@ module TICBenchmarkCLI
   INVOCATION_ARGUMENTS = ARGV.dup
   MAX_NESTING          = 512
 
+  record ManagedMemorySnapshot,
+    total_bytes : UInt64,
+    heap_size : UInt64,
+    free_bytes : UInt64,
+    unmapped_bytes : UInt64,
+    gc_cycles : UInt64,
+    current_rss_bytes : UInt64?
+
+  record RetainedMemorySnapshots,
+    before_parse : ManagedMemorySnapshot,
+    after_parse : ManagedMemorySnapshot,
+    after_full_gc : ManagedMemorySnapshot
+
   record Measurement,
     wall_seconds : Float64,
     user_cpu_seconds : Float64,
@@ -49,7 +62,8 @@ module TICBenchmarkCLI
     gc_cycles_after : UInt64,
     traversal : TICBench::TraversalResult?,
     typed_traversal : TICBench::TypedTraversalResult?,
-    drain : TICBench::DrainResult?
+    drain : TICBench::DrainResult?,
+    retained_memory_snapshots : RetainedMemorySnapshots?
 
   extend self
 
@@ -202,8 +216,10 @@ module TICBenchmarkCLI
   end
 
   def measure(mode : String, input : String, gzip_input : String?,
-              buffer_size : Int32, max_nesting : Int32) : Measurement
+              buffer_size : Int32, max_nesting : Int32,
+              *, capture_retained_memory : Bool) : Measurement
     GC.collect
+    rss_before = capture_retained_memory ? current_rss_bytes : nil
     gc_before = GC.stats
     prof_before = GC.prof_stats
     cpu_before = Process.times
@@ -225,6 +241,39 @@ module TICBenchmarkCLI
     cpu_after = Process.times
     gc_after = GC.stats
     prof_after = GC.prof_stats
+    rss_after = capture_retained_memory ? current_rss_bytes : nil
+    retained_memory_snapshots = if capture_retained_memory
+                                  GC.collect
+                                  gc_retained = GC.stats
+                                  prof_retained = GC.prof_stats
+                                  rss_retained = current_rss_bytes
+                                  RetainedMemorySnapshots.new(
+                                    ManagedMemorySnapshot.new(
+                                      gc_before.total_bytes,
+                                      gc_before.heap_size,
+                                      gc_before.free_bytes,
+                                      gc_before.unmapped_bytes,
+                                      prof_before.gc_no,
+                                      rss_before
+                                    ),
+                                    ManagedMemorySnapshot.new(
+                                      gc_after.total_bytes,
+                                      gc_after.heap_size,
+                                      gc_after.free_bytes,
+                                      gc_after.unmapped_bytes,
+                                      prof_after.gc_no,
+                                      rss_after
+                                    ),
+                                    ManagedMemorySnapshot.new(
+                                      gc_retained.total_bytes,
+                                      gc_retained.heap_size,
+                                      gc_retained.free_bytes,
+                                      gc_retained.unmapped_bytes,
+                                      prof_retained.gc_no,
+                                      rss_retained
+                                    )
+                                  )
+                                end
     Measurement.new(
       elapsed,
       cpu_after.utime - cpu_before.utime,
@@ -240,7 +289,8 @@ module TICBenchmarkCLI
       prof_after.gc_no,
       traversal,
       typed_traversal,
-      drain
+      drain,
+      retained_memory_snapshots
     )
   end
 
@@ -323,16 +373,27 @@ module TICBenchmarkCLI
   def run(command : String, mode : String, input : String,
           manifest_path : String, gzip_input : String?,
           buffer_size : Int32, max_nesting : Int32,
-          fused_commit : String) : Nil
+          fused_commit : String,
+          capture_retained_memory : Bool) : Nil
     raise "#{command} requires a --release build" unless RELEASE_BUILD
     raise "--mode must be one of: #{MODES.join(", ")}" unless MODES.includes?(mode)
+    if capture_retained_memory && (command != "rss" || !RETAINED_MODES.includes?(mode))
+      raise "--retained-memory-snapshots requires rss with a retained typed mode"
+    end
 
     manifest = TICBench.parse_manifest(manifest_path)
     validate_run_input(mode, input, manifest, buffer_size, max_nesting)
     compressed_bytes = compressed_input_bytes(mode, gzip_input, manifest)
     validate_commit(fused_commit)
     host = host_metadata
-    measurement = measure(mode, input, gzip_input, buffer_size, max_nesting)
+    measurement = measure(
+      mode,
+      input,
+      gzip_input,
+      buffer_size,
+      max_nesting,
+      capture_retained_memory: capture_retained_memory
+    )
     verify_measurement(measurement, manifest, mode)
 
     write_measurement(
@@ -506,6 +567,7 @@ module TICBenchmarkCLI
         )
         nullable_field(json, "typed_values", typed_values)
         write_retained_output(json, typed_traversal.try(&.retained_output))
+        write_retained_memory_snapshots(json, measurement.retained_memory_snapshots)
         nullable_field(
           json,
           "typed_pass_wall_seconds",
@@ -566,6 +628,8 @@ module TICBenchmarkCLI
             json.field "workload", workload_name(mode)
             json.field "retained_output_policy",
               RETAINED_MODES.includes?(mode) ? TICBench::RETAINED_OUTPUT_POLICY : "none"
+            json.field "retained_memory_snapshots",
+              !measurement.retained_memory_snapshots.nil?
             json.field "fused_cache_keys", false
             json.field "fused_reject_duplicate_keys", false
             json.field "crystal_key_pool", "standard library always enabled"
@@ -672,6 +736,35 @@ module TICBenchmarkCLI
     end
   end
 
+  def write_retained_memory_snapshots(json : JSON::Builder,
+                                      snapshots : RetainedMemorySnapshots?) : Nil
+    json.field "retained_memory_snapshots" do
+      if values = snapshots
+        json.object do
+          write_managed_memory_snapshot(json, "before_parse", values.before_parse)
+          write_managed_memory_snapshot(json, "after_parse", values.after_parse)
+          write_managed_memory_snapshot(json, "after_full_gc", values.after_full_gc)
+        end
+      else
+        json.null
+      end
+    end
+  end
+
+  private def write_managed_memory_snapshot(json : JSON::Builder, name : String,
+                                            snapshot : ManagedMemorySnapshot) : Nil
+    json.field name do
+      json.object do
+        json.field "total_bytes", snapshot.total_bytes
+        json.field "heap_size", snapshot.heap_size
+        json.field "free_bytes", snapshot.free_bytes
+        json.field "unmapped_bytes", snapshot.unmapped_bytes
+        json.field "gc_cycles", snapshot.gc_cycles
+        nullable_field(json, "current_rss_bytes", snapshot.current_rss_bytes)
+      end
+    end
+  end
+
   def write_counts(json : JSON::Builder, counts : TICBench::Counts) : Nil
     json.field "counts" do
       json.object do
@@ -735,6 +828,15 @@ module TICBenchmarkCLI
     nil
   end
 
+  def current_rss_bytes : UInt64?
+    value = linux_status_value("VmRSS") || return
+    parts = value.split
+    return unless parts.size == 2 && parts[1] == "kB"
+    kilobytes = parts[0].to_u64?
+    return unless kilobytes && kilobytes <= UInt64::MAX // 1024_u64
+    kilobytes * 1024_u64
+  end
+
   def runtime_os : String
     {% if flag?(:linux) %}
       "Linux"
@@ -763,6 +865,7 @@ mode = nil.as(String?)
 buffer_size = FusedJSON::StreamingPullParser::DEFAULT_BUFFER_SIZE
 max_nesting = 512
 fused_commit = ENV["FUSED_JSON_BENCH_COMMIT"]? || "unknown"
+capture_retained_memory = false
 
 options = OptionParser.new do |parser|
   parser.banner = "Usage: #{PROGRAM_NAME} #{command} --input FILE --manifest FILE [options]"
@@ -787,6 +890,10 @@ options = OptionParser.new do |parser|
   parser.on("--commit=REV", "FusedJSON revision recorded in receipts") do |value|
     fused_commit = value
   end
+  parser.on("--retained-memory-snapshots",
+    "Collect before/after/full-GC snapshots for retained typed RSS modes") do
+    capture_retained_memory = true
+  end
   parser.on("-h", "--help", "Show this help") do
     puts parser
     puts
@@ -804,6 +911,9 @@ begin
 
   if command == "verify"
     raise ArgumentError.new("--mode is not accepted by verify") if mode
+    if capture_retained_memory
+      raise ArgumentError.new("--retained-memory-snapshots is not accepted by verify")
+    end
     TICBenchmarkCLI.verify(
       command,
       selected_input,
@@ -822,7 +932,8 @@ begin
       gzip_input,
       buffer_size,
       max_nesting,
-      fused_commit
+      fused_commit,
+      capture_retained_memory
     )
   end
 rescue error
