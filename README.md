@@ -259,7 +259,9 @@ Current priorities are:
   typed value and key paths. Streaming tree construction will build values
   directly from `IO` instead of routing them through pull events. Future work
   must be rechecked on stable x86-64 and consult the report-only ARM64 and
-  macOS workflow results.
+  macOS workflow results. The staged experiments, merge thresholds, and
+  regression gates are defined in the
+  [post-0.2 performance plan](docs/post-0.2-performance-plan.md).
 - Expanded fuzz testing and broader platform coverage, beginning with ARM64 and macOS. The word scanner will be tested on real 32-bit and big-endian hardware when practical CI runners are available. The compiler-private float hook will either be replaced or moved behind a stable upstream API, while the tested public fallback remains available.
 
 Application feedback will shape the typed and pull interfaces before 1.0. The 1.0 release will define stable contracts for limits, numbers, errors, and compiler compatibility.

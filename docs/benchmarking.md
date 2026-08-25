@@ -2,7 +2,10 @@
 
 Benchmark only optimized builds and verify semantics before measuring. The
 programs under `bench/` abort on result mismatches and retain results in
-observable sinks.
+observable sinks. The [post-0.2 performance plan](post-0.2-performance-plan.md)
+defines the attribution work, staged decision gates, and paired validation for
+the next typed, key-cache, and direct streaming-tree changes; this guide
+remains the command and protocol reference.
 
 ```console
 $ crystal build --release --no-debug bench/parse.cr -o bin/parse-bench
