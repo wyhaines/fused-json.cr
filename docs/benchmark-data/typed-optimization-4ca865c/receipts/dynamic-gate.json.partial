@@ -1,0 +1,3852 @@
+{
+  "artifact": "fused-json-milestone-6-dynamic-gate-partial-journal",
+  "version": 2,
+  "journal_generation": 5,
+  "updated_at": "2026-08-25T19:38:50.663Z",
+  "state": "observations-complete",
+  "base": {
+    "artifact": "fused-json-milestone-6-dynamic-gate",
+    "version": 2,
+    "campaign": "milestone-6-dynamic-regression-gate-adjunct",
+    "created_at": "2026-08-25T19:18:41.743Z",
+    "requested": {
+      "output": "/tmp/fused-json-opt-4ca865c/receipts/dynamic-gate.json",
+      "partial_journal": "/tmp/fused-json-opt-4ca865c/receipts/dynamic-gate.json.partial",
+      "append_only_journal": "/tmp/fused-json-opt-4ca865c/receipts/dynamic-gate.json.journal.jsonl",
+      "environment_journal": "/tmp/fused-json-opt-4ca865c/receipts/dynamic-gate.json.environment.jsonl",
+      "binary": "/tmp/fused-json-opt-4ca865c/bin/parse-bench",
+      "corpus_dir": "/media/wyhaines/home/wyhaines/ghq/github.com/ohler55/oj/test/data",
+      "commit": "4ca865c4e8ad8716041df4069181a5523493de08"
+    },
+    "candidate_commit": "4ca865c4e8ad8716041df4069181a5523493de08",
+    "commit_binding": "caller attestation; the recorded benchmark binary SHA-256 is authoritative",
+    "protocol": {
+      "independent_unit": "one fresh bench/parse process covering all five canonical corpora",
+      "process_count": 5,
+      "retry_policy": "none",
+      "order": [
+        "normal",
+        "reverse",
+        "normal",
+        "reverse",
+        "normal"
+      ],
+      "benchmark_cpu": "3",
+      "benchmark_sibling_cpu": "2",
+      "runner_cpu": "0",
+      "wrapper": "GNU time -v around taskset -c 3",
+      "parameters": {
+        "warmup_seconds": 1,
+        "measurement_seconds": 2,
+        "allocation_operations": 20
+      },
+      "task_cpu_validity": {
+        "comparison": ">=",
+        "percent": 99
+      },
+      "environment_policy": {
+        "name": "busy-pinned-v2",
+        "version": 2,
+        "sample_interval_ms": 2000,
+        "initial_admission_seconds": 60,
+        "block_admission_seconds": 6,
+        "gate_load1_maximum": 5,
+        "gate_load5_maximum": 5,
+        "gate_tctl_maximum_c": 94,
+        "gate_tctl_range_maximum_c": 5,
+        "gate_sibling_cpu_busy_maximum_percent": 25,
+        "gate_benchmark_cpu_busy_maximum_percent": 10,
+        "block_gate_deadline_seconds": 180,
+        "invalid_tctl_minimum_c": 100,
+        "invalid_load1_strictly_greater_than": 7,
+        "invalid_sibling_busy_strictly_greater_than_percent": 35,
+        "consecutive_breach_samples": 2,
+        "maximum_monitor_gap_seconds": 5,
+        "minimum_parser_task_cpu_percent": 99,
+        "child_window_sibling_busy_maximum_percent": 25,
+        "cpu_frequency_policy": "diagnostic-only; never gates, excludes, or normalizes"
+      },
+      "thermal_monitor": "owned by this dynamic-gate run; samples are durable in the environment journal",
+      "exclusions": "none; any child, identity, monitor, task-CPU, or receipt failure invalidates the complete run"
+    },
+    "schedule": [
+      {
+        "index": 0,
+        "process_id": "m6-dynamic-00-normal",
+        "order": "normal",
+        "reverse": false,
+        "attempt": 1
+      },
+      {
+        "index": 1,
+        "process_id": "m6-dynamic-01-reverse",
+        "order": "reverse",
+        "reverse": true,
+        "attempt": 1
+      },
+      {
+        "index": 2,
+        "process_id": "m6-dynamic-02-normal",
+        "order": "normal",
+        "reverse": false,
+        "attempt": 1
+      },
+      {
+        "index": 3,
+        "process_id": "m6-dynamic-03-reverse",
+        "order": "reverse",
+        "reverse": true,
+        "attempt": 1
+      },
+      {
+        "index": 4,
+        "process_id": "m6-dynamic-04-normal",
+        "order": "normal",
+        "reverse": false,
+        "attempt": 1
+      }
+    ],
+    "identities": {
+      "frozen_at": "2026-08-25T19:18:41.482Z",
+      "binary": {
+        "requested_path": "/tmp/fused-json-opt-4ca865c/bin/parse-bench",
+        "realpath": "/tmp/fused-json-opt-4ca865c/bin/parse-bench",
+        "basename": "parse-bench",
+        "bytes": 1011576,
+        "sha256": "eb2224c58a9a2547931efbf219f5dc85cad15cf9d8373142dac36f5b108126a6",
+        "mode_octal": "0775",
+        "device": 64513,
+        "inode": 42994262,
+        "mtime_iso": "2026-08-25T15:39:24.592Z",
+        "executable": true
+      },
+      "binary_build_contract": {
+        "supplied_as": "release bench/parse binary",
+        "verification": "caller-supplied build status; executable bytes are frozen and verified by SHA-256"
+      },
+      "runner": {
+        "requested_path": "/media/wyhaines/home/wyhaines/ghq/github.com/wyhaines/fused-json.cr/scripts/dynamic_gate.mjs",
+        "realpath": "/media/wyhaines/home/wyhaines/ghq/github.com/wyhaines/fused-json.cr/scripts/dynamic_gate.mjs",
+        "basename": "dynamic_gate.mjs",
+        "bytes": 121078,
+        "sha256": "65a3b78670a3d35e105c8943500061516d88a807e80de8d5127881a29ec77020",
+        "mode_octal": "0664",
+        "device": 66309,
+        "inode": 17622555,
+        "mtime_iso": "2026-08-24T15:30:45.251Z",
+        "executable": false
+      },
+      "tools": {
+        "gnu_time": {
+          "requested_path": "/usr/bin/time",
+          "realpath": "/usr/bin/time",
+          "basename": "time",
+          "bytes": 27160,
+          "sha256": "7310b9b4c51a8f4d26c1af0da250f03a49ec8a8141033123e79196ad18f6c81b",
+          "mode_octal": "0755",
+          "device": 64513,
+          "inode": 21759224,
+          "mtime_iso": "2022-03-25T09:52:22.000Z",
+          "executable": true
+        },
+        "taskset": {
+          "requested_path": "/usr/bin/taskset",
+          "realpath": "/usr/bin/taskset",
+          "basename": "taskset",
+          "bytes": 22912,
+          "sha256": "63e52c4b99a688ccd7bab6edbc6df2af1acad124eb852adcb4d20043d28eb2d3",
+          "mode_octal": "0755",
+          "device": 64513,
+          "inode": 21763413,
+          "mtime_iso": "2026-03-06T16:10:04.000Z",
+          "executable": true
+        },
+        "node": {
+          "requested_path": "/media/wyhaines/home/wyhaines/.nvm/versions/node/v24.13.0/bin/node",
+          "realpath": "/media/wyhaines/home/wyhaines/.nvm/versions/node/v24.13.0/bin/node",
+          "basename": "node",
+          "bytes": 121158216,
+          "sha256": "53fb205ae78805130177e24bcb459a69a1518c8d98f8965f31d85aae7ea840fc",
+          "mode_octal": "0755",
+          "device": 66309,
+          "inode": 57455130,
+          "mtime_iso": "2026-01-12T18:02:59.000Z",
+          "executable": true
+        }
+      },
+      "corpora": {
+        "directory": {
+          "requested_path": "/media/wyhaines/home/wyhaines/ghq/github.com/ohler55/oj/test/data",
+          "realpath": "/media/wyhaines/home/wyhaines/ghq/github.com/ohler55/oj/test/data",
+          "device": 66309,
+          "inode": 59018565
+        },
+        "canonical_order": [
+          "activitypub.json",
+          "canada.json",
+          "citm_catalog.json",
+          "ohai.json",
+          "twitter.json"
+        ],
+        "files": [
+          {
+            "requested_path": "/media/wyhaines/home/wyhaines/ghq/github.com/ohler55/oj/test/data/activitypub.json",
+            "realpath": "/media/wyhaines/home/wyhaines/ghq/github.com/ohler55/oj/test/data/activitypub.json",
+            "basename": "activitypub.json",
+            "bytes": 58160,
+            "sha256": "4f4a68f2a0b0f5022e1eeff93ed6871845dc0e4e479dc4c32082225e1dbb3f7c",
+            "mode_octal": "0664",
+            "device": 66309,
+            "inode": 59018567,
+            "mtime_iso": "2026-08-21T12:53:59.573Z",
+            "executable": false,
+            "canonical_name": "activitypub.json"
+          },
+          {
+            "requested_path": "/media/wyhaines/home/wyhaines/ghq/github.com/ohler55/oj/test/data/canada.json",
+            "realpath": "/media/wyhaines/home/wyhaines/ghq/github.com/ohler55/oj/test/data/canada.json",
+            "basename": "canada.json",
+            "bytes": 2251051,
+            "sha256": "f83b3b354030d5dd58740c68ac4fecef64cb730a0d12a90362a7f23077f50d78",
+            "mode_octal": "0664",
+            "device": 66309,
+            "inode": 59018570,
+            "mtime_iso": "2026-08-21T12:53:59.587Z",
+            "executable": false,
+            "canonical_name": "canada.json"
+          },
+          {
+            "requested_path": "/media/wyhaines/home/wyhaines/ghq/github.com/ohler55/oj/test/data/citm_catalog.json",
+            "realpath": "/media/wyhaines/home/wyhaines/ghq/github.com/ohler55/oj/test/data/citm_catalog.json",
+            "basename": "citm_catalog.json",
+            "bytes": 1727204,
+            "sha256": "b3a1f8d7eda4d74551ee8c47639d2896fdcdb0d3ed8ffdb4d4d93ddbb07fdb90",
+            "mode_octal": "0664",
+            "device": 66309,
+            "inode": 59018573,
+            "mtime_iso": "2026-08-21T12:53:59.597Z",
+            "executable": false,
+            "canonical_name": "citm_catalog.json"
+          },
+          {
+            "requested_path": "/media/wyhaines/home/wyhaines/ghq/github.com/ohler55/oj/test/data/ohai.json",
+            "realpath": "/media/wyhaines/home/wyhaines/ghq/github.com/ohler55/oj/test/data/ohai.json",
+            "basename": "ohai.json",
+            "bytes": 32444,
+            "sha256": "4a56817d69aaedb1689944d9af6d8487dbd9742be415d9e22390236022be50f8",
+            "mode_octal": "0664",
+            "device": 66309,
+            "inode": 59018576,
+            "mtime_iso": "2026-08-21T12:53:59.597Z",
+            "executable": false,
+            "canonical_name": "ohai.json"
+          },
+          {
+            "requested_path": "/media/wyhaines/home/wyhaines/ghq/github.com/ohler55/oj/test/data/twitter.json",
+            "realpath": "/media/wyhaines/home/wyhaines/ghq/github.com/ohler55/oj/test/data/twitter.json",
+            "basename": "twitter.json",
+            "bytes": 631514,
+            "sha256": "a08b769f32b95f426cbc3abafcec65c1a19d3eb544d4ddf320eae142c99efc5d",
+            "mode_octal": "0664",
+            "device": 66309,
+            "inode": 59018579,
+            "mtime_iso": "2026-08-21T12:53:59.599Z",
+            "executable": false,
+            "canonical_name": "twitter.json"
+          }
+        ]
+      },
+      "initial_verification": {
+        "verified_at": "2026-08-25T19:18:41.742Z",
+        "matched": true,
+        "mismatches": [],
+        "observed": {
+          "tools": {
+            "gnu_time": {
+              "realpath": "/usr/bin/time",
+              "basename": "time",
+              "bytes": 27160,
+              "sha256": "7310b9b4c51a8f4d26c1af0da250f03a49ec8a8141033123e79196ad18f6c81b",
+              "executable": true
+            },
+            "taskset": {
+              "realpath": "/usr/bin/taskset",
+              "basename": "taskset",
+              "bytes": 22912,
+              "sha256": "63e52c4b99a688ccd7bab6edbc6df2af1acad124eb852adcb4d20043d28eb2d3",
+              "executable": true
+            },
+            "node": {
+              "realpath": "/media/wyhaines/home/wyhaines/.nvm/versions/node/v24.13.0/bin/node",
+              "basename": "node",
+              "bytes": 121158216,
+              "sha256": "53fb205ae78805130177e24bcb459a69a1518c8d98f8965f31d85aae7ea840fc",
+              "executable": true
+            }
+          },
+          "corpora": [
+            {
+              "name": "activitypub.json",
+              "identity": {
+                "realpath": "/media/wyhaines/home/wyhaines/ghq/github.com/ohler55/oj/test/data/activitypub.json",
+                "basename": "activitypub.json",
+                "bytes": 58160,
+                "sha256": "4f4a68f2a0b0f5022e1eeff93ed6871845dc0e4e479dc4c32082225e1dbb3f7c",
+                "executable": false
+              }
+            },
+            {
+              "name": "canada.json",
+              "identity": {
+                "realpath": "/media/wyhaines/home/wyhaines/ghq/github.com/ohler55/oj/test/data/canada.json",
+                "basename": "canada.json",
+                "bytes": 2251051,
+                "sha256": "f83b3b354030d5dd58740c68ac4fecef64cb730a0d12a90362a7f23077f50d78",
+                "executable": false
+              }
+            },
+            {
+              "name": "citm_catalog.json",
+              "identity": {
+                "realpath": "/media/wyhaines/home/wyhaines/ghq/github.com/ohler55/oj/test/data/citm_catalog.json",
+                "basename": "citm_catalog.json",
+                "bytes": 1727204,
+                "sha256": "b3a1f8d7eda4d74551ee8c47639d2896fdcdb0d3ed8ffdb4d4d93ddbb07fdb90",
+                "executable": false
+              }
+            },
+            {
+              "name": "ohai.json",
+              "identity": {
+                "realpath": "/media/wyhaines/home/wyhaines/ghq/github.com/ohler55/oj/test/data/ohai.json",
+                "basename": "ohai.json",
+                "bytes": 32444,
+                "sha256": "4a56817d69aaedb1689944d9af6d8487dbd9742be415d9e22390236022be50f8",
+                "executable": false
+              }
+            },
+            {
+              "name": "twitter.json",
+              "identity": {
+                "realpath": "/media/wyhaines/home/wyhaines/ghq/github.com/ohler55/oj/test/data/twitter.json",
+                "basename": "twitter.json",
+                "bytes": 631514,
+                "sha256": "a08b769f32b95f426cbc3abafcec65c1a19d3eb544d4ddf320eae142c99efc5d",
+                "executable": false
+              }
+            }
+          ],
+          "binary": {
+            "realpath": "/tmp/fused-json-opt-4ca865c/bin/parse-bench",
+            "basename": "parse-bench",
+            "bytes": 1011576,
+            "sha256": "eb2224c58a9a2547931efbf219f5dc85cad15cf9d8373142dac36f5b108126a6",
+            "executable": true
+          },
+          "runner": {
+            "realpath": "/media/wyhaines/home/wyhaines/ghq/github.com/wyhaines/fused-json.cr/scripts/dynamic_gate.mjs",
+            "basename": "dynamic_gate.mjs",
+            "bytes": 121078,
+            "sha256": "65a3b78670a3d35e105c8943500061516d88a807e80de8d5127881a29ec77020",
+            "executable": false
+          }
+        }
+      }
+    },
+    "host": {
+      "hostname": "pop-os",
+      "platform": "Linux 7.0.11-76070011-generic x64",
+      "cpu_model": "AMD Ryzen 9 7940HS w/ Radeon 780M Graphics",
+      "runner_affinity": "0",
+      "node": "v24.13.0",
+      "node_versions": {
+        "node": "24.13.0",
+        "acorn": "8.15.0",
+        "ada": "3.3.0",
+        "amaro": "1.1.5",
+        "ares": "1.34.6",
+        "brotli": "1.1.0",
+        "cjs_module_lexer": "2.1.0",
+        "cldr": "47.0",
+        "icu": "77.1",
+        "llhttp": "9.3.0",
+        "modules": "137",
+        "napi": "10",
+        "nbytes": "0.1.1",
+        "ncrypto": "0.0.1",
+        "nghttp2": "1.67.1",
+        "openssl": "3.5.4",
+        "simdjson": "4.1.0",
+        "simdutf": "6.4.0",
+        "sqlite": "3.50.4",
+        "tz": "2025b",
+        "undici": "7.18.2",
+        "unicode": "16.0",
+        "uv": "1.51.0",
+        "uvwasi": "0.0.23",
+        "v8": "13.6.233.17-node.37",
+        "zlib": "1.3.1-470d3a2",
+        "zstd": "1.5.7"
+      },
+      "node_release": {
+        "name": "node",
+        "lts": "Krypton",
+        "sourceUrl": "https://nodejs.org/download/release/v24.13.0/node-v24.13.0.tar.gz",
+        "headersUrl": "https://nodejs.org/download/release/v24.13.0/node-v24.13.0-headers.tar.gz"
+      },
+      "node_executable": {
+        "requested_path": "/media/wyhaines/home/wyhaines/.nvm/versions/node/v24.13.0/bin/node",
+        "realpath": "/media/wyhaines/home/wyhaines/.nvm/versions/node/v24.13.0/bin/node",
+        "basename": "node",
+        "bytes": 121158216,
+        "sha256": "53fb205ae78805130177e24bcb459a69a1518c8d98f8965f31d85aae7ea840fc",
+        "mode_octal": "0755",
+        "device": 66309,
+        "inode": 57455130,
+        "mtime_iso": "2026-01-12T18:02:59.000Z",
+        "executable": true
+      },
+      "argv": [
+        "/media/wyhaines/home/wyhaines/.nvm/versions/node/v24.13.0/bin/node",
+        "/media/wyhaines/home/wyhaines/ghq/github.com/wyhaines/fused-json.cr/scripts/dynamic_gate.mjs",
+        "--output=/tmp/fused-json-opt-4ca865c/receipts/dynamic-gate.json",
+        "--binary=/tmp/fused-json-opt-4ca865c/bin/parse-bench",
+        "--corpus-dir=/media/wyhaines/home/wyhaines/ghq/github.com/ohler55/oj/test/data",
+        "--commit=4ca865c4e8ad8716041df4069181a5523493de08"
+      ]
+    }
+  },
+  "completed_processes": 5,
+  "observations": [
+    {
+      "receipt": "fused-json-m6-dynamic-child",
+      "version": 2,
+      "schedule_index": 0,
+      "process_id": "m6-dynamic-00-normal",
+      "order": "normal",
+      "attempt": 1,
+      "retry_policy": "none",
+      "commit_argument": "4ca865c4e8ad8716041df4069181a5523493de08",
+      "fused_json_commit": "4ca865c4e8ad8716041df4069181a5523493de08",
+      "cpu_affinity": "3",
+      "environment": {
+        "PATH": "/usr/bin:/bin",
+        "LANG": "C",
+        "LC_ALL": "C",
+        "TZ": "UTC",
+        "GC_NPROCS": "1",
+        "GC_MARKERS": "1",
+        "FUSED_JSON_BENCH_WARMUP": "1",
+        "FUSED_JSON_BENCH_TIME": "2",
+        "FUSED_JSON_BENCH_ALLOCATIONS": "20",
+        "FUSED_JSON_BENCH_REVERSE": "0",
+        "FUSED_JSON_BENCH_COMMIT": "4ca865c4e8ad8716041df4069181a5523493de08"
+      },
+      "environment_policy": "sanitized; parent environment is not inherited",
+      "time_command": [
+        "/usr/bin/time",
+        "-v",
+        "-o",
+        "/tmp/fused-json-m6-dynamic-8tNDBW/process-00.time-v.txt",
+        "/usr/bin/taskset",
+        "-c",
+        "3",
+        "/tmp/fused-json-opt-4ca865c/bin/parse-bench",
+        "/media/wyhaines/home/wyhaines/ghq/github.com/ohler55/oj/test/data/activitypub.json",
+        "/media/wyhaines/home/wyhaines/ghq/github.com/ohler55/oj/test/data/canada.json",
+        "/media/wyhaines/home/wyhaines/ghq/github.com/ohler55/oj/test/data/citm_catalog.json",
+        "/media/wyhaines/home/wyhaines/ghq/github.com/ohler55/oj/test/data/ohai.json",
+        "/media/wyhaines/home/wyhaines/ghq/github.com/ohler55/oj/test/data/twitter.json"
+      ],
+      "benchmark_command": [
+        "/usr/bin/taskset",
+        "-c",
+        "3",
+        "/tmp/fused-json-opt-4ca865c/bin/parse-bench",
+        "/media/wyhaines/home/wyhaines/ghq/github.com/ohler55/oj/test/data/activitypub.json",
+        "/media/wyhaines/home/wyhaines/ghq/github.com/ohler55/oj/test/data/canada.json",
+        "/media/wyhaines/home/wyhaines/ghq/github.com/ohler55/oj/test/data/citm_catalog.json",
+        "/media/wyhaines/home/wyhaines/ghq/github.com/ohler55/oj/test/data/ohai.json",
+        "/media/wyhaines/home/wyhaines/ghq/github.com/ohler55/oj/test/data/twitter.json"
+      ],
+      "wrapper_pid": 9,
+      "binary_sha256": "eb2224c58a9a2547931efbf219f5dc85cad15cf9d8373142dac36f5b108126a6",
+      "runner_sha256": "65a3b78670a3d35e105c8943500061516d88a807e80de8d5127881a29ec77020",
+      "gnu_time_sha256": "7310b9b4c51a8f4d26c1af0da250f03a49ec8a8141033123e79196ad18f6c81b",
+      "taskset_sha256": "63e52c4b99a688ccd7bab6edbc6df2af1acad124eb852adcb4d20043d28eb2d3",
+      "node_executable_sha256": "53fb205ae78805130177e24bcb459a69a1518c8d98f8965f31d85aae7ea840fc",
+      "corpora": [
+        {
+          "name": "activitypub.json",
+          "realpath": "/media/wyhaines/home/wyhaines/ghq/github.com/ohler55/oj/test/data/activitypub.json",
+          "bytes": 58160,
+          "sha256": "4f4a68f2a0b0f5022e1eeff93ed6871845dc0e4e479dc4c32082225e1dbb3f7c"
+        },
+        {
+          "name": "canada.json",
+          "realpath": "/media/wyhaines/home/wyhaines/ghq/github.com/ohler55/oj/test/data/canada.json",
+          "bytes": 2251051,
+          "sha256": "f83b3b354030d5dd58740c68ac4fecef64cb730a0d12a90362a7f23077f50d78"
+        },
+        {
+          "name": "citm_catalog.json",
+          "realpath": "/media/wyhaines/home/wyhaines/ghq/github.com/ohler55/oj/test/data/citm_catalog.json",
+          "bytes": 1727204,
+          "sha256": "b3a1f8d7eda4d74551ee8c47639d2896fdcdb0d3ed8ffdb4d4d93ddbb07fdb90"
+        },
+        {
+          "name": "ohai.json",
+          "realpath": "/media/wyhaines/home/wyhaines/ghq/github.com/ohler55/oj/test/data/ohai.json",
+          "bytes": 32444,
+          "sha256": "4a56817d69aaedb1689944d9af6d8487dbd9742be415d9e22390236022be50f8"
+        },
+        {
+          "name": "twitter.json",
+          "realpath": "/media/wyhaines/home/wyhaines/ghq/github.com/ohler55/oj/test/data/twitter.json",
+          "bytes": 631514,
+          "sha256": "a08b769f32b95f426cbc3abafcec65c1a19d3eb544d4ddf320eae142c99efc5d"
+        }
+      ],
+      "identity_verification_before": {
+        "verified_at": "2026-08-25T19:33:34.090Z",
+        "matched": true,
+        "mismatches": [],
+        "observed": {
+          "tools": {
+            "gnu_time": {
+              "realpath": "/usr/bin/time",
+              "basename": "time",
+              "bytes": 27160,
+              "sha256": "7310b9b4c51a8f4d26c1af0da250f03a49ec8a8141033123e79196ad18f6c81b",
+              "executable": true
+            },
+            "taskset": {
+              "realpath": "/usr/bin/taskset",
+              "basename": "taskset",
+              "bytes": 22912,
+              "sha256": "63e52c4b99a688ccd7bab6edbc6df2af1acad124eb852adcb4d20043d28eb2d3",
+              "executable": true
+            },
+            "node": {
+              "realpath": "/media/wyhaines/home/wyhaines/.nvm/versions/node/v24.13.0/bin/node",
+              "basename": "node",
+              "bytes": 121158216,
+              "sha256": "53fb205ae78805130177e24bcb459a69a1518c8d98f8965f31d85aae7ea840fc",
+              "executable": true
+            }
+          },
+          "corpora": [
+            {
+              "name": "activitypub.json",
+              "identity": {
+                "realpath": "/media/wyhaines/home/wyhaines/ghq/github.com/ohler55/oj/test/data/activitypub.json",
+                "basename": "activitypub.json",
+                "bytes": 58160,
+                "sha256": "4f4a68f2a0b0f5022e1eeff93ed6871845dc0e4e479dc4c32082225e1dbb3f7c",
+                "executable": false
+              }
+            },
+            {
+              "name": "canada.json",
+              "identity": {
+                "realpath": "/media/wyhaines/home/wyhaines/ghq/github.com/ohler55/oj/test/data/canada.json",
+                "basename": "canada.json",
+                "bytes": 2251051,
+                "sha256": "f83b3b354030d5dd58740c68ac4fecef64cb730a0d12a90362a7f23077f50d78",
+                "executable": false
+              }
+            },
+            {
+              "name": "citm_catalog.json",
+              "identity": {
+                "realpath": "/media/wyhaines/home/wyhaines/ghq/github.com/ohler55/oj/test/data/citm_catalog.json",
+                "basename": "citm_catalog.json",
+                "bytes": 1727204,
+                "sha256": "b3a1f8d7eda4d74551ee8c47639d2896fdcdb0d3ed8ffdb4d4d93ddbb07fdb90",
+                "executable": false
+              }
+            },
+            {
+              "name": "ohai.json",
+              "identity": {
+                "realpath": "/media/wyhaines/home/wyhaines/ghq/github.com/ohler55/oj/test/data/ohai.json",
+                "basename": "ohai.json",
+                "bytes": 32444,
+                "sha256": "4a56817d69aaedb1689944d9af6d8487dbd9742be415d9e22390236022be50f8",
+                "executable": false
+              }
+            },
+            {
+              "name": "twitter.json",
+              "identity": {
+                "realpath": "/media/wyhaines/home/wyhaines/ghq/github.com/ohler55/oj/test/data/twitter.json",
+                "basename": "twitter.json",
+                "bytes": 631514,
+                "sha256": "a08b769f32b95f426cbc3abafcec65c1a19d3eb544d4ddf320eae142c99efc5d",
+                "executable": false
+              }
+            }
+          ],
+          "binary": {
+            "realpath": "/tmp/fused-json-opt-4ca865c/bin/parse-bench",
+            "basename": "parse-bench",
+            "bytes": 1011576,
+            "sha256": "eb2224c58a9a2547931efbf219f5dc85cad15cf9d8373142dac36f5b108126a6",
+            "executable": true
+          },
+          "runner": {
+            "realpath": "/media/wyhaines/home/wyhaines/ghq/github.com/wyhaines/fused-json.cr/scripts/dynamic_gate.mjs",
+            "basename": "dynamic_gate.mjs",
+            "bytes": 121078,
+            "sha256": "65a3b78670a3d35e105c8943500061516d88a807e80de8d5127881a29ec77020",
+            "executable": false
+          }
+        }
+      },
+      "identity_verification_after": {
+        "verified_at": "2026-08-25T19:34:21.262Z",
+        "matched": true,
+        "mismatches": [],
+        "observed": {
+          "tools": {
+            "gnu_time": {
+              "realpath": "/usr/bin/time",
+              "basename": "time",
+              "bytes": 27160,
+              "sha256": "7310b9b4c51a8f4d26c1af0da250f03a49ec8a8141033123e79196ad18f6c81b",
+              "executable": true
+            },
+            "taskset": {
+              "realpath": "/usr/bin/taskset",
+              "basename": "taskset",
+              "bytes": 22912,
+              "sha256": "63e52c4b99a688ccd7bab6edbc6df2af1acad124eb852adcb4d20043d28eb2d3",
+              "executable": true
+            },
+            "node": {
+              "realpath": "/media/wyhaines/home/wyhaines/.nvm/versions/node/v24.13.0/bin/node",
+              "basename": "node",
+              "bytes": 121158216,
+              "sha256": "53fb205ae78805130177e24bcb459a69a1518c8d98f8965f31d85aae7ea840fc",
+              "executable": true
+            }
+          },
+          "corpora": [
+            {
+              "name": "activitypub.json",
+              "identity": {
+                "realpath": "/media/wyhaines/home/wyhaines/ghq/github.com/ohler55/oj/test/data/activitypub.json",
+                "basename": "activitypub.json",
+                "bytes": 58160,
+                "sha256": "4f4a68f2a0b0f5022e1eeff93ed6871845dc0e4e479dc4c32082225e1dbb3f7c",
+                "executable": false
+              }
+            },
+            {
+              "name": "canada.json",
+              "identity": {
+                "realpath": "/media/wyhaines/home/wyhaines/ghq/github.com/ohler55/oj/test/data/canada.json",
+                "basename": "canada.json",
+                "bytes": 2251051,
+                "sha256": "f83b3b354030d5dd58740c68ac4fecef64cb730a0d12a90362a7f23077f50d78",
+                "executable": false
+              }
+            },
+            {
+              "name": "citm_catalog.json",
+              "identity": {
+                "realpath": "/media/wyhaines/home/wyhaines/ghq/github.com/ohler55/oj/test/data/citm_catalog.json",
+                "basename": "citm_catalog.json",
+                "bytes": 1727204,
+                "sha256": "b3a1f8d7eda4d74551ee8c47639d2896fdcdb0d3ed8ffdb4d4d93ddbb07fdb90",
+                "executable": false
+              }
+            },
+            {
+              "name": "ohai.json",
+              "identity": {
+                "realpath": "/media/wyhaines/home/wyhaines/ghq/github.com/ohler55/oj/test/data/ohai.json",
+                "basename": "ohai.json",
+                "bytes": 32444,
+                "sha256": "4a56817d69aaedb1689944d9af6d8487dbd9742be415d9e22390236022be50f8",
+                "executable": false
+              }
+            },
+            {
+              "name": "twitter.json",
+              "identity": {
+                "realpath": "/media/wyhaines/home/wyhaines/ghq/github.com/ohler55/oj/test/data/twitter.json",
+                "basename": "twitter.json",
+                "bytes": 631514,
+                "sha256": "a08b769f32b95f426cbc3abafcec65c1a19d3eb544d4ddf320eae142c99efc5d",
+                "executable": false
+              }
+            }
+          ],
+          "binary": {
+            "realpath": "/tmp/fused-json-opt-4ca865c/bin/parse-bench",
+            "basename": "parse-bench",
+            "bytes": 1011576,
+            "sha256": "eb2224c58a9a2547931efbf219f5dc85cad15cf9d8373142dac36f5b108126a6",
+            "executable": true
+          },
+          "runner": {
+            "realpath": "/media/wyhaines/home/wyhaines/ghq/github.com/wyhaines/fused-json.cr/scripts/dynamic_gate.mjs",
+            "basename": "dynamic_gate.mjs",
+            "bytes": 121078,
+            "sha256": "65a3b78670a3d35e105c8943500061516d88a807e80de8d5127881a29ec77020",
+            "executable": false
+          }
+        }
+      },
+      "started_at": "2026-08-25T19:33:34.090Z",
+      "finished_at": "2026-08-25T19:34:21.130Z",
+      "started_monotonic_ms": 892630.663401,
+      "finished_monotonic_ms": 939670.705168,
+      "elapsed_monotonic_seconds": 47.04004176699999,
+      "environment_start_gate": {
+        "policy_name": "busy-pinned-v2",
+        "policy_version": 2,
+        "label": "m6-dynamic-00-normal",
+        "required_continuous_seconds": 6,
+        "wait_started_monotonic_ms": 884463.521448,
+        "block_gate_deadline_seconds": 180,
+        "absolute_deadline_monotonic_ms": 1064463.5214479999,
+        "admitted_evaluated_monotonic_ms": 892479.746065,
+        "first_acceptable_sample_sequence": 441,
+        "first_acceptable_monotonic_ms": 886439.365124,
+        "admitted_sample_sequence": 444,
+        "admitted_monotonic_ms": 892469.366189,
+        "continuous_seconds": 6.0300010649999605,
+        "sample_sequences": [
+          441,
+          442,
+          443,
+          444
+        ],
+        "sample_count": 4,
+        "tctl_minimum_c": 59.5,
+        "tctl_maximum_c": 60.375,
+        "tctl_range_c": 0.875
+      },
+      "environment_start_sample_sequence": 444,
+      "environment_end_sample_sequence": 467,
+      "child_environment_window": {
+        "cpu": "2",
+        "maximum_busy_percent": 25,
+        "before": {
+          "observed_at": "2026-08-25T19:33:34.090Z",
+          "monotonic_ms": 892630.504404,
+          "proc_stat_cpu_line": "cpu2 5117898 1874430 676279 26480525 23154 0 8812 0 0 0",
+          "counters": [
+            "5117898",
+            "1874430",
+            "676279",
+            "26480525",
+            "23154",
+            "0",
+            "8812",
+            "0",
+            "0",
+            "0"
+          ],
+          "total_ticks": "34181098",
+          "idle_ticks": "26503679",
+          "tctl_raw_millicelsius": "60500",
+          "tctl_c": 60.5
+        },
+        "after": {
+          "observed_at": "2026-08-25T19:34:21.131Z",
+          "monotonic_ms": 939670.708203,
+          "proc_stat_cpu_line": "cpu2 5117927 1874461 676305 26485108 23169 0 8813 0 0 0",
+          "counters": [
+            "5117927",
+            "1874461",
+            "676305",
+            "26485108",
+            "23169",
+            "0",
+            "8813",
+            "0",
+            "0",
+            "0"
+          ],
+          "total_ticks": "34185783",
+          "idle_ticks": "26508277",
+          "tctl_raw_millicelsius": "96250",
+          "tctl_c": 96.25
+        },
+        "delta_total_ticks": "4685",
+        "delta_idle_ticks": "4598",
+        "delta_busy_ticks": "87",
+        "cpu_busy_percent": 1.8569903948772677,
+        "within_busy_limit": true
+      },
+      "exit": {
+        "code": 0,
+        "signal": null,
+        "spawn_error": null
+      },
+      "raw": {
+        "stdout": {
+          "bytes": 2800,
+          "sha256": "7c77a96be42bcff0dc5333482b2c3c669e54c1ce56048b5fac7981381cdf211a",
+          "encoding": "base64",
+          "base64": "CmFjdGl2aXR5cHViLmpzb246IDU4MTYwIGJ5dGVzCkNyeXN0YWwgSlNPTi5wYXJzZSAgIDQuMzFrICgyMzIuMjbCtXMpICjCsSAwLjgyJSkgIDE1N2tCL29wICAgMi4yMcOXIHNsb3dlcgogICAgRnVzZWRKU09OLmxvYWQgICA5LjE4ayAoMTA4LjkwwrVzKSAowrEgMS40OSUpICAyMTdrQi9vcCAgIDEuMDTDlyBzbG93ZXIKICBGdXNlZEpTT04gY2FjaGVkICAgOS41MmsgKDEwNS4wNcK1cykgKMKxIDMuNjAlKSAgMTk2a0Ivb3AgICAgICAgIGZhc3Rlc3QKICBDcnlzdGFsIEpTT04ucGFyc2UgICAgMjM4LjgwNDI5MSBNaUIvcyAgKFJTRCAgMC44MiUpCiAgRnVzZWRKU09OLmxvYWQgICAgICAgIDUwOS4zNDE0MDQgTWlCL3MgIChSU0QgIDEuNDklKQogIEZ1c2VkSlNPTiBjYWNoZWQgICAgICA1MjcuOTcwNTA4IE1pQi9zICAoUlNEICAzLjYwJSkKICBNYW5hZ2VkIGFsbG9jYXRpb25zCiAgQ3J5c3RhbCBKU09OLnBhcnNlICAgICAgIDE2MTg3MiBCL29wCiAgRnVzZWRKU09OLmxvYWQgICAgICAgICAgIDIyMjExNSBCL29wCiAgRnVzZWRKU09OIGNhY2hlZCAgICAgICAgIDIwMDg5MCBCL29wCgpjYW5hZGEuanNvbjogMjI1MTA1MSBieXRlcwpDcnlzdGFsIEpTT04ucGFyc2UgIDgwLjgyICAoIDEyLjM3bXMpICjCsSAzLjE5JSkgIDEyLjdNQi9vcCAgIDEuNzfDlyBzbG93ZXIKICAgIEZ1c2VkSlNPTi5sb2FkIDE0My40NCAgKCAgNi45N21zKSAowrEgNC4wNCUpICA4LjU0TUIvb3AgICAgICAgIGZhc3Rlc3QKICBGdXNlZEpTT04gY2FjaGVkIDE0Mi4yOCAgKCAgNy4wM21zKSAowrEgNS4xNSUpICA4LjU0TUIvb3AgICAxLjAxw5cgc2xvd2VyCiAgQ3J5c3RhbCBKU09OLnBhcnNlICAgIDE3My41MDExMzkgTWlCL3MgIChSU0QgIDMuMTklKQogIEZ1c2VkSlNPTi5sb2FkICAgICAgICAzMDcuOTI0NzkzIE1pQi9zICAoUlNEICA0LjA0JSkKICBGdXNlZEpTT04gY2FjaGVkICAgICAgMzA1LjQ0NTgwNSBNaUIvcyAgKFJTRCAgNS4xNSUpCiAgTWFuYWdlZCBhbGxvY2F0aW9ucwogIENyeXN0YWwgSlNPTi5wYXJzZSAgICAgMTMzMjY2MzEgQi9vcAogIEZ1c2VkSlNPTi5sb2FkICAgICAgICAgIDg5NjIyMTcgQi9vcAogIEZ1c2VkSlNPTiBjYWNoZWQgICAgICAgIDg5NjIxMjcgQi9vcAoKY2l0bV9jYXRhbG9nLmpzb246IDE3MjcyMDQgYnl0ZXMKQ3J5c3RhbCBKU09OLnBhcnNlIDE1Ni43OCAgKCAgNi4zOG1zKSAowrEgMi41MiUpICAzLjczTUIvb3AgICAyLjAzw5cgc2xvd2VyCiAgICBGdXNlZEpTT04ubG9hZCAzMDAuMDIgICggIDMuMzNtcykgKMKxIDIuODUlKSAgNC4wNU1CL29wICAgMS4wNsOXIHNsb3dlcgogIEZ1c2VkSlNPTiBjYWNoZWQgMzE3LjU3ICAoICAzLjE1bXMpICjCsSAyLjI1JSkgIDMuMjhNQi9vcCAgICAgICAgZmFzdGVzdAogIENyeXN0YWwgSlNPTi5wYXJzZSAgICAyNTguMjU0MTMxIE1pQi9zICAoUlNEICAyLjUyJSkKICBGdXNlZEpTT04ubG9hZCAgICAgICAgNDk0LjE5MDA3NiBNaUIvcyAgKFJTRCAgMi44NSUpCiAgRnVzZWRKU09OIGNhY2hlZCAgICAgIDUyMy4wOTI2NTUgTWlCL3MgIChSU0QgIDIuMjUlKQogIE1hbmFnZWQgYWxsb2NhdGlvbnMKICBDcnlzdGFsIEpTT04ucGFyc2UgICAgICAzOTA1NzMyIEIvb3AKICBGdXNlZEpTT04ubG9hZCAgICAgICAgICA0MjUyNTYzIEIvb3AKICBGdXNlZEpTT04gY2FjaGVkICAgICAgICAzNDQ1Mjg1IEIvb3AKCm9oYWkuanNvbjogMzI0NDQgYnl0ZXMKQ3J5c3RhbCBKU09OLnBhcnNlICAgNi43OWsgKDE0Ny4yNMK1cykgKMKxIDEuNTIlKSAgMTQ1a0Ivb3AgICAyLjAyw5cgc2xvd2VyCiAgICBGdXNlZEpTT04ubG9hZCAgMTMuNzVrICggNzIuNzXCtXMpICjCsSAxLjc2JSkgIDEyNWtCL29wICAgICAgICBmYXN0ZXN0CiAgRnVzZWRKU09OIGNhY2hlZCAgMTIuMjlrICggODEuMzXCtXMpICjCsSAxLjU4JSkgIDE0MmtCL29wICAgMS4xMsOXIHNsb3dlcgogIENyeXN0YWwgSlNPTi5wYXJzZSAgICAyMTAuMTMzMzUzIE1pQi9zICAoUlNEICAxLjUyJSkKICBGdXNlZEpTT04ubG9hZCAgICAgICAgNDI1LjI5ODE5MyBNaUIvcyAgKFJTRCAgMS43NiUpCiAgRnVzZWRKU09OIGNhY2hlZCAgICAgIDM4MC4zMjYwMjIgTWlCL3MgIChSU0QgIDEuNTglKQogIE1hbmFnZWQgYWxsb2NhdGlvbnMKICBDcnlzdGFsIEpTT04ucGFyc2UgICAgICAgMTQ4MTY2IEIvb3AKICBGdXNlZEpTT04ubG9hZCAgICAgICAgICAgMTI3Mzg3IEIvb3AKICBGdXNlZEpTT04gY2FjaGVkICAgICAgICAgMTQ1MjM3IEIvb3AKCnR3aXR0ZXIuanNvbjogNjMxNTE0IGJ5dGVzCkNyeXN0YWwgSlNPTi5wYXJzZSA0MTguMDQgICggIDIuMzltcykgKMKxIDEuNjIlKSAgIDEuOE1CL29wICAgMS43N8OXIHNsb3dlcgogICAgRnVzZWRKU09OLmxvYWQgNjk1LjcyICAoICAxLjQ0bXMpICjCsSAyLjMzJSkgIDIuMjhNQi9vcCAgIDEuMDbDlyBzbG93ZXIKICBGdXNlZEpTT04gY2FjaGVkIDczOC45NiAgKCAgMS4zNW1zKSAowrEgMi41NyUpICAxLjg0TUIvb3AgICAgICAgIGZhc3Rlc3QKICBDcnlzdGFsIEpTT04ucGFyc2UgICAgMjUxLjc2NTU0MiBNaUIvcyAgKFJTRCAgMS42MiUpCiAgRnVzZWRKU09OLmxvYWQgICAgICAgIDQxOS4wMDM0MDggTWlCL3MgIChSU0QgIDIuMzMlKQogIEZ1c2VkSlNPTiBjYWNoZWQgICAgICA0NDUuMDQ0ODI5IE1pQi9zICAoUlNEICAyLjU3JSkKICBNYW5hZ2VkIGFsbG9jYXRpb25zCiAgQ3J5c3RhbCBKU09OLnBhcnNlICAgICAgMTg5MDE5NyBCL29wCiAgRnVzZWRKU09OLmxvYWQgICAgICAgICAgMjM4NjIyNCBCL29wCiAgRnVzZWRKU09OIGNhY2hlZCAgICAgICAgMTkyODQxMSBCL29wCg==",
+          "utf8": "\nactivitypub.json: 58160 bytes\nCrystal JSON.parse   4.31k (232.26µs) (± 0.82%)  157kB/op   2.21× slower\n    FusedJSON.load   9.18k (108.90µs) (± 1.49%)  217kB/op   1.04× slower\n  FusedJSON cached   9.52k (105.05µs) (± 3.60%)  196kB/op        fastest\n  Crystal JSON.parse    238.804291 MiB/s  (RSD  0.82%)\n  FusedJSON.load        509.341404 MiB/s  (RSD  1.49%)\n  FusedJSON cached      527.970508 MiB/s  (RSD  3.60%)\n  Managed allocations\n  Crystal JSON.parse       161872 B/op\n  FusedJSON.load           222115 B/op\n  FusedJSON cached         200890 B/op\n\ncanada.json: 2251051 bytes\nCrystal JSON.parse  80.82  ( 12.37ms) (± 3.19%)  12.7MB/op   1.77× slower\n    FusedJSON.load 143.44  (  6.97ms) (± 4.04%)  8.54MB/op        fastest\n  FusedJSON cached 142.28  (  7.03ms) (± 5.15%)  8.54MB/op   1.01× slower\n  Crystal JSON.parse    173.501139 MiB/s  (RSD  3.19%)\n  FusedJSON.load        307.924793 MiB/s  (RSD  4.04%)\n  FusedJSON cached      305.445805 MiB/s  (RSD  5.15%)\n  Managed allocations\n  Crystal JSON.parse     13326631 B/op\n  FusedJSON.load          8962217 B/op\n  FusedJSON cached        8962127 B/op\n\ncitm_catalog.json: 1727204 bytes\nCrystal JSON.parse 156.78  (  6.38ms) (± 2.52%)  3.73MB/op   2.03× slower\n    FusedJSON.load 300.02  (  3.33ms) (± 2.85%)  4.05MB/op   1.06× slower\n  FusedJSON cached 317.57  (  3.15ms) (± 2.25%)  3.28MB/op        fastest\n  Crystal JSON.parse    258.254131 MiB/s  (RSD  2.52%)\n  FusedJSON.load        494.190076 MiB/s  (RSD  2.85%)\n  FusedJSON cached      523.092655 MiB/s  (RSD  2.25%)\n  Managed allocations\n  Crystal JSON.parse      3905732 B/op\n  FusedJSON.load          4252563 B/op\n  FusedJSON cached        3445285 B/op\n\nohai.json: 32444 bytes\nCrystal JSON.parse   6.79k (147.24µs) (± 1.52%)  145kB/op   2.02× slower\n    FusedJSON.load  13.75k ( 72.75µs) (± 1.76%)  125kB/op        fastest\n  FusedJSON cached  12.29k ( 81.35µs) (± 1.58%)  142kB/op   1.12× slower\n  Crystal JSON.parse    210.133353 MiB/s  (RSD  1.52%)\n  FusedJSON.load        425.298193 MiB/s  (RSD  1.76%)\n  FusedJSON cached      380.326022 MiB/s  (RSD  1.58%)\n  Managed allocations\n  Crystal JSON.parse       148166 B/op\n  FusedJSON.load           127387 B/op\n  FusedJSON cached         145237 B/op\n\ntwitter.json: 631514 bytes\nCrystal JSON.parse 418.04  (  2.39ms) (± 1.62%)   1.8MB/op   1.77× slower\n    FusedJSON.load 695.72  (  1.44ms) (± 2.33%)  2.28MB/op   1.06× slower\n  FusedJSON cached 738.96  (  1.35ms) (± 2.57%)  1.84MB/op        fastest\n  Crystal JSON.parse    251.765542 MiB/s  (RSD  1.62%)\n  FusedJSON.load        419.003408 MiB/s  (RSD  2.33%)\n  FusedJSON cached      445.044829 MiB/s  (RSD  2.57%)\n  Managed allocations\n  Crystal JSON.parse      1890197 B/op\n  FusedJSON.load          2386224 B/op\n  FusedJSON cached        1928411 B/op\n"
+        },
+        "stderr": {
+          "bytes": 0,
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "encoding": "base64",
+          "base64": "",
+          "utf8": ""
+        },
+        "task_audit": {
+          "bytes": 1191,
+          "sha256": "2e2394e9b6a864cebac2c683fbe28973171970fc9a4809b6cd96cf758dc19329",
+          "encoding": "base64",
+          "base64": "CUNvbW1hbmQgYmVpbmcgdGltZWQ6ICIvdXNyL2Jpbi90YXNrc2V0IC1jIDMgL3RtcC9mdXNlZC1qc29uLW9wdC00Y2E4NjVjL2Jpbi9wYXJzZS1iZW5jaCAvbWVkaWEvd3loYWluZXMvaG9tZS93eWhhaW5lcy9naHEvZ2l0aHViLmNvbS9vaGxlcjU1L29qL3Rlc3QvZGF0YS9hY3Rpdml0eXB1Yi5qc29uIC9tZWRpYS93eWhhaW5lcy9ob21lL3d5aGFpbmVzL2docS9naXRodWIuY29tL29obGVyNTUvb2ovdGVzdC9kYXRhL2NhbmFkYS5qc29uIC9tZWRpYS93eWhhaW5lcy9ob21lL3d5aGFpbmVzL2docS9naXRodWIuY29tL29obGVyNTUvb2ovdGVzdC9kYXRhL2NpdG1fY2F0YWxvZy5qc29uIC9tZWRpYS93eWhhaW5lcy9ob21lL3d5aGFpbmVzL2docS9naXRodWIuY29tL29obGVyNTUvb2ovdGVzdC9kYXRhL29oYWkuanNvbiAvbWVkaWEvd3loYWluZXMvaG9tZS93eWhhaW5lcy9naHEvZ2l0aHViLmNvbS9vaGxlcjU1L29qL3Rlc3QvZGF0YS90d2l0dGVyLmpzb24iCglVc2VyIHRpbWUgKHNlY29uZHMpOiA0Ni42MwoJU3lzdGVtIHRpbWUgKHNlY29uZHMpOiAwLjM4CglQZXJjZW50IG9mIENQVSB0aGlzIGpvYiBnb3Q6IDk5JQoJRWxhcHNlZCAod2FsbCBjbG9jaykgdGltZSAoaDptbTpzcyBvciBtOnNzKTogMDo0Ny4wMgoJQXZlcmFnZSBzaGFyZWQgdGV4dCBzaXplIChrYnl0ZXMpOiAwCglBdmVyYWdlIHVuc2hhcmVkIGRhdGEgc2l6ZSAoa2J5dGVzKTogMAoJQXZlcmFnZSBzdGFjayBzaXplIChrYnl0ZXMpOiAwCglBdmVyYWdlIHRvdGFsIHNpemUgKGtieXRlcyk6IDAKCU1heGltdW0gcmVzaWRlbnQgc2V0IHNpemUgKGtieXRlcyk6IDY2MTg0CglBdmVyYWdlIHJlc2lkZW50IHNldCBzaXplIChrYnl0ZXMpOiAwCglNYWpvciAocmVxdWlyaW5nIEkvTykgcGFnZSBmYXVsdHM6IDAKCU1pbm9yIChyZWNsYWltaW5nIGEgZnJhbWUpIHBhZ2UgZmF1bHRzOiAyNjYzMgoJVm9sdW50YXJ5IGNvbnRleHQgc3dpdGNoZXM6IDMxODUyCglJbnZvbHVudGFyeSBjb250ZXh0IHN3aXRjaGVzOiAzMTk4MwoJU3dhcHM6IDAKCUZpbGUgc3lzdGVtIGlucHV0czogMAoJRmlsZSBzeXN0ZW0gb3V0cHV0czogMTYKCVNvY2tldCBtZXNzYWdlcyBzZW50OiAwCglTb2NrZXQgbWVzc2FnZXMgcmVjZWl2ZWQ6IDAKCVNpZ25hbHMgZGVsaXZlcmVkOiAwCglQYWdlIHNpemUgKGJ5dGVzKTogNDA5NgoJRXhpdCBzdGF0dXM6IDAK",
+          "utf8": "\tCommand being timed: \"/usr/bin/taskset -c 3 /tmp/fused-json-opt-4ca865c/bin/parse-bench /media/wyhaines/home/wyhaines/ghq/github.com/ohler55/oj/test/data/activitypub.json /media/wyhaines/home/wyhaines/ghq/github.com/ohler55/oj/test/data/canada.json /media/wyhaines/home/wyhaines/ghq/github.com/ohler55/oj/test/data/citm_catalog.json /media/wyhaines/home/wyhaines/ghq/github.com/ohler55/oj/test/data/ohai.json /media/wyhaines/home/wyhaines/ghq/github.com/ohler55/oj/test/data/twitter.json\"\n\tUser time (seconds): 46.63\n\tSystem time (seconds): 0.38\n\tPercent of CPU this job got: 99%\n\tElapsed (wall clock) time (h:mm:ss or m:ss): 0:47.02\n\tAverage shared text size (kbytes): 0\n\tAverage unshared data size (kbytes): 0\n\tAverage stack size (kbytes): 0\n\tAverage total size (kbytes): 0\n\tMaximum resident set size (kbytes): 66184\n\tAverage resident set size (kbytes): 0\n\tMajor (requiring I/O) page faults: 0\n\tMinor (reclaiming a frame) page faults: 26632\n\tVoluntary context switches: 31852\n\tInvoluntary context switches: 31983\n\tSwaps: 0\n\tFile system inputs: 0\n\tFile system outputs: 16\n\tSocket messages sent: 0\n\tSocket messages received: 0\n\tSignals delivered: 0\n\tPage size (bytes): 4096\n\tExit status: 0\n"
+        }
+      },
+      "parsed_stdout_sha256": "7c77a96be42bcff0dc5333482b2c3c669e54c1ce56048b5fac7981381cdf211a",
+      "parsed_output": {
+        "schema": "fused-json-parse-custom-output-v1",
+        "corpora": [
+          {
+            "name": "activitypub.json",
+            "bytes": 58160,
+            "throughput_order": [
+              "Crystal JSON.parse",
+              "FusedJSON.load",
+              "FusedJSON cached"
+            ],
+            "allocation_order": [
+              "Crystal JSON.parse",
+              "FusedJSON.load",
+              "FusedJSON cached"
+            ],
+            "implementations": {
+              "crystal_json_parse": {
+                "label": "Crystal JSON.parse",
+                "mib_per_second": 238.804291,
+                "relative_stddev_percent": 0.82,
+                "managed_bytes_per_operation": 161872
+              },
+              "fused_json_load": {
+                "label": "FusedJSON.load",
+                "mib_per_second": 509.341404,
+                "relative_stddev_percent": 1.49,
+                "managed_bytes_per_operation": 222115
+              },
+              "fused_json_cached": {
+                "label": "FusedJSON cached",
+                "mib_per_second": 527.970508,
+                "relative_stddev_percent": 3.6,
+                "managed_bytes_per_operation": 200890
+              }
+            },
+            "fused_load_to_crystal_ratio": 2.132882126477367
+          },
+          {
+            "name": "canada.json",
+            "bytes": 2251051,
+            "throughput_order": [
+              "Crystal JSON.parse",
+              "FusedJSON.load",
+              "FusedJSON cached"
+            ],
+            "allocation_order": [
+              "Crystal JSON.parse",
+              "FusedJSON.load",
+              "FusedJSON cached"
+            ],
+            "implementations": {
+              "crystal_json_parse": {
+                "label": "Crystal JSON.parse",
+                "mib_per_second": 173.501139,
+                "relative_stddev_percent": 3.19,
+                "managed_bytes_per_operation": 13326631
+              },
+              "fused_json_load": {
+                "label": "FusedJSON.load",
+                "mib_per_second": 307.924793,
+                "relative_stddev_percent": 4.04,
+                "managed_bytes_per_operation": 8962217
+              },
+              "fused_json_cached": {
+                "label": "FusedJSON cached",
+                "mib_per_second": 305.445805,
+                "relative_stddev_percent": 5.15,
+                "managed_bytes_per_operation": 8962127
+              }
+            },
+            "fused_load_to_crystal_ratio": 1.7747710174974702
+          },
+          {
+            "name": "citm_catalog.json",
+            "bytes": 1727204,
+            "throughput_order": [
+              "Crystal JSON.parse",
+              "FusedJSON.load",
+              "FusedJSON cached"
+            ],
+            "allocation_order": [
+              "Crystal JSON.parse",
+              "FusedJSON.load",
+              "FusedJSON cached"
+            ],
+            "implementations": {
+              "crystal_json_parse": {
+                "label": "Crystal JSON.parse",
+                "mib_per_second": 258.254131,
+                "relative_stddev_percent": 2.52,
+                "managed_bytes_per_operation": 3905732
+              },
+              "fused_json_load": {
+                "label": "FusedJSON.load",
+                "mib_per_second": 494.190076,
+                "relative_stddev_percent": 2.85,
+                "managed_bytes_per_operation": 4252563
+              },
+              "fused_json_cached": {
+                "label": "FusedJSON cached",
+                "mib_per_second": 523.092655,
+                "relative_stddev_percent": 2.25,
+                "managed_bytes_per_operation": 3445285
+              }
+            },
+            "fused_load_to_crystal_ratio": 1.9135805266170167
+          },
+          {
+            "name": "ohai.json",
+            "bytes": 32444,
+            "throughput_order": [
+              "Crystal JSON.parse",
+              "FusedJSON.load",
+              "FusedJSON cached"
+            ],
+            "allocation_order": [
+              "Crystal JSON.parse",
+              "FusedJSON.load",
+              "FusedJSON cached"
+            ],
+            "implementations": {
+              "crystal_json_parse": {
+                "label": "Crystal JSON.parse",
+                "mib_per_second": 210.133353,
+                "relative_stddev_percent": 1.52,
+                "managed_bytes_per_operation": 148166
+              },
+              "fused_json_load": {
+                "label": "FusedJSON.load",
+                "mib_per_second": 425.298193,
+                "relative_stddev_percent": 1.76,
+                "managed_bytes_per_operation": 127387
+              },
+              "fused_json_cached": {
+                "label": "FusedJSON cached",
+                "mib_per_second": 380.326022,
+                "relative_stddev_percent": 1.58,
+                "managed_bytes_per_operation": 145237
+              }
+            },
+            "fused_load_to_crystal_ratio": 2.023944256959532
+          },
+          {
+            "name": "twitter.json",
+            "bytes": 631514,
+            "throughput_order": [
+              "Crystal JSON.parse",
+              "FusedJSON.load",
+              "FusedJSON cached"
+            ],
+            "allocation_order": [
+              "Crystal JSON.parse",
+              "FusedJSON.load",
+              "FusedJSON cached"
+            ],
+            "implementations": {
+              "crystal_json_parse": {
+                "label": "Crystal JSON.parse",
+                "mib_per_second": 251.765542,
+                "relative_stddev_percent": 1.62,
+                "managed_bytes_per_operation": 1890197
+              },
+              "fused_json_load": {
+                "label": "FusedJSON.load",
+                "mib_per_second": 419.003408,
+                "relative_stddev_percent": 2.33,
+                "managed_bytes_per_operation": 2386224
+              },
+              "fused_json_cached": {
+                "label": "FusedJSON cached",
+                "mib_per_second": 445.044829,
+                "relative_stddev_percent": 2.57,
+                "managed_bytes_per_operation": 1928411
+              }
+            },
+            "fused_load_to_crystal_ratio": 1.664260345841926
+          }
+        ]
+      },
+      "output_parse_error": null,
+      "parsed_task_audit_sha256": "2e2394e9b6a864cebac2c683fbe28973171970fc9a4809b6cd96cf758dc19329",
+      "task_audit": {
+        "schema": "gnu-time-v1-verbose-v1",
+        "user_cpu_seconds": 46.63,
+        "system_cpu_seconds": 0.38,
+        "task_cpu_seconds": 47.010000000000005,
+        "reported_cpu_percent": 99,
+        "reported_cpu_share": 0.99,
+        "elapsed_wall": "0:47.02",
+        "elapsed_wall_seconds": 47.02,
+        "maximum_resident_kibibytes": 66184,
+        "major_page_faults": 0,
+        "minor_page_faults": 26632,
+        "voluntary_context_switches": 31852,
+        "involuntary_context_switches": 31983,
+        "exit_status": 0,
+        "cpu_time_over_wall_from_rounded_seconds": 0.9997873245427478,
+        "total_context_switches": 63835
+      },
+      "task_audit_error": null,
+      "validity_issues": [],
+      "valid": true
+    },
+    {
+      "receipt": "fused-json-m6-dynamic-child",
+      "version": 2,
+      "schedule_index": 1,
+      "process_id": "m6-dynamic-01-reverse",
+      "order": "reverse",
+      "attempt": 1,
+      "retry_policy": "none",
+      "commit_argument": "4ca865c4e8ad8716041df4069181a5523493de08",
+      "fused_json_commit": "4ca865c4e8ad8716041df4069181a5523493de08",
+      "cpu_affinity": "3",
+      "environment": {
+        "PATH": "/usr/bin:/bin",
+        "LANG": "C",
+        "LC_ALL": "C",
+        "TZ": "UTC",
+        "GC_NPROCS": "1",
+        "GC_MARKERS": "1",
+        "FUSED_JSON_BENCH_WARMUP": "1",
+        "FUSED_JSON_BENCH_TIME": "2",
+        "FUSED_JSON_BENCH_ALLOCATIONS": "20",
+        "FUSED_JSON_BENCH_REVERSE": "1",
+        "FUSED_JSON_BENCH_COMMIT": "4ca865c4e8ad8716041df4069181a5523493de08"
+      },
+      "environment_policy": "sanitized; parent environment is not inherited",
+      "time_command": [
+        "/usr/bin/time",
+        "-v",
+        "-o",
+        "/tmp/fused-json-m6-dynamic-8tNDBW/process-01.time-v.txt",
+        "/usr/bin/taskset",
+        "-c",
+        "3",
+        "/tmp/fused-json-opt-4ca865c/bin/parse-bench",
+        "/media/wyhaines/home/wyhaines/ghq/github.com/ohler55/oj/test/data/activitypub.json",
+        "/media/wyhaines/home/wyhaines/ghq/github.com/ohler55/oj/test/data/canada.json",
+        "/media/wyhaines/home/wyhaines/ghq/github.com/ohler55/oj/test/data/citm_catalog.json",
+        "/media/wyhaines/home/wyhaines/ghq/github.com/ohler55/oj/test/data/ohai.json",
+        "/media/wyhaines/home/wyhaines/ghq/github.com/ohler55/oj/test/data/twitter.json"
+      ],
+      "benchmark_command": [
+        "/usr/bin/taskset",
+        "-c",
+        "3",
+        "/tmp/fused-json-opt-4ca865c/bin/parse-bench",
+        "/media/wyhaines/home/wyhaines/ghq/github.com/ohler55/oj/test/data/activitypub.json",
+        "/media/wyhaines/home/wyhaines/ghq/github.com/ohler55/oj/test/data/canada.json",
+        "/media/wyhaines/home/wyhaines/ghq/github.com/ohler55/oj/test/data/citm_catalog.json",
+        "/media/wyhaines/home/wyhaines/ghq/github.com/ohler55/oj/test/data/ohai.json",
+        "/media/wyhaines/home/wyhaines/ghq/github.com/ohler55/oj/test/data/twitter.json"
+      ],
+      "wrapper_pid": 12,
+      "binary_sha256": "eb2224c58a9a2547931efbf219f5dc85cad15cf9d8373142dac36f5b108126a6",
+      "runner_sha256": "65a3b78670a3d35e105c8943500061516d88a807e80de8d5127881a29ec77020",
+      "gnu_time_sha256": "7310b9b4c51a8f4d26c1af0da250f03a49ec8a8141033123e79196ad18f6c81b",
+      "taskset_sha256": "63e52c4b99a688ccd7bab6edbc6df2af1acad124eb852adcb4d20043d28eb2d3",
+      "node_executable_sha256": "53fb205ae78805130177e24bcb459a69a1518c8d98f8965f31d85aae7ea840fc",
+      "corpora": [
+        {
+          "name": "activitypub.json",
+          "realpath": "/media/wyhaines/home/wyhaines/ghq/github.com/ohler55/oj/test/data/activitypub.json",
+          "bytes": 58160,
+          "sha256": "4f4a68f2a0b0f5022e1eeff93ed6871845dc0e4e479dc4c32082225e1dbb3f7c"
+        },
+        {
+          "name": "canada.json",
+          "realpath": "/media/wyhaines/home/wyhaines/ghq/github.com/ohler55/oj/test/data/canada.json",
+          "bytes": 2251051,
+          "sha256": "f83b3b354030d5dd58740c68ac4fecef64cb730a0d12a90362a7f23077f50d78"
+        },
+        {
+          "name": "citm_catalog.json",
+          "realpath": "/media/wyhaines/home/wyhaines/ghq/github.com/ohler55/oj/test/data/citm_catalog.json",
+          "bytes": 1727204,
+          "sha256": "b3a1f8d7eda4d74551ee8c47639d2896fdcdb0d3ed8ffdb4d4d93ddbb07fdb90"
+        },
+        {
+          "name": "ohai.json",
+          "realpath": "/media/wyhaines/home/wyhaines/ghq/github.com/ohler55/oj/test/data/ohai.json",
+          "bytes": 32444,
+          "sha256": "4a56817d69aaedb1689944d9af6d8487dbd9742be415d9e22390236022be50f8"
+        },
+        {
+          "name": "twitter.json",
+          "realpath": "/media/wyhaines/home/wyhaines/ghq/github.com/ohler55/oj/test/data/twitter.json",
+          "bytes": 631514,
+          "sha256": "a08b769f32b95f426cbc3abafcec65c1a19d3eb544d4ddf320eae142c99efc5d"
+        }
+      ],
+      "identity_verification_before": {
+        "verified_at": "2026-08-25T19:34:42.420Z",
+        "matched": true,
+        "mismatches": [],
+        "observed": {
+          "tools": {
+            "gnu_time": {
+              "realpath": "/usr/bin/time",
+              "basename": "time",
+              "bytes": 27160,
+              "sha256": "7310b9b4c51a8f4d26c1af0da250f03a49ec8a8141033123e79196ad18f6c81b",
+              "executable": true
+            },
+            "taskset": {
+              "realpath": "/usr/bin/taskset",
+              "basename": "taskset",
+              "bytes": 22912,
+              "sha256": "63e52c4b99a688ccd7bab6edbc6df2af1acad124eb852adcb4d20043d28eb2d3",
+              "executable": true
+            },
+            "node": {
+              "realpath": "/media/wyhaines/home/wyhaines/.nvm/versions/node/v24.13.0/bin/node",
+              "basename": "node",
+              "bytes": 121158216,
+              "sha256": "53fb205ae78805130177e24bcb459a69a1518c8d98f8965f31d85aae7ea840fc",
+              "executable": true
+            }
+          },
+          "corpora": [
+            {
+              "name": "activitypub.json",
+              "identity": {
+                "realpath": "/media/wyhaines/home/wyhaines/ghq/github.com/ohler55/oj/test/data/activitypub.json",
+                "basename": "activitypub.json",
+                "bytes": 58160,
+                "sha256": "4f4a68f2a0b0f5022e1eeff93ed6871845dc0e4e479dc4c32082225e1dbb3f7c",
+                "executable": false
+              }
+            },
+            {
+              "name": "canada.json",
+              "identity": {
+                "realpath": "/media/wyhaines/home/wyhaines/ghq/github.com/ohler55/oj/test/data/canada.json",
+                "basename": "canada.json",
+                "bytes": 2251051,
+                "sha256": "f83b3b354030d5dd58740c68ac4fecef64cb730a0d12a90362a7f23077f50d78",
+                "executable": false
+              }
+            },
+            {
+              "name": "citm_catalog.json",
+              "identity": {
+                "realpath": "/media/wyhaines/home/wyhaines/ghq/github.com/ohler55/oj/test/data/citm_catalog.json",
+                "basename": "citm_catalog.json",
+                "bytes": 1727204,
+                "sha256": "b3a1f8d7eda4d74551ee8c47639d2896fdcdb0d3ed8ffdb4d4d93ddbb07fdb90",
+                "executable": false
+              }
+            },
+            {
+              "name": "ohai.json",
+              "identity": {
+                "realpath": "/media/wyhaines/home/wyhaines/ghq/github.com/ohler55/oj/test/data/ohai.json",
+                "basename": "ohai.json",
+                "bytes": 32444,
+                "sha256": "4a56817d69aaedb1689944d9af6d8487dbd9742be415d9e22390236022be50f8",
+                "executable": false
+              }
+            },
+            {
+              "name": "twitter.json",
+              "identity": {
+                "realpath": "/media/wyhaines/home/wyhaines/ghq/github.com/ohler55/oj/test/data/twitter.json",
+                "basename": "twitter.json",
+                "bytes": 631514,
+                "sha256": "a08b769f32b95f426cbc3abafcec65c1a19d3eb544d4ddf320eae142c99efc5d",
+                "executable": false
+              }
+            }
+          ],
+          "binary": {
+            "realpath": "/tmp/fused-json-opt-4ca865c/bin/parse-bench",
+            "basename": "parse-bench",
+            "bytes": 1011576,
+            "sha256": "eb2224c58a9a2547931efbf219f5dc85cad15cf9d8373142dac36f5b108126a6",
+            "executable": true
+          },
+          "runner": {
+            "realpath": "/media/wyhaines/home/wyhaines/ghq/github.com/wyhaines/fused-json.cr/scripts/dynamic_gate.mjs",
+            "basename": "dynamic_gate.mjs",
+            "bytes": 121078,
+            "sha256": "65a3b78670a3d35e105c8943500061516d88a807e80de8d5127881a29ec77020",
+            "executable": false
+          }
+        }
+      },
+      "identity_verification_after": {
+        "verified_at": "2026-08-25T19:35:29.379Z",
+        "matched": true,
+        "mismatches": [],
+        "observed": {
+          "tools": {
+            "gnu_time": {
+              "realpath": "/usr/bin/time",
+              "basename": "time",
+              "bytes": 27160,
+              "sha256": "7310b9b4c51a8f4d26c1af0da250f03a49ec8a8141033123e79196ad18f6c81b",
+              "executable": true
+            },
+            "taskset": {
+              "realpath": "/usr/bin/taskset",
+              "basename": "taskset",
+              "bytes": 22912,
+              "sha256": "63e52c4b99a688ccd7bab6edbc6df2af1acad124eb852adcb4d20043d28eb2d3",
+              "executable": true
+            },
+            "node": {
+              "realpath": "/media/wyhaines/home/wyhaines/.nvm/versions/node/v24.13.0/bin/node",
+              "basename": "node",
+              "bytes": 121158216,
+              "sha256": "53fb205ae78805130177e24bcb459a69a1518c8d98f8965f31d85aae7ea840fc",
+              "executable": true
+            }
+          },
+          "corpora": [
+            {
+              "name": "activitypub.json",
+              "identity": {
+                "realpath": "/media/wyhaines/home/wyhaines/ghq/github.com/ohler55/oj/test/data/activitypub.json",
+                "basename": "activitypub.json",
+                "bytes": 58160,
+                "sha256": "4f4a68f2a0b0f5022e1eeff93ed6871845dc0e4e479dc4c32082225e1dbb3f7c",
+                "executable": false
+              }
+            },
+            {
+              "name": "canada.json",
+              "identity": {
+                "realpath": "/media/wyhaines/home/wyhaines/ghq/github.com/ohler55/oj/test/data/canada.json",
+                "basename": "canada.json",
+                "bytes": 2251051,
+                "sha256": "f83b3b354030d5dd58740c68ac4fecef64cb730a0d12a90362a7f23077f50d78",
+                "executable": false
+              }
+            },
+            {
+              "name": "citm_catalog.json",
+              "identity": {
+                "realpath": "/media/wyhaines/home/wyhaines/ghq/github.com/ohler55/oj/test/data/citm_catalog.json",
+                "basename": "citm_catalog.json",
+                "bytes": 1727204,
+                "sha256": "b3a1f8d7eda4d74551ee8c47639d2896fdcdb0d3ed8ffdb4d4d93ddbb07fdb90",
+                "executable": false
+              }
+            },
+            {
+              "name": "ohai.json",
+              "identity": {
+                "realpath": "/media/wyhaines/home/wyhaines/ghq/github.com/ohler55/oj/test/data/ohai.json",
+                "basename": "ohai.json",
+                "bytes": 32444,
+                "sha256": "4a56817d69aaedb1689944d9af6d8487dbd9742be415d9e22390236022be50f8",
+                "executable": false
+              }
+            },
+            {
+              "name": "twitter.json",
+              "identity": {
+                "realpath": "/media/wyhaines/home/wyhaines/ghq/github.com/ohler55/oj/test/data/twitter.json",
+                "basename": "twitter.json",
+                "bytes": 631514,
+                "sha256": "a08b769f32b95f426cbc3abafcec65c1a19d3eb544d4ddf320eae142c99efc5d",
+                "executable": false
+              }
+            }
+          ],
+          "binary": {
+            "realpath": "/tmp/fused-json-opt-4ca865c/bin/parse-bench",
+            "basename": "parse-bench",
+            "bytes": 1011576,
+            "sha256": "eb2224c58a9a2547931efbf219f5dc85cad15cf9d8373142dac36f5b108126a6",
+            "executable": true
+          },
+          "runner": {
+            "realpath": "/media/wyhaines/home/wyhaines/ghq/github.com/wyhaines/fused-json.cr/scripts/dynamic_gate.mjs",
+            "basename": "dynamic_gate.mjs",
+            "bytes": 121078,
+            "sha256": "65a3b78670a3d35e105c8943500061516d88a807e80de8d5127881a29ec77020",
+            "executable": false
+          }
+        }
+      },
+      "started_at": "2026-08-25T19:34:42.422Z",
+      "finished_at": "2026-08-25T19:35:29.240Z",
+      "started_monotonic_ms": 960961.884009,
+      "finished_monotonic_ms": 1007779.92894,
+      "elapsed_monotonic_seconds": 46.81804493099998,
+      "environment_start_gate": {
+        "policy_name": "busy-pinned-v2",
+        "policy_version": 2,
+        "label": "m6-dynamic-01-reverse",
+        "required_continuous_seconds": 6,
+        "wait_started_monotonic_ms": 939835.544529,
+        "block_gate_deadline_seconds": 180,
+        "absolute_deadline_monotonic_ms": 1119835.5445289998,
+        "admitted_evaluated_monotonic_ms": 960805.585107,
+        "first_acceptable_sample_sequence": 475,
+        "first_acceptable_monotonic_ms": 954765.370767,
+        "admitted_sample_sequence": 478,
+        "admitted_monotonic_ms": 960795.366111,
+        "continuous_seconds": 6.029995343999937,
+        "sample_sequences": [
+          475,
+          476,
+          477,
+          478
+        ],
+        "sample_count": 4,
+        "tctl_minimum_c": 61.375,
+        "tctl_maximum_c": 66.375,
+        "tctl_range_c": 5
+      },
+      "environment_start_sample_sequence": 478,
+      "environment_end_sample_sequence": 501,
+      "child_environment_window": {
+        "cpu": "2",
+        "maximum_busy_percent": 25,
+        "before": {
+          "observed_at": "2026-08-25T19:34:42.422Z",
+          "monotonic_ms": 960961.754978,
+          "proc_stat_cpu_line": "cpu2 5117978 1874508 676349 26487061 23169 0 8813 0 0 0",
+          "counters": [
+            "5117978",
+            "1874508",
+            "676349",
+            "26487061",
+            "23169",
+            "0",
+            "8813",
+            "0",
+            "0",
+            "0"
+          ],
+          "total_ticks": "34187878",
+          "idle_ticks": "26510230",
+          "tctl_raw_millicelsius": "62625",
+          "tctl_c": 62.625
+        },
+        "after": {
+          "observed_at": "2026-08-25T19:35:29.240Z",
+          "monotonic_ms": 1007779.932126,
+          "proc_stat_cpu_line": "cpu2 5118017 1874566 676376 26491583 23170 0 8814 0 0 0",
+          "counters": [
+            "5118017",
+            "1874566",
+            "676376",
+            "26491583",
+            "23170",
+            "0",
+            "8814",
+            "0",
+            "0",
+            "0"
+          ],
+          "total_ticks": "34192526",
+          "idle_ticks": "26514753",
+          "tctl_raw_millicelsius": "99250",
+          "tctl_c": 99.25
+        },
+        "delta_total_ticks": "4648",
+        "delta_idle_ticks": "4523",
+        "delta_busy_ticks": "125",
+        "cpu_busy_percent": 2.689328743545611,
+        "within_busy_limit": true
+      },
+      "exit": {
+        "code": 0,
+        "signal": null,
+        "spawn_error": null
+      },
+      "raw": {
+        "stdout": {
+          "bytes": 2800,
+          "sha256": "a50b04826f417853707f0a7c89c151f715b0bfcd8d73dede372094aef311d4c3",
+          "encoding": "base64",
+          "base64": "CmFjdGl2aXR5cHViLmpzb246IDU4MTYwIGJ5dGVzCiAgRnVzZWRKU09OIGNhY2hlZCAgIDkuNDRrICgxMDUuOTDCtXMpICjCsSAxLjQ4JSkgIDE5NmtCL29wICAgICAgICBmYXN0ZXN0CiAgICBGdXNlZEpTT04ubG9hZCAgIDkuMDlrICgxMTAuMDPCtXMpICjCsSAxLjE5JSkgIDIxN2tCL29wICAgMS4wNMOXIHNsb3dlcgpDcnlzdGFsIEpTT04ucGFyc2UgICA0LjMzayAoMjMxLjAywrVzKSAowrEgMy41NyUpICAxNTdrQi9vcCAgIDIuMTjDlyBzbG93ZXIKICBGdXNlZEpTT04gY2FjaGVkICAgICAgNTIzLjc0MzE4MiBNaUIvcyAgKFJTRCAgMS40OCUpCiAgRnVzZWRKU09OLmxvYWQgICAgICAgIDUwNC4xMTI0OTMgTWlCL3MgIChSU0QgIDEuMTklKQogIENyeXN0YWwgSlNPTi5wYXJzZSAgICAyNDAuMDg2OTc0IE1pQi9zICAoUlNEICAzLjU3JSkKICBNYW5hZ2VkIGFsbG9jYXRpb25zCiAgQ3J5c3RhbCBKU09OLnBhcnNlICAgICAgIDE2MTg0NCBCL29wCiAgRnVzZWRKU09OLmxvYWQgICAgICAgICAgIDIyMjA0NiBCL29wCiAgRnVzZWRKU09OIGNhY2hlZCAgICAgICAgIDIwMTAzOSBCL29wCgpjYW5hZGEuanNvbjogMjI1MTA1MSBieXRlcwogIEZ1c2VkSlNPTiBjYWNoZWQgMTQ4LjA4ICAoICA2Ljc1bXMpICjCsSAzLjgwJSkgIDguNTRNQi9vcCAgIDEuMDDDlyBzbG93ZXIKICAgIEZ1c2VkSlNPTi5sb2FkIDE0OC4zMSAgKCAgNi43NG1zKSAowrEgMy4xMSUpICA4LjU0TUIvb3AgICAgICAgIGZhc3Rlc3QKQ3J5c3RhbCBKU09OLnBhcnNlICA4MC44NSAgKCAxMi4zN21zKSAowrEgMy4xMyUpICAxMi43TUIvb3AgICAxLjgzw5cgc2xvd2VyCiAgRnVzZWRKU09OIGNhY2hlZCAgICAgIDMxNy44ODg2NzEgTWlCL3MgIChSU0QgIDMuODAlKQogIEZ1c2VkSlNPTi5sb2FkICAgICAgICAzMTguMzgzMjQ2IE1pQi9zICAoUlNEICAzLjExJSkKICBDcnlzdGFsIEpTT04ucGFyc2UgICAgMTczLjU1NjMyNyBNaUIvcyAgKFJTRCAgMy4xMyUpCiAgTWFuYWdlZCBhbGxvY2F0aW9ucwogIENyeXN0YWwgSlNPTi5wYXJzZSAgICAgMTMzMjYzMDIgQi9vcAogIEZ1c2VkSlNPTi5sb2FkICAgICAgICAgIDg5NjIzNzkgQi9vcAogIEZ1c2VkSlNPTiBjYWNoZWQgICAgICAgIDg5NjIzMTQgQi9vcAoKY2l0bV9jYXRhbG9nLmpzb246IDE3MjcyMDQgYnl0ZXMKICBGdXNlZEpTT04gY2FjaGVkIDMxMS40NiAgKCAgMy4yMW1zKSAowrEgMi41OCUpICAzLjI4TUIvb3AgICAgICAgIGZhc3Rlc3QKICAgIEZ1c2VkSlNPTi5sb2FkIDMwMC4yMiAgKCAgMy4zM21zKSAowrEgMy4wNiUpICA0LjA1TUIvb3AgICAxLjA0w5cgc2xvd2VyCkNyeXN0YWwgSlNPTi5wYXJzZSAxNDkuNDggICggIDYuNjltcykgKMKxIDcuMDYlKSAgMy43M01CL29wICAgMi4wOMOXIHNsb3dlcgogIEZ1c2VkSlNPTiBjYWNoZWQgICAgICA1MTMuMDM1NzUzIE1pQi9zICAoUlNEICAyLjU4JSkKICBGdXNlZEpTT04ubG9hZCAgICAgICAgNDk0LjUxOTQ1MCBNaUIvcyAgKFJTRCAgMy4wNiUpCiAgQ3J5c3RhbCBKU09OLnBhcnNlICAgIDI0Ni4yMjkyMDQgTWlCL3MgIChSU0QgIDcuMDYlKQogIE1hbmFnZWQgYWxsb2NhdGlvbnMKICBDcnlzdGFsIEpTT04ucGFyc2UgICAgICAzOTA2MDI2IEIvb3AKICBGdXNlZEpTT04ubG9hZCAgICAgICAgICA0MjUyNjg2IEIvb3AKICBGdXNlZEpTT04gY2FjaGVkICAgICAgICAzNDQ1MjgxIEIvb3AKCm9oYWkuanNvbjogMzI0NDQgYnl0ZXMKICBGdXNlZEpTT04gY2FjaGVkICAxMi4yOGsgKCA4MS40M8K1cykgKMKxIDEuNzAlKSAgMTQya0Ivb3AgICAxLjEzw5cgc2xvd2VyCiAgICBGdXNlZEpTT04ubG9hZCAgMTMuODlrICggNzEuOTnCtXMpICjCsSAxLjcxJSkgIDEyNWtCL29wICAgICAgICBmYXN0ZXN0CkNyeXN0YWwgSlNPTi5wYXJzZSAgIDYuOTVrICgxNDMuOTfCtXMpICjCsSAxLjUzJSkgIDE0NWtCL29wICAgMi4wMMOXIHNsb3dlcgogIEZ1c2VkSlNPTiBjYWNoZWQgICAgICAzNzkuOTgxNDUwIE1pQi9zICAoUlNEICAxLjcwJSkKICBGdXNlZEpTT04ubG9hZCAgICAgICAgNDI5LjgxNDkxOCBNaUIvcyAgKFJTRCAgMS43MSUpCiAgQ3J5c3RhbCBKU09OLnBhcnNlICAgIDIxNC45MTI0NDQgTWlCL3MgIChSU0QgIDEuNTMlKQogIE1hbmFnZWQgYWxsb2NhdGlvbnMKICBDcnlzdGFsIEpTT04ucGFyc2UgICAgICAgMTQ3NTg1IEIvb3AKICBGdXNlZEpTT04ubG9hZCAgICAgICAgICAgMTI3MzIwIEIvb3AKICBGdXNlZEpTT04gY2FjaGVkICAgICAgICAgMTQ1MTk5IEIvb3AKCnR3aXR0ZXIuanNvbjogNjMxNTE0IGJ5dGVzCiAgRnVzZWRKU09OIGNhY2hlZCA3NDguNzkgICggIDEuMzRtcykgKMKxIDMuMDQlKSAgMS44NE1CL29wICAgICAgICBmYXN0ZXN0CiAgICBGdXNlZEpTT04ubG9hZCA3MTMuMjIgICggIDEuNDBtcykgKMKxIDEuODglKSAgMi4yOE1CL29wICAgMS4wNcOXIHNsb3dlcgpDcnlzdGFsIEpTT04ucGFyc2UgNDI4LjA4ICAoICAyLjM0bXMpICjCsSAxLjQ0JSkgICAxLjhNQi9vcCAgIDEuNzXDlyBzbG93ZXIKICBGdXNlZEpTT04gY2FjaGVkICAgICAgNDUwLjk2NTY4MyBNaUIvcyAgKFJTRCAgMy4wNCUpCiAgRnVzZWRKU09OLmxvYWQgICAgICAgIDQyOS41NDU2OTYgTWlCL3MgIChSU0QgIDEuODglKQogIENyeXN0YWwgSlNPTi5wYXJzZSAgICAyNTcuODE3MTgyIE1pQi9zICAoUlNEICAxLjQ0JSkKICBNYW5hZ2VkIGFsbG9jYXRpb25zCiAgQ3J5c3RhbCBKU09OLnBhcnNlICAgICAgMTg4OTQxNCBCL29wCiAgRnVzZWRKU09OLmxvYWQgICAgICAgICAgMjM4NjEwOSBCL29wCiAgRnVzZWRKU09OIGNhY2hlZCAgICAgICAgMTkyODQxNiBCL29wCg==",
+          "utf8": "\nactivitypub.json: 58160 bytes\n  FusedJSON cached   9.44k (105.90µs) (± 1.48%)  196kB/op        fastest\n    FusedJSON.load   9.09k (110.03µs) (± 1.19%)  217kB/op   1.04× slower\nCrystal JSON.parse   4.33k (231.02µs) (± 3.57%)  157kB/op   2.18× slower\n  FusedJSON cached      523.743182 MiB/s  (RSD  1.48%)\n  FusedJSON.load        504.112493 MiB/s  (RSD  1.19%)\n  Crystal JSON.parse    240.086974 MiB/s  (RSD  3.57%)\n  Managed allocations\n  Crystal JSON.parse       161844 B/op\n  FusedJSON.load           222046 B/op\n  FusedJSON cached         201039 B/op\n\ncanada.json: 2251051 bytes\n  FusedJSON cached 148.08  (  6.75ms) (± 3.80%)  8.54MB/op   1.00× slower\n    FusedJSON.load 148.31  (  6.74ms) (± 3.11%)  8.54MB/op        fastest\nCrystal JSON.parse  80.85  ( 12.37ms) (± 3.13%)  12.7MB/op   1.83× slower\n  FusedJSON cached      317.888671 MiB/s  (RSD  3.80%)\n  FusedJSON.load        318.383246 MiB/s  (RSD  3.11%)\n  Crystal JSON.parse    173.556327 MiB/s  (RSD  3.13%)\n  Managed allocations\n  Crystal JSON.parse     13326302 B/op\n  FusedJSON.load          8962379 B/op\n  FusedJSON cached        8962314 B/op\n\ncitm_catalog.json: 1727204 bytes\n  FusedJSON cached 311.46  (  3.21ms) (± 2.58%)  3.28MB/op        fastest\n    FusedJSON.load 300.22  (  3.33ms) (± 3.06%)  4.05MB/op   1.04× slower\nCrystal JSON.parse 149.48  (  6.69ms) (± 7.06%)  3.73MB/op   2.08× slower\n  FusedJSON cached      513.035753 MiB/s  (RSD  2.58%)\n  FusedJSON.load        494.519450 MiB/s  (RSD  3.06%)\n  Crystal JSON.parse    246.229204 MiB/s  (RSD  7.06%)\n  Managed allocations\n  Crystal JSON.parse      3906026 B/op\n  FusedJSON.load          4252686 B/op\n  FusedJSON cached        3445281 B/op\n\nohai.json: 32444 bytes\n  FusedJSON cached  12.28k ( 81.43µs) (± 1.70%)  142kB/op   1.13× slower\n    FusedJSON.load  13.89k ( 71.99µs) (± 1.71%)  125kB/op        fastest\nCrystal JSON.parse   6.95k (143.97µs) (± 1.53%)  145kB/op   2.00× slower\n  FusedJSON cached      379.981450 MiB/s  (RSD  1.70%)\n  FusedJSON.load        429.814918 MiB/s  (RSD  1.71%)\n  Crystal JSON.parse    214.912444 MiB/s  (RSD  1.53%)\n  Managed allocations\n  Crystal JSON.parse       147585 B/op\n  FusedJSON.load           127320 B/op\n  FusedJSON cached         145199 B/op\n\ntwitter.json: 631514 bytes\n  FusedJSON cached 748.79  (  1.34ms) (± 3.04%)  1.84MB/op        fastest\n    FusedJSON.load 713.22  (  1.40ms) (± 1.88%)  2.28MB/op   1.05× slower\nCrystal JSON.parse 428.08  (  2.34ms) (± 1.44%)   1.8MB/op   1.75× slower\n  FusedJSON cached      450.965683 MiB/s  (RSD  3.04%)\n  FusedJSON.load        429.545696 MiB/s  (RSD  1.88%)\n  Crystal JSON.parse    257.817182 MiB/s  (RSD  1.44%)\n  Managed allocations\n  Crystal JSON.parse      1889414 B/op\n  FusedJSON.load          2386109 B/op\n  FusedJSON cached        1928416 B/op\n"
+        },
+        "stderr": {
+          "bytes": 0,
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "encoding": "base64",
+          "base64": "",
+          "utf8": ""
+        },
+        "task_audit": {
+          "bytes": 1191,
+          "sha256": "79b3700772c99c01cbf6d863effd1ea7033bcf368d71163f29f5ccbcb1f7a07a",
+          "encoding": "base64",
+          "base64": "CUNvbW1hbmQgYmVpbmcgdGltZWQ6ICIvdXNyL2Jpbi90YXNrc2V0IC1jIDMgL3RtcC9mdXNlZC1qc29uLW9wdC00Y2E4NjVjL2Jpbi9wYXJzZS1iZW5jaCAvbWVkaWEvd3loYWluZXMvaG9tZS93eWhhaW5lcy9naHEvZ2l0aHViLmNvbS9vaGxlcjU1L29qL3Rlc3QvZGF0YS9hY3Rpdml0eXB1Yi5qc29uIC9tZWRpYS93eWhhaW5lcy9ob21lL3d5aGFpbmVzL2docS9naXRodWIuY29tL29obGVyNTUvb2ovdGVzdC9kYXRhL2NhbmFkYS5qc29uIC9tZWRpYS93eWhhaW5lcy9ob21lL3d5aGFpbmVzL2docS9naXRodWIuY29tL29obGVyNTUvb2ovdGVzdC9kYXRhL2NpdG1fY2F0YWxvZy5qc29uIC9tZWRpYS93eWhhaW5lcy9ob21lL3d5aGFpbmVzL2docS9naXRodWIuY29tL29obGVyNTUvb2ovdGVzdC9kYXRhL29oYWkuanNvbiAvbWVkaWEvd3loYWluZXMvaG9tZS93eWhhaW5lcy9naHEvZ2l0aHViLmNvbS9vaGxlcjU1L29qL3Rlc3QvZGF0YS90d2l0dGVyLmpzb24iCglVc2VyIHRpbWUgKHNlY29uZHMpOiA0Ni40MQoJU3lzdGVtIHRpbWUgKHNlY29uZHMpOiAwLjM4CglQZXJjZW50IG9mIENQVSB0aGlzIGpvYiBnb3Q6IDk5JQoJRWxhcHNlZCAod2FsbCBjbG9jaykgdGltZSAoaDptbTpzcyBvciBtOnNzKTogMDo0Ni44MAoJQXZlcmFnZSBzaGFyZWQgdGV4dCBzaXplIChrYnl0ZXMpOiAwCglBdmVyYWdlIHVuc2hhcmVkIGRhdGEgc2l6ZSAoa2J5dGVzKTogMAoJQXZlcmFnZSBzdGFjayBzaXplIChrYnl0ZXMpOiAwCglBdmVyYWdlIHRvdGFsIHNpemUgKGtieXRlcyk6IDAKCU1heGltdW0gcmVzaWRlbnQgc2V0IHNpemUgKGtieXRlcyk6IDY2MzkyCglBdmVyYWdlIHJlc2lkZW50IHNldCBzaXplIChrYnl0ZXMpOiAwCglNYWpvciAocmVxdWlyaW5nIEkvTykgcGFnZSBmYXVsdHM6IDAKCU1pbm9yIChyZWNsYWltaW5nIGEgZnJhbWUpIHBhZ2UgZmF1bHRzOiAyMjk5OAoJVm9sdW50YXJ5IGNvbnRleHQgc3dpdGNoZXM6IDM0NDM0CglJbnZvbHVudGFyeSBjb250ZXh0IHN3aXRjaGVzOiAzNDU2MQoJU3dhcHM6IDAKCUZpbGUgc3lzdGVtIGlucHV0czogMAoJRmlsZSBzeXN0ZW0gb3V0cHV0czogMTYKCVNvY2tldCBtZXNzYWdlcyBzZW50OiAwCglTb2NrZXQgbWVzc2FnZXMgcmVjZWl2ZWQ6IDAKCVNpZ25hbHMgZGVsaXZlcmVkOiAwCglQYWdlIHNpemUgKGJ5dGVzKTogNDA5NgoJRXhpdCBzdGF0dXM6IDAK",
+          "utf8": "\tCommand being timed: \"/usr/bin/taskset -c 3 /tmp/fused-json-opt-4ca865c/bin/parse-bench /media/wyhaines/home/wyhaines/ghq/github.com/ohler55/oj/test/data/activitypub.json /media/wyhaines/home/wyhaines/ghq/github.com/ohler55/oj/test/data/canada.json /media/wyhaines/home/wyhaines/ghq/github.com/ohler55/oj/test/data/citm_catalog.json /media/wyhaines/home/wyhaines/ghq/github.com/ohler55/oj/test/data/ohai.json /media/wyhaines/home/wyhaines/ghq/github.com/ohler55/oj/test/data/twitter.json\"\n\tUser time (seconds): 46.41\n\tSystem time (seconds): 0.38\n\tPercent of CPU this job got: 99%\n\tElapsed (wall clock) time (h:mm:ss or m:ss): 0:46.80\n\tAverage shared text size (kbytes): 0\n\tAverage unshared data size (kbytes): 0\n\tAverage stack size (kbytes): 0\n\tAverage total size (kbytes): 0\n\tMaximum resident set size (kbytes): 66392\n\tAverage resident set size (kbytes): 0\n\tMajor (requiring I/O) page faults: 0\n\tMinor (reclaiming a frame) page faults: 22998\n\tVoluntary context switches: 34434\n\tInvoluntary context switches: 34561\n\tSwaps: 0\n\tFile system inputs: 0\n\tFile system outputs: 16\n\tSocket messages sent: 0\n\tSocket messages received: 0\n\tSignals delivered: 0\n\tPage size (bytes): 4096\n\tExit status: 0\n"
+        }
+      },
+      "parsed_stdout_sha256": "a50b04826f417853707f0a7c89c151f715b0bfcd8d73dede372094aef311d4c3",
+      "parsed_output": {
+        "schema": "fused-json-parse-custom-output-v1",
+        "corpora": [
+          {
+            "name": "activitypub.json",
+            "bytes": 58160,
+            "throughput_order": [
+              "FusedJSON cached",
+              "FusedJSON.load",
+              "Crystal JSON.parse"
+            ],
+            "allocation_order": [
+              "Crystal JSON.parse",
+              "FusedJSON.load",
+              "FusedJSON cached"
+            ],
+            "implementations": {
+              "fused_json_cached": {
+                "label": "FusedJSON cached",
+                "mib_per_second": 523.743182,
+                "relative_stddev_percent": 1.48,
+                "managed_bytes_per_operation": 201039
+              },
+              "fused_json_load": {
+                "label": "FusedJSON.load",
+                "mib_per_second": 504.112493,
+                "relative_stddev_percent": 1.19,
+                "managed_bytes_per_operation": 222046
+              },
+              "crystal_json_parse": {
+                "label": "Crystal JSON.parse",
+                "mib_per_second": 240.086974,
+                "relative_stddev_percent": 3.57,
+                "managed_bytes_per_operation": 161844
+              }
+            },
+            "fused_load_to_crystal_ratio": 2.099707804222648
+          },
+          {
+            "name": "canada.json",
+            "bytes": 2251051,
+            "throughput_order": [
+              "FusedJSON cached",
+              "FusedJSON.load",
+              "Crystal JSON.parse"
+            ],
+            "allocation_order": [
+              "Crystal JSON.parse",
+              "FusedJSON.load",
+              "FusedJSON cached"
+            ],
+            "implementations": {
+              "fused_json_cached": {
+                "label": "FusedJSON cached",
+                "mib_per_second": 317.888671,
+                "relative_stddev_percent": 3.8,
+                "managed_bytes_per_operation": 8962314
+              },
+              "fused_json_load": {
+                "label": "FusedJSON.load",
+                "mib_per_second": 318.383246,
+                "relative_stddev_percent": 3.11,
+                "managed_bytes_per_operation": 8962379
+              },
+              "crystal_json_parse": {
+                "label": "Crystal JSON.parse",
+                "mib_per_second": 173.556327,
+                "relative_stddev_percent": 3.13,
+                "managed_bytes_per_operation": 13326302
+              }
+            },
+            "fused_load_to_crystal_ratio": 1.8344663747118823
+          },
+          {
+            "name": "citm_catalog.json",
+            "bytes": 1727204,
+            "throughput_order": [
+              "FusedJSON cached",
+              "FusedJSON.load",
+              "Crystal JSON.parse"
+            ],
+            "allocation_order": [
+              "Crystal JSON.parse",
+              "FusedJSON.load",
+              "FusedJSON cached"
+            ],
+            "implementations": {
+              "fused_json_cached": {
+                "label": "FusedJSON cached",
+                "mib_per_second": 513.035753,
+                "relative_stddev_percent": 2.58,
+                "managed_bytes_per_operation": 3445281
+              },
+              "fused_json_load": {
+                "label": "FusedJSON.load",
+                "mib_per_second": 494.51945,
+                "relative_stddev_percent": 3.06,
+                "managed_bytes_per_operation": 4252686
+              },
+              "crystal_json_parse": {
+                "label": "Crystal JSON.parse",
+                "mib_per_second": 246.229204,
+                "relative_stddev_percent": 7.06,
+                "managed_bytes_per_operation": 3906026
+              }
+            },
+            "fused_load_to_crystal_ratio": 2.0083704205939763
+          },
+          {
+            "name": "ohai.json",
+            "bytes": 32444,
+            "throughput_order": [
+              "FusedJSON cached",
+              "FusedJSON.load",
+              "Crystal JSON.parse"
+            ],
+            "allocation_order": [
+              "Crystal JSON.parse",
+              "FusedJSON.load",
+              "FusedJSON cached"
+            ],
+            "implementations": {
+              "fused_json_cached": {
+                "label": "FusedJSON cached",
+                "mib_per_second": 379.98145,
+                "relative_stddev_percent": 1.7,
+                "managed_bytes_per_operation": 145199
+              },
+              "fused_json_load": {
+                "label": "FusedJSON.load",
+                "mib_per_second": 429.814918,
+                "relative_stddev_percent": 1.71,
+                "managed_bytes_per_operation": 127320
+              },
+              "crystal_json_parse": {
+                "label": "Crystal JSON.parse",
+                "mib_per_second": 214.912444,
+                "relative_stddev_percent": 1.53,
+                "managed_bytes_per_operation": 147585
+              }
+            },
+            "fused_load_to_crystal_ratio": 1.9999536090148413
+          },
+          {
+            "name": "twitter.json",
+            "bytes": 631514,
+            "throughput_order": [
+              "FusedJSON cached",
+              "FusedJSON.load",
+              "Crystal JSON.parse"
+            ],
+            "allocation_order": [
+              "Crystal JSON.parse",
+              "FusedJSON.load",
+              "FusedJSON cached"
+            ],
+            "implementations": {
+              "fused_json_cached": {
+                "label": "FusedJSON cached",
+                "mib_per_second": 450.965683,
+                "relative_stddev_percent": 3.04,
+                "managed_bytes_per_operation": 1928416
+              },
+              "fused_json_load": {
+                "label": "FusedJSON.load",
+                "mib_per_second": 429.545696,
+                "relative_stddev_percent": 1.88,
+                "managed_bytes_per_operation": 2386109
+              },
+              "crystal_json_parse": {
+                "label": "Crystal JSON.parse",
+                "mib_per_second": 257.817182,
+                "relative_stddev_percent": 1.44,
+                "managed_bytes_per_operation": 1889414
+              }
+            },
+            "fused_load_to_crystal_ratio": 1.6660863820938048
+          }
+        ]
+      },
+      "output_parse_error": null,
+      "parsed_task_audit_sha256": "79b3700772c99c01cbf6d863effd1ea7033bcf368d71163f29f5ccbcb1f7a07a",
+      "task_audit": {
+        "schema": "gnu-time-v1-verbose-v1",
+        "user_cpu_seconds": 46.41,
+        "system_cpu_seconds": 0.38,
+        "task_cpu_seconds": 46.79,
+        "reported_cpu_percent": 99,
+        "reported_cpu_share": 0.99,
+        "elapsed_wall": "0:46.80",
+        "elapsed_wall_seconds": 46.8,
+        "maximum_resident_kibibytes": 66392,
+        "major_page_faults": 0,
+        "minor_page_faults": 22998,
+        "voluntary_context_switches": 34434,
+        "involuntary_context_switches": 34561,
+        "exit_status": 0,
+        "cpu_time_over_wall_from_rounded_seconds": 0.9997863247863248,
+        "total_context_switches": 68995
+      },
+      "task_audit_error": null,
+      "validity_issues": [],
+      "valid": true
+    },
+    {
+      "receipt": "fused-json-m6-dynamic-child",
+      "version": 2,
+      "schedule_index": 2,
+      "process_id": "m6-dynamic-02-normal",
+      "order": "normal",
+      "attempt": 1,
+      "retry_policy": "none",
+      "commit_argument": "4ca865c4e8ad8716041df4069181a5523493de08",
+      "fused_json_commit": "4ca865c4e8ad8716041df4069181a5523493de08",
+      "cpu_affinity": "3",
+      "environment": {
+        "PATH": "/usr/bin:/bin",
+        "LANG": "C",
+        "LC_ALL": "C",
+        "TZ": "UTC",
+        "GC_NPROCS": "1",
+        "GC_MARKERS": "1",
+        "FUSED_JSON_BENCH_WARMUP": "1",
+        "FUSED_JSON_BENCH_TIME": "2",
+        "FUSED_JSON_BENCH_ALLOCATIONS": "20",
+        "FUSED_JSON_BENCH_REVERSE": "0",
+        "FUSED_JSON_BENCH_COMMIT": "4ca865c4e8ad8716041df4069181a5523493de08"
+      },
+      "environment_policy": "sanitized; parent environment is not inherited",
+      "time_command": [
+        "/usr/bin/time",
+        "-v",
+        "-o",
+        "/tmp/fused-json-m6-dynamic-8tNDBW/process-02.time-v.txt",
+        "/usr/bin/taskset",
+        "-c",
+        "3",
+        "/tmp/fused-json-opt-4ca865c/bin/parse-bench",
+        "/media/wyhaines/home/wyhaines/ghq/github.com/ohler55/oj/test/data/activitypub.json",
+        "/media/wyhaines/home/wyhaines/ghq/github.com/ohler55/oj/test/data/canada.json",
+        "/media/wyhaines/home/wyhaines/ghq/github.com/ohler55/oj/test/data/citm_catalog.json",
+        "/media/wyhaines/home/wyhaines/ghq/github.com/ohler55/oj/test/data/ohai.json",
+        "/media/wyhaines/home/wyhaines/ghq/github.com/ohler55/oj/test/data/twitter.json"
+      ],
+      "benchmark_command": [
+        "/usr/bin/taskset",
+        "-c",
+        "3",
+        "/tmp/fused-json-opt-4ca865c/bin/parse-bench",
+        "/media/wyhaines/home/wyhaines/ghq/github.com/ohler55/oj/test/data/activitypub.json",
+        "/media/wyhaines/home/wyhaines/ghq/github.com/ohler55/oj/test/data/canada.json",
+        "/media/wyhaines/home/wyhaines/ghq/github.com/ohler55/oj/test/data/citm_catalog.json",
+        "/media/wyhaines/home/wyhaines/ghq/github.com/ohler55/oj/test/data/ohai.json",
+        "/media/wyhaines/home/wyhaines/ghq/github.com/ohler55/oj/test/data/twitter.json"
+      ],
+      "wrapper_pid": 15,
+      "binary_sha256": "eb2224c58a9a2547931efbf219f5dc85cad15cf9d8373142dac36f5b108126a6",
+      "runner_sha256": "65a3b78670a3d35e105c8943500061516d88a807e80de8d5127881a29ec77020",
+      "gnu_time_sha256": "7310b9b4c51a8f4d26c1af0da250f03a49ec8a8141033123e79196ad18f6c81b",
+      "taskset_sha256": "63e52c4b99a688ccd7bab6edbc6df2af1acad124eb852adcb4d20043d28eb2d3",
+      "node_executable_sha256": "53fb205ae78805130177e24bcb459a69a1518c8d98f8965f31d85aae7ea840fc",
+      "corpora": [
+        {
+          "name": "activitypub.json",
+          "realpath": "/media/wyhaines/home/wyhaines/ghq/github.com/ohler55/oj/test/data/activitypub.json",
+          "bytes": 58160,
+          "sha256": "4f4a68f2a0b0f5022e1eeff93ed6871845dc0e4e479dc4c32082225e1dbb3f7c"
+        },
+        {
+          "name": "canada.json",
+          "realpath": "/media/wyhaines/home/wyhaines/ghq/github.com/ohler55/oj/test/data/canada.json",
+          "bytes": 2251051,
+          "sha256": "f83b3b354030d5dd58740c68ac4fecef64cb730a0d12a90362a7f23077f50d78"
+        },
+        {
+          "name": "citm_catalog.json",
+          "realpath": "/media/wyhaines/home/wyhaines/ghq/github.com/ohler55/oj/test/data/citm_catalog.json",
+          "bytes": 1727204,
+          "sha256": "b3a1f8d7eda4d74551ee8c47639d2896fdcdb0d3ed8ffdb4d4d93ddbb07fdb90"
+        },
+        {
+          "name": "ohai.json",
+          "realpath": "/media/wyhaines/home/wyhaines/ghq/github.com/ohler55/oj/test/data/ohai.json",
+          "bytes": 32444,
+          "sha256": "4a56817d69aaedb1689944d9af6d8487dbd9742be415d9e22390236022be50f8"
+        },
+        {
+          "name": "twitter.json",
+          "realpath": "/media/wyhaines/home/wyhaines/ghq/github.com/ohler55/oj/test/data/twitter.json",
+          "bytes": 631514,
+          "sha256": "a08b769f32b95f426cbc3abafcec65c1a19d3eb544d4ddf320eae142c99efc5d"
+        }
+      ],
+      "identity_verification_before": {
+        "verified_at": "2026-08-25T19:35:46.730Z",
+        "matched": true,
+        "mismatches": [],
+        "observed": {
+          "tools": {
+            "gnu_time": {
+              "realpath": "/usr/bin/time",
+              "basename": "time",
+              "bytes": 27160,
+              "sha256": "7310b9b4c51a8f4d26c1af0da250f03a49ec8a8141033123e79196ad18f6c81b",
+              "executable": true
+            },
+            "taskset": {
+              "realpath": "/usr/bin/taskset",
+              "basename": "taskset",
+              "bytes": 22912,
+              "sha256": "63e52c4b99a688ccd7bab6edbc6df2af1acad124eb852adcb4d20043d28eb2d3",
+              "executable": true
+            },
+            "node": {
+              "realpath": "/media/wyhaines/home/wyhaines/.nvm/versions/node/v24.13.0/bin/node",
+              "basename": "node",
+              "bytes": 121158216,
+              "sha256": "53fb205ae78805130177e24bcb459a69a1518c8d98f8965f31d85aae7ea840fc",
+              "executable": true
+            }
+          },
+          "corpora": [
+            {
+              "name": "activitypub.json",
+              "identity": {
+                "realpath": "/media/wyhaines/home/wyhaines/ghq/github.com/ohler55/oj/test/data/activitypub.json",
+                "basename": "activitypub.json",
+                "bytes": 58160,
+                "sha256": "4f4a68f2a0b0f5022e1eeff93ed6871845dc0e4e479dc4c32082225e1dbb3f7c",
+                "executable": false
+              }
+            },
+            {
+              "name": "canada.json",
+              "identity": {
+                "realpath": "/media/wyhaines/home/wyhaines/ghq/github.com/ohler55/oj/test/data/canada.json",
+                "basename": "canada.json",
+                "bytes": 2251051,
+                "sha256": "f83b3b354030d5dd58740c68ac4fecef64cb730a0d12a90362a7f23077f50d78",
+                "executable": false
+              }
+            },
+            {
+              "name": "citm_catalog.json",
+              "identity": {
+                "realpath": "/media/wyhaines/home/wyhaines/ghq/github.com/ohler55/oj/test/data/citm_catalog.json",
+                "basename": "citm_catalog.json",
+                "bytes": 1727204,
+                "sha256": "b3a1f8d7eda4d74551ee8c47639d2896fdcdb0d3ed8ffdb4d4d93ddbb07fdb90",
+                "executable": false
+              }
+            },
+            {
+              "name": "ohai.json",
+              "identity": {
+                "realpath": "/media/wyhaines/home/wyhaines/ghq/github.com/ohler55/oj/test/data/ohai.json",
+                "basename": "ohai.json",
+                "bytes": 32444,
+                "sha256": "4a56817d69aaedb1689944d9af6d8487dbd9742be415d9e22390236022be50f8",
+                "executable": false
+              }
+            },
+            {
+              "name": "twitter.json",
+              "identity": {
+                "realpath": "/media/wyhaines/home/wyhaines/ghq/github.com/ohler55/oj/test/data/twitter.json",
+                "basename": "twitter.json",
+                "bytes": 631514,
+                "sha256": "a08b769f32b95f426cbc3abafcec65c1a19d3eb544d4ddf320eae142c99efc5d",
+                "executable": false
+              }
+            }
+          ],
+          "binary": {
+            "realpath": "/tmp/fused-json-opt-4ca865c/bin/parse-bench",
+            "basename": "parse-bench",
+            "bytes": 1011576,
+            "sha256": "eb2224c58a9a2547931efbf219f5dc85cad15cf9d8373142dac36f5b108126a6",
+            "executable": true
+          },
+          "runner": {
+            "realpath": "/media/wyhaines/home/wyhaines/ghq/github.com/wyhaines/fused-json.cr/scripts/dynamic_gate.mjs",
+            "basename": "dynamic_gate.mjs",
+            "bytes": 121078,
+            "sha256": "65a3b78670a3d35e105c8943500061516d88a807e80de8d5127881a29ec77020",
+            "executable": false
+          }
+        }
+      },
+      "identity_verification_after": {
+        "verified_at": "2026-08-25T19:36:33.843Z",
+        "matched": true,
+        "mismatches": [],
+        "observed": {
+          "tools": {
+            "gnu_time": {
+              "realpath": "/usr/bin/time",
+              "basename": "time",
+              "bytes": 27160,
+              "sha256": "7310b9b4c51a8f4d26c1af0da250f03a49ec8a8141033123e79196ad18f6c81b",
+              "executable": true
+            },
+            "taskset": {
+              "realpath": "/usr/bin/taskset",
+              "basename": "taskset",
+              "bytes": 22912,
+              "sha256": "63e52c4b99a688ccd7bab6edbc6df2af1acad124eb852adcb4d20043d28eb2d3",
+              "executable": true
+            },
+            "node": {
+              "realpath": "/media/wyhaines/home/wyhaines/.nvm/versions/node/v24.13.0/bin/node",
+              "basename": "node",
+              "bytes": 121158216,
+              "sha256": "53fb205ae78805130177e24bcb459a69a1518c8d98f8965f31d85aae7ea840fc",
+              "executable": true
+            }
+          },
+          "corpora": [
+            {
+              "name": "activitypub.json",
+              "identity": {
+                "realpath": "/media/wyhaines/home/wyhaines/ghq/github.com/ohler55/oj/test/data/activitypub.json",
+                "basename": "activitypub.json",
+                "bytes": 58160,
+                "sha256": "4f4a68f2a0b0f5022e1eeff93ed6871845dc0e4e479dc4c32082225e1dbb3f7c",
+                "executable": false
+              }
+            },
+            {
+              "name": "canada.json",
+              "identity": {
+                "realpath": "/media/wyhaines/home/wyhaines/ghq/github.com/ohler55/oj/test/data/canada.json",
+                "basename": "canada.json",
+                "bytes": 2251051,
+                "sha256": "f83b3b354030d5dd58740c68ac4fecef64cb730a0d12a90362a7f23077f50d78",
+                "executable": false
+              }
+            },
+            {
+              "name": "citm_catalog.json",
+              "identity": {
+                "realpath": "/media/wyhaines/home/wyhaines/ghq/github.com/ohler55/oj/test/data/citm_catalog.json",
+                "basename": "citm_catalog.json",
+                "bytes": 1727204,
+                "sha256": "b3a1f8d7eda4d74551ee8c47639d2896fdcdb0d3ed8ffdb4d4d93ddbb07fdb90",
+                "executable": false
+              }
+            },
+            {
+              "name": "ohai.json",
+              "identity": {
+                "realpath": "/media/wyhaines/home/wyhaines/ghq/github.com/ohler55/oj/test/data/ohai.json",
+                "basename": "ohai.json",
+                "bytes": 32444,
+                "sha256": "4a56817d69aaedb1689944d9af6d8487dbd9742be415d9e22390236022be50f8",
+                "executable": false
+              }
+            },
+            {
+              "name": "twitter.json",
+              "identity": {
+                "realpath": "/media/wyhaines/home/wyhaines/ghq/github.com/ohler55/oj/test/data/twitter.json",
+                "basename": "twitter.json",
+                "bytes": 631514,
+                "sha256": "a08b769f32b95f426cbc3abafcec65c1a19d3eb544d4ddf320eae142c99efc5d",
+                "executable": false
+              }
+            }
+          ],
+          "binary": {
+            "realpath": "/tmp/fused-json-opt-4ca865c/bin/parse-bench",
+            "basename": "parse-bench",
+            "bytes": 1011576,
+            "sha256": "eb2224c58a9a2547931efbf219f5dc85cad15cf9d8373142dac36f5b108126a6",
+            "executable": true
+          },
+          "runner": {
+            "realpath": "/media/wyhaines/home/wyhaines/ghq/github.com/wyhaines/fused-json.cr/scripts/dynamic_gate.mjs",
+            "basename": "dynamic_gate.mjs",
+            "bytes": 121078,
+            "sha256": "65a3b78670a3d35e105c8943500061516d88a807e80de8d5127881a29ec77020",
+            "executable": false
+          }
+        }
+      },
+      "started_at": "2026-08-25T19:35:46.731Z",
+      "finished_at": "2026-08-25T19:36:33.708Z",
+      "started_monotonic_ms": 1025270.89653,
+      "finished_monotonic_ms": 1072248.048349,
+      "elapsed_monotonic_seconds": 46.97715181900002,
+      "environment_start_gate": {
+        "policy_name": "busy-pinned-v2",
+        "policy_version": 2,
+        "label": "m6-dynamic-02-normal",
+        "required_continuous_seconds": 6,
+        "wait_started_monotonic_ms": 1007946.039076,
+        "block_gate_deadline_seconds": 180,
+        "absolute_deadline_monotonic_ms": 1187946.039076,
+        "admitted_evaluated_monotonic_ms": 1025115.473675,
+        "first_acceptable_sample_sequence": 507,
+        "first_acceptable_monotonic_ms": 1019074.353082,
+        "admitted_sample_sequence": 510,
+        "admitted_monotonic_ms": 1025104.362112,
+        "continuous_seconds": 6.030009029999958,
+        "sample_sequences": [
+          507,
+          508,
+          509,
+          510
+        ],
+        "sample_count": 4,
+        "tctl_minimum_c": 61,
+        "tctl_maximum_c": 62.875,
+        "tctl_range_c": 1.875
+      },
+      "environment_start_sample_sequence": 510,
+      "environment_end_sample_sequence": 533,
+      "child_environment_window": {
+        "cpu": "2",
+        "maximum_busy_percent": 25,
+        "before": {
+          "observed_at": "2026-08-25T19:35:46.731Z",
+          "monotonic_ms": 1025270.767379,
+          "proc_stat_cpu_line": "cpu2 5118080 1874608 676411 26493164 23175 0 8815 0 0 0",
+          "counters": [
+            "5118080",
+            "1874608",
+            "676411",
+            "26493164",
+            "23175",
+            "0",
+            "8815",
+            "0",
+            "0",
+            "0"
+          ],
+          "total_ticks": "34194253",
+          "idle_ticks": "26516339",
+          "tctl_raw_millicelsius": "62500",
+          "tctl_c": 62.5
+        },
+        "after": {
+          "observed_at": "2026-08-25T19:36:33.708Z",
+          "monotonic_ms": 1072248.051435,
+          "proc_stat_cpu_line": "cpu2 5118102 1874651 676433 26497721 23184 0 8816 0 0 0",
+          "counters": [
+            "5118102",
+            "1874651",
+            "676433",
+            "26497721",
+            "23184",
+            "0",
+            "8816",
+            "0",
+            "0",
+            "0"
+          ],
+          "total_ticks": "34198907",
+          "idle_ticks": "26520905",
+          "tctl_raw_millicelsius": "97375",
+          "tctl_c": 97.375
+        },
+        "delta_total_ticks": "4654",
+        "delta_idle_ticks": "4566",
+        "delta_busy_ticks": "88",
+        "cpu_busy_percent": 1.8908465835840136,
+        "within_busy_limit": true
+      },
+      "exit": {
+        "code": 0,
+        "signal": null,
+        "spawn_error": null
+      },
+      "raw": {
+        "stdout": {
+          "bytes": 2800,
+          "sha256": "16411035211c5eb2edaa3e7a9f468907ac119f8eb84bf0d31d7336427ecdf75c",
+          "encoding": "base64",
+          "base64": "CmFjdGl2aXR5cHViLmpzb246IDU4MTYwIGJ5dGVzCkNyeXN0YWwgSlNPTi5wYXJzZSAgIDQuMzFrICgyMzEuOTbCtXMpICjCsSAxLjY5JSkgIDE1N2tCL29wICAgMi4yMMOXIHNsb3dlcgogICAgRnVzZWRKU09OLmxvYWQgICA5LjIyayAoMTA4LjUywrVzKSAowrEgMS4zMyUpICAyMTdrQi9vcCAgIDEuMDPDlyBzbG93ZXIKICBGdXNlZEpTT04gY2FjaGVkICAgOS41MGsgKDEwNS4yNcK1cykgKMKxIDEuMTclKSAgMTk2a0Ivb3AgICAgICAgIGZhc3Rlc3QKICBDcnlzdGFsIEpTT04ucGFyc2UgICAgMjM5LjExNjA0MyBNaUIvcyAgKFJTRCAgMS42OSUpCiAgRnVzZWRKU09OLmxvYWQgICAgICAgIDUxMS4xMzM2MDMgTWlCL3MgIChSU0QgIDEuMzMlKQogIEZ1c2VkSlNPTiBjYWNoZWQgICAgICA1MjcuMDE0OTA0IE1pQi9zICAoUlNEICAxLjE3JSkKICBNYW5hZ2VkIGFsbG9jYXRpb25zCiAgQ3J5c3RhbCBKU09OLnBhcnNlICAgICAgIDE2MjA4MiBCL29wCiAgRnVzZWRKU09OLmxvYWQgICAgICAgICAgIDIyMjEwNiBCL29wCiAgRnVzZWRKU09OIGNhY2hlZCAgICAgICAgIDIwMDg1NCBCL29wCgpjYW5hZGEuanNvbjogMjI1MTA1MSBieXRlcwpDcnlzdGFsIEpTT04ucGFyc2UgIDc1LjY5ICAoIDEzLjIxbXMpICjCsSAzLjMxJSkgIDEyLjdNQi9vcCAgIDEuOTHDlyBzbG93ZXIKICAgIEZ1c2VkSlNPTi5sb2FkIDE0NC4zMSAgKCAgNi45M21zKSAowrEgMi43OCUpICA4LjU0TUIvb3AgICAgICAgIGZhc3Rlc3QKICBGdXNlZEpTT04gY2FjaGVkIDEzOS41NiAgKCAgNy4xN21zKSAowrEgNS41NiUpICA4LjU0TUIvb3AgICAxLjAzw5cgc2xvd2VyCiAgQ3J5c3RhbCBKU09OLnBhcnNlICAgIDE2Mi40OTYzNDMgTWlCL3MgIChSU0QgIDMuMzElKQogIEZ1c2VkSlNPTi5sb2FkICAgICAgICAzMDkuODEwODM1IE1pQi9zICAoUlNEICAyLjc4JSkKICBGdXNlZEpTT04gY2FjaGVkICAgICAgMjk5LjYwNjI1MCBNaUIvcyAgKFJTRCAgNS41NiUpCiAgTWFuYWdlZCBhbGxvY2F0aW9ucwogIENyeXN0YWwgSlNPTi5wYXJzZSAgICAgMTMzMjYwNDQgQi9vcAogIEZ1c2VkSlNPTi5sb2FkICAgICAgICAgIDg5NjIyNjEgQi9vcAogIEZ1c2VkSlNPTiBjYWNoZWQgICAgICAgIDg5NjIzNTUgQi9vcAoKY2l0bV9jYXRhbG9nLmpzb246IDE3MjcyMDQgYnl0ZXMKQ3J5c3RhbCBKU09OLnBhcnNlIDE1Mi42MSAgKCAgNi41NW1zKSAowrEgMi4wOCUpICAzLjczTUIvb3AgICAyLjA4w5cgc2xvd2VyCiAgICBGdXNlZEpTT04ubG9hZCAyODguNDYgICggIDMuNDdtcykgKMKxIDIuOTElKSAgNC4wNU1CL29wICAgMS4xMMOXIHNsb3dlcgogIEZ1c2VkSlNPTiBjYWNoZWQgMzE3LjU4ICAoICAzLjE1bXMpICjCsSAzLjU3JSkgIDMuMjhNQi9vcCAgICAgICAgZmFzdGVzdAogIENyeXN0YWwgSlNPTi5wYXJzZSAgICAyNTEuMzc2NTI3IE1pQi9zICAoUlNEICAyLjA4JSkKICBGdXNlZEpTT04ubG9hZCAgICAgICAgNDc1LjE0ODkyMyBNaUIvcyAgKFJTRCAgMi45MSUpCiAgRnVzZWRKU09OIGNhY2hlZCAgICAgIDUyMy4xMTg2NzMgTWlCL3MgIChSU0QgIDMuNTclKQogIE1hbmFnZWQgYWxsb2NhdGlvbnMKICBDcnlzdGFsIEpTT04ucGFyc2UgICAgICAzOTA1NDM0IEIvb3AKICBGdXNlZEpTT04ubG9hZCAgICAgICAgICA0MjUyOTQwIEIvb3AKICBGdXNlZEpTT04gY2FjaGVkICAgICAgICAzNDQ1MzE3IEIvb3AKCm9oYWkuanNvbjogMzI0NDQgYnl0ZXMKQ3J5c3RhbCBKU09OLnBhcnNlICAgNi44NmsgKDE0NS43M8K1cykgKMKxIDMuNDAlKSAgMTQ1a0Ivb3AgICAyLjA1w5cgc2xvd2VyCiAgICBGdXNlZEpTT04ubG9hZCAgMTQuMTBrICggNzAuOTXCtXMpICjCsSAyLjU2JSkgIDEyNWtCL29wICAgICAgICBmYXN0ZXN0CiAgRnVzZWRKU09OIGNhY2hlZCAgMTIuNjFrICggNzkuMzDCtXMpICjCsSAxLjMzJSkgIDE0MmtCL29wICAgMS4xMsOXIHNsb3dlcgogIENyeXN0YWwgSlNPTi5wYXJzZSAgICAyMTIuMzE2MDQ5IE1pQi9zICAoUlNEICAzLjQwJSkKICBGdXNlZEpTT04ubG9hZCAgICAgICAgNDM2LjExOTg2OSBNaUIvcyAgKFJTRCAgMi41NiUpCiAgRnVzZWRKU09OIGNhY2hlZCAgICAgIDM5MC4xODczNjUgTWlCL3MgIChSU0QgIDEuMzMlKQogIE1hbmFnZWQgYWxsb2NhdGlvbnMKICBDcnlzdGFsIEpTT04ucGFyc2UgICAgICAgMTQ3NDQ0IEIvb3AKICBGdXNlZEpTT04ubG9hZCAgICAgICAgICAgMTI3NzI5IEIvb3AKICBGdXNlZEpTT04gY2FjaGVkICAgICAgICAgMTQ0OTY0IEIvb3AKCnR3aXR0ZXIuanNvbjogNjMxNTE0IGJ5dGVzCkNyeXN0YWwgSlNPTi5wYXJzZSA0MTcuNjcgICggIDIuMzltcykgKMKxIDMuMTMlKSAgIDEuOE1CL29wICAgMS44McOXIHNsb3dlcgogICAgRnVzZWRKU09OLmxvYWQgNzEzLjQwICAoICAxLjQwbXMpICjCsSAxLjU3JSkgIDIuMjhNQi9vcCAgIDEuMDbDlyBzbG93ZXIKICBGdXNlZEpTT04gY2FjaGVkIDc1NS43MSAgKCAgMS4zMm1zKSAowrEgMS4yOCUpICAxLjg0TUIvb3AgICAgICAgIGZhc3Rlc3QKICBDcnlzdGFsIEpTT04ucGFyc2UgICAgMjUxLjU0Njc1NSBNaUIvcyAgKFJTRCAgMy4xMyUpCiAgRnVzZWRKU09OLmxvYWQgICAgICAgIDQyOS42NDk2ODMgTWlCL3MgIChSU0QgIDEuNTclKQogIEZ1c2VkSlNPTiBjYWNoZWQgICAgICA0NTUuMTM1NzgwIE1pQi9zICAoUlNEICAxLjI4JSkKICBNYW5hZ2VkIGFsbG9jYXRpb25zCiAgQ3J5c3RhbCBKU09OLnBhcnNlICAgICAgMTg4OTc0MSBCL29wCiAgRnVzZWRKU09OLmxvYWQgICAgICAgICAgMjM4NTc0MSBCL29wCiAgRnVzZWRKU09OIGNhY2hlZCAgICAgICAgMTkyODM4MyBCL29wCg==",
+          "utf8": "\nactivitypub.json: 58160 bytes\nCrystal JSON.parse   4.31k (231.96µs) (± 1.69%)  157kB/op   2.20× slower\n    FusedJSON.load   9.22k (108.52µs) (± 1.33%)  217kB/op   1.03× slower\n  FusedJSON cached   9.50k (105.25µs) (± 1.17%)  196kB/op        fastest\n  Crystal JSON.parse    239.116043 MiB/s  (RSD  1.69%)\n  FusedJSON.load        511.133603 MiB/s  (RSD  1.33%)\n  FusedJSON cached      527.014904 MiB/s  (RSD  1.17%)\n  Managed allocations\n  Crystal JSON.parse       162082 B/op\n  FusedJSON.load           222106 B/op\n  FusedJSON cached         200854 B/op\n\ncanada.json: 2251051 bytes\nCrystal JSON.parse  75.69  ( 13.21ms) (± 3.31%)  12.7MB/op   1.91× slower\n    FusedJSON.load 144.31  (  6.93ms) (± 2.78%)  8.54MB/op        fastest\n  FusedJSON cached 139.56  (  7.17ms) (± 5.56%)  8.54MB/op   1.03× slower\n  Crystal JSON.parse    162.496343 MiB/s  (RSD  3.31%)\n  FusedJSON.load        309.810835 MiB/s  (RSD  2.78%)\n  FusedJSON cached      299.606250 MiB/s  (RSD  5.56%)\n  Managed allocations\n  Crystal JSON.parse     13326044 B/op\n  FusedJSON.load          8962261 B/op\n  FusedJSON cached        8962355 B/op\n\ncitm_catalog.json: 1727204 bytes\nCrystal JSON.parse 152.61  (  6.55ms) (± 2.08%)  3.73MB/op   2.08× slower\n    FusedJSON.load 288.46  (  3.47ms) (± 2.91%)  4.05MB/op   1.10× slower\n  FusedJSON cached 317.58  (  3.15ms) (± 3.57%)  3.28MB/op        fastest\n  Crystal JSON.parse    251.376527 MiB/s  (RSD  2.08%)\n  FusedJSON.load        475.148923 MiB/s  (RSD  2.91%)\n  FusedJSON cached      523.118673 MiB/s  (RSD  3.57%)\n  Managed allocations\n  Crystal JSON.parse      3905434 B/op\n  FusedJSON.load          4252940 B/op\n  FusedJSON cached        3445317 B/op\n\nohai.json: 32444 bytes\nCrystal JSON.parse   6.86k (145.73µs) (± 3.40%)  145kB/op   2.05× slower\n    FusedJSON.load  14.10k ( 70.95µs) (± 2.56%)  125kB/op        fastest\n  FusedJSON cached  12.61k ( 79.30µs) (± 1.33%)  142kB/op   1.12× slower\n  Crystal JSON.parse    212.316049 MiB/s  (RSD  3.40%)\n  FusedJSON.load        436.119869 MiB/s  (RSD  2.56%)\n  FusedJSON cached      390.187365 MiB/s  (RSD  1.33%)\n  Managed allocations\n  Crystal JSON.parse       147444 B/op\n  FusedJSON.load           127729 B/op\n  FusedJSON cached         144964 B/op\n\ntwitter.json: 631514 bytes\nCrystal JSON.parse 417.67  (  2.39ms) (± 3.13%)   1.8MB/op   1.81× slower\n    FusedJSON.load 713.40  (  1.40ms) (± 1.57%)  2.28MB/op   1.06× slower\n  FusedJSON cached 755.71  (  1.32ms) (± 1.28%)  1.84MB/op        fastest\n  Crystal JSON.parse    251.546755 MiB/s  (RSD  3.13%)\n  FusedJSON.load        429.649683 MiB/s  (RSD  1.57%)\n  FusedJSON cached      455.135780 MiB/s  (RSD  1.28%)\n  Managed allocations\n  Crystal JSON.parse      1889741 B/op\n  FusedJSON.load          2385741 B/op\n  FusedJSON cached        1928383 B/op\n"
+        },
+        "stderr": {
+          "bytes": 0,
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "encoding": "base64",
+          "base64": "",
+          "utf8": ""
+        },
+        "task_audit": {
+          "bytes": 1191,
+          "sha256": "919dac385ddbb34dfda3fe51ddbed7ffe0d0277b4b3782558e3b926e99c5c4b1",
+          "encoding": "base64",
+          "base64": "CUNvbW1hbmQgYmVpbmcgdGltZWQ6ICIvdXNyL2Jpbi90YXNrc2V0IC1jIDMgL3RtcC9mdXNlZC1qc29uLW9wdC00Y2E4NjVjL2Jpbi9wYXJzZS1iZW5jaCAvbWVkaWEvd3loYWluZXMvaG9tZS93eWhhaW5lcy9naHEvZ2l0aHViLmNvbS9vaGxlcjU1L29qL3Rlc3QvZGF0YS9hY3Rpdml0eXB1Yi5qc29uIC9tZWRpYS93eWhhaW5lcy9ob21lL3d5aGFpbmVzL2docS9naXRodWIuY29tL29obGVyNTUvb2ovdGVzdC9kYXRhL2NhbmFkYS5qc29uIC9tZWRpYS93eWhhaW5lcy9ob21lL3d5aGFpbmVzL2docS9naXRodWIuY29tL29obGVyNTUvb2ovdGVzdC9kYXRhL2NpdG1fY2F0YWxvZy5qc29uIC9tZWRpYS93eWhhaW5lcy9ob21lL3d5aGFpbmVzL2docS9naXRodWIuY29tL29obGVyNTUvb2ovdGVzdC9kYXRhL29oYWkuanNvbiAvbWVkaWEvd3loYWluZXMvaG9tZS93eWhhaW5lcy9naHEvZ2l0aHViLmNvbS9vaGxlcjU1L29qL3Rlc3QvZGF0YS90d2l0dGVyLmpzb24iCglVc2VyIHRpbWUgKHNlY29uZHMpOiA0Ni41NwoJU3lzdGVtIHRpbWUgKHNlY29uZHMpOiAwLjM4CglQZXJjZW50IG9mIENQVSB0aGlzIGpvYiBnb3Q6IDk5JQoJRWxhcHNlZCAod2FsbCBjbG9jaykgdGltZSAoaDptbTpzcyBvciBtOnNzKTogMDo0Ni45NgoJQXZlcmFnZSBzaGFyZWQgdGV4dCBzaXplIChrYnl0ZXMpOiAwCglBdmVyYWdlIHVuc2hhcmVkIGRhdGEgc2l6ZSAoa2J5dGVzKTogMAoJQXZlcmFnZSBzdGFjayBzaXplIChrYnl0ZXMpOiAwCglBdmVyYWdlIHRvdGFsIHNpemUgKGtieXRlcyk6IDAKCU1heGltdW0gcmVzaWRlbnQgc2V0IHNpemUgKGtieXRlcyk6IDU3Nzk2CglBdmVyYWdlIHJlc2lkZW50IHNldCBzaXplIChrYnl0ZXMpOiAwCglNYWpvciAocmVxdWlyaW5nIEkvTykgcGFnZSBmYXVsdHM6IDAKCU1pbm9yIChyZWNsYWltaW5nIGEgZnJhbWUpIHBhZ2UgZmF1bHRzOiAyNjk5NQoJVm9sdW50YXJ5IGNvbnRleHQgc3dpdGNoZXM6IDMyMzUyCglJbnZvbHVudGFyeSBjb250ZXh0IHN3aXRjaGVzOiAzMjUyMQoJU3dhcHM6IDAKCUZpbGUgc3lzdGVtIGlucHV0czogMAoJRmlsZSBzeXN0ZW0gb3V0cHV0czogMTYKCVNvY2tldCBtZXNzYWdlcyBzZW50OiAwCglTb2NrZXQgbWVzc2FnZXMgcmVjZWl2ZWQ6IDAKCVNpZ25hbHMgZGVsaXZlcmVkOiAwCglQYWdlIHNpemUgKGJ5dGVzKTogNDA5NgoJRXhpdCBzdGF0dXM6IDAK",
+          "utf8": "\tCommand being timed: \"/usr/bin/taskset -c 3 /tmp/fused-json-opt-4ca865c/bin/parse-bench /media/wyhaines/home/wyhaines/ghq/github.com/ohler55/oj/test/data/activitypub.json /media/wyhaines/home/wyhaines/ghq/github.com/ohler55/oj/test/data/canada.json /media/wyhaines/home/wyhaines/ghq/github.com/ohler55/oj/test/data/citm_catalog.json /media/wyhaines/home/wyhaines/ghq/github.com/ohler55/oj/test/data/ohai.json /media/wyhaines/home/wyhaines/ghq/github.com/ohler55/oj/test/data/twitter.json\"\n\tUser time (seconds): 46.57\n\tSystem time (seconds): 0.38\n\tPercent of CPU this job got: 99%\n\tElapsed (wall clock) time (h:mm:ss or m:ss): 0:46.96\n\tAverage shared text size (kbytes): 0\n\tAverage unshared data size (kbytes): 0\n\tAverage stack size (kbytes): 0\n\tAverage total size (kbytes): 0\n\tMaximum resident set size (kbytes): 57796\n\tAverage resident set size (kbytes): 0\n\tMajor (requiring I/O) page faults: 0\n\tMinor (reclaiming a frame) page faults: 26995\n\tVoluntary context switches: 32352\n\tInvoluntary context switches: 32521\n\tSwaps: 0\n\tFile system inputs: 0\n\tFile system outputs: 16\n\tSocket messages sent: 0\n\tSocket messages received: 0\n\tSignals delivered: 0\n\tPage size (bytes): 4096\n\tExit status: 0\n"
+        }
+      },
+      "parsed_stdout_sha256": "16411035211c5eb2edaa3e7a9f468907ac119f8eb84bf0d31d7336427ecdf75c",
+      "parsed_output": {
+        "schema": "fused-json-parse-custom-output-v1",
+        "corpora": [
+          {
+            "name": "activitypub.json",
+            "bytes": 58160,
+            "throughput_order": [
+              "Crystal JSON.parse",
+              "FusedJSON.load",
+              "FusedJSON cached"
+            ],
+            "allocation_order": [
+              "Crystal JSON.parse",
+              "FusedJSON.load",
+              "FusedJSON cached"
+            ],
+            "implementations": {
+              "crystal_json_parse": {
+                "label": "Crystal JSON.parse",
+                "mib_per_second": 239.116043,
+                "relative_stddev_percent": 1.69,
+                "managed_bytes_per_operation": 162082
+              },
+              "fused_json_load": {
+                "label": "FusedJSON.load",
+                "mib_per_second": 511.133603,
+                "relative_stddev_percent": 1.33,
+                "managed_bytes_per_operation": 222106
+              },
+              "fused_json_cached": {
+                "label": "FusedJSON cached",
+                "mib_per_second": 527.014904,
+                "relative_stddev_percent": 1.17,
+                "managed_bytes_per_operation": 200854
+              }
+            },
+            "fused_load_to_crystal_ratio": 2.1375964430793126
+          },
+          {
+            "name": "canada.json",
+            "bytes": 2251051,
+            "throughput_order": [
+              "Crystal JSON.parse",
+              "FusedJSON.load",
+              "FusedJSON cached"
+            ],
+            "allocation_order": [
+              "Crystal JSON.parse",
+              "FusedJSON.load",
+              "FusedJSON cached"
+            ],
+            "implementations": {
+              "crystal_json_parse": {
+                "label": "Crystal JSON.parse",
+                "mib_per_second": 162.496343,
+                "relative_stddev_percent": 3.31,
+                "managed_bytes_per_operation": 13326044
+              },
+              "fused_json_load": {
+                "label": "FusedJSON.load",
+                "mib_per_second": 309.810835,
+                "relative_stddev_percent": 2.78,
+                "managed_bytes_per_operation": 8962261
+              },
+              "fused_json_cached": {
+                "label": "FusedJSON cached",
+                "mib_per_second": 299.60625,
+                "relative_stddev_percent": 5.56,
+                "managed_bytes_per_operation": 8962355
+              }
+            },
+            "fused_load_to_crystal_ratio": 1.9065711220344201
+          },
+          {
+            "name": "citm_catalog.json",
+            "bytes": 1727204,
+            "throughput_order": [
+              "Crystal JSON.parse",
+              "FusedJSON.load",
+              "FusedJSON cached"
+            ],
+            "allocation_order": [
+              "Crystal JSON.parse",
+              "FusedJSON.load",
+              "FusedJSON cached"
+            ],
+            "implementations": {
+              "crystal_json_parse": {
+                "label": "Crystal JSON.parse",
+                "mib_per_second": 251.376527,
+                "relative_stddev_percent": 2.08,
+                "managed_bytes_per_operation": 3905434
+              },
+              "fused_json_load": {
+                "label": "FusedJSON.load",
+                "mib_per_second": 475.148923,
+                "relative_stddev_percent": 2.91,
+                "managed_bytes_per_operation": 4252940
+              },
+              "fused_json_cached": {
+                "label": "FusedJSON cached",
+                "mib_per_second": 523.118673,
+                "relative_stddev_percent": 3.57,
+                "managed_bytes_per_operation": 3445317
+              }
+            },
+            "fused_load_to_crystal_ratio": 1.8901881121143822
+          },
+          {
+            "name": "ohai.json",
+            "bytes": 32444,
+            "throughput_order": [
+              "Crystal JSON.parse",
+              "FusedJSON.load",
+              "FusedJSON cached"
+            ],
+            "allocation_order": [
+              "Crystal JSON.parse",
+              "FusedJSON.load",
+              "FusedJSON cached"
+            ],
+            "implementations": {
+              "crystal_json_parse": {
+                "label": "Crystal JSON.parse",
+                "mib_per_second": 212.316049,
+                "relative_stddev_percent": 3.4,
+                "managed_bytes_per_operation": 147444
+              },
+              "fused_json_load": {
+                "label": "FusedJSON.load",
+                "mib_per_second": 436.119869,
+                "relative_stddev_percent": 2.56,
+                "managed_bytes_per_operation": 127729
+              },
+              "fused_json_cached": {
+                "label": "FusedJSON cached",
+                "mib_per_second": 390.187365,
+                "relative_stddev_percent": 1.33,
+                "managed_bytes_per_operation": 144964
+              }
+            },
+            "fused_load_to_crystal_ratio": 2.05410693658867
+          },
+          {
+            "name": "twitter.json",
+            "bytes": 631514,
+            "throughput_order": [
+              "Crystal JSON.parse",
+              "FusedJSON.load",
+              "FusedJSON cached"
+            ],
+            "allocation_order": [
+              "Crystal JSON.parse",
+              "FusedJSON.load",
+              "FusedJSON cached"
+            ],
+            "implementations": {
+              "crystal_json_parse": {
+                "label": "Crystal JSON.parse",
+                "mib_per_second": 251.546755,
+                "relative_stddev_percent": 3.13,
+                "managed_bytes_per_operation": 1889741
+              },
+              "fused_json_load": {
+                "label": "FusedJSON.load",
+                "mib_per_second": 429.649683,
+                "relative_stddev_percent": 1.57,
+                "managed_bytes_per_operation": 2385741
+              },
+              "fused_json_cached": {
+                "label": "FusedJSON cached",
+                "mib_per_second": 455.13578,
+                "relative_stddev_percent": 1.28,
+                "managed_bytes_per_operation": 1928383
+              }
+            },
+            "fused_load_to_crystal_ratio": 1.708031109365732
+          }
+        ]
+      },
+      "output_parse_error": null,
+      "parsed_task_audit_sha256": "919dac385ddbb34dfda3fe51ddbed7ffe0d0277b4b3782558e3b926e99c5c4b1",
+      "task_audit": {
+        "schema": "gnu-time-v1-verbose-v1",
+        "user_cpu_seconds": 46.57,
+        "system_cpu_seconds": 0.38,
+        "task_cpu_seconds": 46.95,
+        "reported_cpu_percent": 99,
+        "reported_cpu_share": 0.99,
+        "elapsed_wall": "0:46.96",
+        "elapsed_wall_seconds": 46.96,
+        "maximum_resident_kibibytes": 57796,
+        "major_page_faults": 0,
+        "minor_page_faults": 26995,
+        "voluntary_context_switches": 32352,
+        "involuntary_context_switches": 32521,
+        "exit_status": 0,
+        "cpu_time_over_wall_from_rounded_seconds": 0.999787052810903,
+        "total_context_switches": 64873
+      },
+      "task_audit_error": null,
+      "validity_issues": [],
+      "valid": true
+    },
+    {
+      "receipt": "fused-json-m6-dynamic-child",
+      "version": 2,
+      "schedule_index": 3,
+      "process_id": "m6-dynamic-03-reverse",
+      "order": "reverse",
+      "attempt": 1,
+      "retry_policy": "none",
+      "commit_argument": "4ca865c4e8ad8716041df4069181a5523493de08",
+      "fused_json_commit": "4ca865c4e8ad8716041df4069181a5523493de08",
+      "cpu_affinity": "3",
+      "environment": {
+        "PATH": "/usr/bin:/bin",
+        "LANG": "C",
+        "LC_ALL": "C",
+        "TZ": "UTC",
+        "GC_NPROCS": "1",
+        "GC_MARKERS": "1",
+        "FUSED_JSON_BENCH_WARMUP": "1",
+        "FUSED_JSON_BENCH_TIME": "2",
+        "FUSED_JSON_BENCH_ALLOCATIONS": "20",
+        "FUSED_JSON_BENCH_REVERSE": "1",
+        "FUSED_JSON_BENCH_COMMIT": "4ca865c4e8ad8716041df4069181a5523493de08"
+      },
+      "environment_policy": "sanitized; parent environment is not inherited",
+      "time_command": [
+        "/usr/bin/time",
+        "-v",
+        "-o",
+        "/tmp/fused-json-m6-dynamic-8tNDBW/process-03.time-v.txt",
+        "/usr/bin/taskset",
+        "-c",
+        "3",
+        "/tmp/fused-json-opt-4ca865c/bin/parse-bench",
+        "/media/wyhaines/home/wyhaines/ghq/github.com/ohler55/oj/test/data/activitypub.json",
+        "/media/wyhaines/home/wyhaines/ghq/github.com/ohler55/oj/test/data/canada.json",
+        "/media/wyhaines/home/wyhaines/ghq/github.com/ohler55/oj/test/data/citm_catalog.json",
+        "/media/wyhaines/home/wyhaines/ghq/github.com/ohler55/oj/test/data/ohai.json",
+        "/media/wyhaines/home/wyhaines/ghq/github.com/ohler55/oj/test/data/twitter.json"
+      ],
+      "benchmark_command": [
+        "/usr/bin/taskset",
+        "-c",
+        "3",
+        "/tmp/fused-json-opt-4ca865c/bin/parse-bench",
+        "/media/wyhaines/home/wyhaines/ghq/github.com/ohler55/oj/test/data/activitypub.json",
+        "/media/wyhaines/home/wyhaines/ghq/github.com/ohler55/oj/test/data/canada.json",
+        "/media/wyhaines/home/wyhaines/ghq/github.com/ohler55/oj/test/data/citm_catalog.json",
+        "/media/wyhaines/home/wyhaines/ghq/github.com/ohler55/oj/test/data/ohai.json",
+        "/media/wyhaines/home/wyhaines/ghq/github.com/ohler55/oj/test/data/twitter.json"
+      ],
+      "wrapper_pid": 18,
+      "binary_sha256": "eb2224c58a9a2547931efbf219f5dc85cad15cf9d8373142dac36f5b108126a6",
+      "runner_sha256": "65a3b78670a3d35e105c8943500061516d88a807e80de8d5127881a29ec77020",
+      "gnu_time_sha256": "7310b9b4c51a8f4d26c1af0da250f03a49ec8a8141033123e79196ad18f6c81b",
+      "taskset_sha256": "63e52c4b99a688ccd7bab6edbc6df2af1acad124eb852adcb4d20043d28eb2d3",
+      "node_executable_sha256": "53fb205ae78805130177e24bcb459a69a1518c8d98f8965f31d85aae7ea840fc",
+      "corpora": [
+        {
+          "name": "activitypub.json",
+          "realpath": "/media/wyhaines/home/wyhaines/ghq/github.com/ohler55/oj/test/data/activitypub.json",
+          "bytes": 58160,
+          "sha256": "4f4a68f2a0b0f5022e1eeff93ed6871845dc0e4e479dc4c32082225e1dbb3f7c"
+        },
+        {
+          "name": "canada.json",
+          "realpath": "/media/wyhaines/home/wyhaines/ghq/github.com/ohler55/oj/test/data/canada.json",
+          "bytes": 2251051,
+          "sha256": "f83b3b354030d5dd58740c68ac4fecef64cb730a0d12a90362a7f23077f50d78"
+        },
+        {
+          "name": "citm_catalog.json",
+          "realpath": "/media/wyhaines/home/wyhaines/ghq/github.com/ohler55/oj/test/data/citm_catalog.json",
+          "bytes": 1727204,
+          "sha256": "b3a1f8d7eda4d74551ee8c47639d2896fdcdb0d3ed8ffdb4d4d93ddbb07fdb90"
+        },
+        {
+          "name": "ohai.json",
+          "realpath": "/media/wyhaines/home/wyhaines/ghq/github.com/ohler55/oj/test/data/ohai.json",
+          "bytes": 32444,
+          "sha256": "4a56817d69aaedb1689944d9af6d8487dbd9742be415d9e22390236022be50f8"
+        },
+        {
+          "name": "twitter.json",
+          "realpath": "/media/wyhaines/home/wyhaines/ghq/github.com/ohler55/oj/test/data/twitter.json",
+          "bytes": 631514,
+          "sha256": "a08b769f32b95f426cbc3abafcec65c1a19d3eb544d4ddf320eae142c99efc5d"
+        }
+      ],
+      "identity_verification_before": {
+        "verified_at": "2026-08-25T19:36:51.047Z",
+        "matched": true,
+        "mismatches": [],
+        "observed": {
+          "tools": {
+            "gnu_time": {
+              "realpath": "/usr/bin/time",
+              "basename": "time",
+              "bytes": 27160,
+              "sha256": "7310b9b4c51a8f4d26c1af0da250f03a49ec8a8141033123e79196ad18f6c81b",
+              "executable": true
+            },
+            "taskset": {
+              "realpath": "/usr/bin/taskset",
+              "basename": "taskset",
+              "bytes": 22912,
+              "sha256": "63e52c4b99a688ccd7bab6edbc6df2af1acad124eb852adcb4d20043d28eb2d3",
+              "executable": true
+            },
+            "node": {
+              "realpath": "/media/wyhaines/home/wyhaines/.nvm/versions/node/v24.13.0/bin/node",
+              "basename": "node",
+              "bytes": 121158216,
+              "sha256": "53fb205ae78805130177e24bcb459a69a1518c8d98f8965f31d85aae7ea840fc",
+              "executable": true
+            }
+          },
+          "corpora": [
+            {
+              "name": "activitypub.json",
+              "identity": {
+                "realpath": "/media/wyhaines/home/wyhaines/ghq/github.com/ohler55/oj/test/data/activitypub.json",
+                "basename": "activitypub.json",
+                "bytes": 58160,
+                "sha256": "4f4a68f2a0b0f5022e1eeff93ed6871845dc0e4e479dc4c32082225e1dbb3f7c",
+                "executable": false
+              }
+            },
+            {
+              "name": "canada.json",
+              "identity": {
+                "realpath": "/media/wyhaines/home/wyhaines/ghq/github.com/ohler55/oj/test/data/canada.json",
+                "basename": "canada.json",
+                "bytes": 2251051,
+                "sha256": "f83b3b354030d5dd58740c68ac4fecef64cb730a0d12a90362a7f23077f50d78",
+                "executable": false
+              }
+            },
+            {
+              "name": "citm_catalog.json",
+              "identity": {
+                "realpath": "/media/wyhaines/home/wyhaines/ghq/github.com/ohler55/oj/test/data/citm_catalog.json",
+                "basename": "citm_catalog.json",
+                "bytes": 1727204,
+                "sha256": "b3a1f8d7eda4d74551ee8c47639d2896fdcdb0d3ed8ffdb4d4d93ddbb07fdb90",
+                "executable": false
+              }
+            },
+            {
+              "name": "ohai.json",
+              "identity": {
+                "realpath": "/media/wyhaines/home/wyhaines/ghq/github.com/ohler55/oj/test/data/ohai.json",
+                "basename": "ohai.json",
+                "bytes": 32444,
+                "sha256": "4a56817d69aaedb1689944d9af6d8487dbd9742be415d9e22390236022be50f8",
+                "executable": false
+              }
+            },
+            {
+              "name": "twitter.json",
+              "identity": {
+                "realpath": "/media/wyhaines/home/wyhaines/ghq/github.com/ohler55/oj/test/data/twitter.json",
+                "basename": "twitter.json",
+                "bytes": 631514,
+                "sha256": "a08b769f32b95f426cbc3abafcec65c1a19d3eb544d4ddf320eae142c99efc5d",
+                "executable": false
+              }
+            }
+          ],
+          "binary": {
+            "realpath": "/tmp/fused-json-opt-4ca865c/bin/parse-bench",
+            "basename": "parse-bench",
+            "bytes": 1011576,
+            "sha256": "eb2224c58a9a2547931efbf219f5dc85cad15cf9d8373142dac36f5b108126a6",
+            "executable": true
+          },
+          "runner": {
+            "realpath": "/media/wyhaines/home/wyhaines/ghq/github.com/wyhaines/fused-json.cr/scripts/dynamic_gate.mjs",
+            "basename": "dynamic_gate.mjs",
+            "bytes": 121078,
+            "sha256": "65a3b78670a3d35e105c8943500061516d88a807e80de8d5127881a29ec77020",
+            "executable": false
+          }
+        }
+      },
+      "identity_verification_after": {
+        "verified_at": "2026-08-25T19:37:38.210Z",
+        "matched": true,
+        "mismatches": [],
+        "observed": {
+          "tools": {
+            "gnu_time": {
+              "realpath": "/usr/bin/time",
+              "basename": "time",
+              "bytes": 27160,
+              "sha256": "7310b9b4c51a8f4d26c1af0da250f03a49ec8a8141033123e79196ad18f6c81b",
+              "executable": true
+            },
+            "taskset": {
+              "realpath": "/usr/bin/taskset",
+              "basename": "taskset",
+              "bytes": 22912,
+              "sha256": "63e52c4b99a688ccd7bab6edbc6df2af1acad124eb852adcb4d20043d28eb2d3",
+              "executable": true
+            },
+            "node": {
+              "realpath": "/media/wyhaines/home/wyhaines/.nvm/versions/node/v24.13.0/bin/node",
+              "basename": "node",
+              "bytes": 121158216,
+              "sha256": "53fb205ae78805130177e24bcb459a69a1518c8d98f8965f31d85aae7ea840fc",
+              "executable": true
+            }
+          },
+          "corpora": [
+            {
+              "name": "activitypub.json",
+              "identity": {
+                "realpath": "/media/wyhaines/home/wyhaines/ghq/github.com/ohler55/oj/test/data/activitypub.json",
+                "basename": "activitypub.json",
+                "bytes": 58160,
+                "sha256": "4f4a68f2a0b0f5022e1eeff93ed6871845dc0e4e479dc4c32082225e1dbb3f7c",
+                "executable": false
+              }
+            },
+            {
+              "name": "canada.json",
+              "identity": {
+                "realpath": "/media/wyhaines/home/wyhaines/ghq/github.com/ohler55/oj/test/data/canada.json",
+                "basename": "canada.json",
+                "bytes": 2251051,
+                "sha256": "f83b3b354030d5dd58740c68ac4fecef64cb730a0d12a90362a7f23077f50d78",
+                "executable": false
+              }
+            },
+            {
+              "name": "citm_catalog.json",
+              "identity": {
+                "realpath": "/media/wyhaines/home/wyhaines/ghq/github.com/ohler55/oj/test/data/citm_catalog.json",
+                "basename": "citm_catalog.json",
+                "bytes": 1727204,
+                "sha256": "b3a1f8d7eda4d74551ee8c47639d2896fdcdb0d3ed8ffdb4d4d93ddbb07fdb90",
+                "executable": false
+              }
+            },
+            {
+              "name": "ohai.json",
+              "identity": {
+                "realpath": "/media/wyhaines/home/wyhaines/ghq/github.com/ohler55/oj/test/data/ohai.json",
+                "basename": "ohai.json",
+                "bytes": 32444,
+                "sha256": "4a56817d69aaedb1689944d9af6d8487dbd9742be415d9e22390236022be50f8",
+                "executable": false
+              }
+            },
+            {
+              "name": "twitter.json",
+              "identity": {
+                "realpath": "/media/wyhaines/home/wyhaines/ghq/github.com/ohler55/oj/test/data/twitter.json",
+                "basename": "twitter.json",
+                "bytes": 631514,
+                "sha256": "a08b769f32b95f426cbc3abafcec65c1a19d3eb544d4ddf320eae142c99efc5d",
+                "executable": false
+              }
+            }
+          ],
+          "binary": {
+            "realpath": "/tmp/fused-json-opt-4ca865c/bin/parse-bench",
+            "basename": "parse-bench",
+            "bytes": 1011576,
+            "sha256": "eb2224c58a9a2547931efbf219f5dc85cad15cf9d8373142dac36f5b108126a6",
+            "executable": true
+          },
+          "runner": {
+            "realpath": "/media/wyhaines/home/wyhaines/ghq/github.com/wyhaines/fused-json.cr/scripts/dynamic_gate.mjs",
+            "basename": "dynamic_gate.mjs",
+            "bytes": 121078,
+            "sha256": "65a3b78670a3d35e105c8943500061516d88a807e80de8d5127881a29ec77020",
+            "executable": false
+          }
+        }
+      },
+      "started_at": "2026-08-25T19:36:51.047Z",
+      "finished_at": "2026-08-25T19:37:38.075Z",
+      "started_monotonic_ms": 1089586.952371,
+      "finished_monotonic_ms": 1136615.538761,
+      "elapsed_monotonic_seconds": 47.02858638999984,
+      "environment_start_gate": {
+        "policy_name": "busy-pinned-v2",
+        "policy_version": 2,
+        "label": "m6-dynamic-03-reverse",
+        "required_continuous_seconds": 6,
+        "wait_started_monotonic_ms": 1072410.364164,
+        "block_gate_deadline_seconds": 180,
+        "absolute_deadline_monotonic_ms": 1252410.364164,
+        "admitted_evaluated_monotonic_ms": 1089427.070293,
+        "first_acceptable_sample_sequence": 539,
+        "first_acceptable_monotonic_ms": 1083386.35108,
+        "admitted_sample_sequence": 542,
+        "admitted_monotonic_ms": 1089416.92236,
+        "continuous_seconds": 6.030571280000033,
+        "sample_sequences": [
+          539,
+          540,
+          541,
+          542
+        ],
+        "sample_count": 4,
+        "tctl_minimum_c": 61.125,
+        "tctl_maximum_c": 63.25,
+        "tctl_range_c": 2.125
+      },
+      "environment_start_sample_sequence": 542,
+      "environment_end_sample_sequence": 565,
+      "child_environment_window": {
+        "cpu": "2",
+        "maximum_busy_percent": 25,
+        "before": {
+          "observed_at": "2026-08-25T19:36:51.047Z",
+          "monotonic_ms": 1089586.828249,
+          "proc_stat_cpu_line": "cpu2 5118154 1874688 676463 26499309 23184 0 8816 0 0 0",
+          "counters": [
+            "5118154",
+            "1874688",
+            "676463",
+            "26499309",
+            "23184",
+            "0",
+            "8816",
+            "0",
+            "0",
+            "0"
+          ],
+          "total_ticks": "34200614",
+          "idle_ticks": "26522493",
+          "tctl_raw_millicelsius": "63375",
+          "tctl_c": 63.375
+        },
+        "after": {
+          "observed_at": "2026-08-25T19:37:38.075Z",
+          "monotonic_ms": 1136615.540885,
+          "proc_stat_cpu_line": "cpu2 5118194 1874759 676493 26503831 23185 0 8817 0 0 0",
+          "counters": [
+            "5118194",
+            "1874759",
+            "676493",
+            "26503831",
+            "23185",
+            "0",
+            "8817",
+            "0",
+            "0",
+            "0"
+          ],
+          "total_ticks": "34205279",
+          "idle_ticks": "26527016",
+          "tctl_raw_millicelsius": "99375",
+          "tctl_c": 99.375
+        },
+        "delta_total_ticks": "4665",
+        "delta_idle_ticks": "4523",
+        "delta_busy_ticks": "142",
+        "cpu_busy_percent": 3.0439442658092175,
+        "within_busy_limit": true
+      },
+      "exit": {
+        "code": 0,
+        "signal": null,
+        "spawn_error": null
+      },
+      "raw": {
+        "stdout": {
+          "bytes": 2800,
+          "sha256": "d55fd498c416f5c4e3ea19f9aac5d4f3b2698c7f74fe3c7abe32028aed13e4e8",
+          "encoding": "base64",
+          "base64": "CmFjdGl2aXR5cHViLmpzb246IDU4MTYwIGJ5dGVzCiAgRnVzZWRKU09OIGNhY2hlZCAgIDkuMzRrICgxMDcuMTHCtXMpICjCsSAxLjk2JSkgIDE5NmtCL29wICAgICAgICBmYXN0ZXN0CiAgICBGdXNlZEpTT04ubG9hZCAgIDkuMTNrICgxMDkuNTfCtXMpICjCsSAxLjI2JSkgIDIxN2tCL29wICAgMS4wMsOXIHNsb3dlcgpDcnlzdGFsIEpTT04ucGFyc2UgICA0LjM2ayAoMjI5LjIzwrVzKSAowrEgMS4wMiUpICAxNTdrQi9vcCAgIDIuMTTDlyBzbG93ZXIKICBGdXNlZEpTT04gY2FjaGVkICAgICAgNTE3LjgzMjkzNSBNaUIvcyAgKFJTRCAgMS45NiUpCiAgRnVzZWRKU09OLmxvYWQgICAgICAgIDUwNi4yMjE2NjQgTWlCL3MgIChSU0QgIDEuMjYlKQogIENyeXN0YWwgSlNPTi5wYXJzZSAgICAyNDEuOTYyNTcyIE1pQi9zICAoUlNEICAxLjAyJSkKICBNYW5hZ2VkIGFsbG9jYXRpb25zCiAgQ3J5c3RhbCBKU09OLnBhcnNlICAgICAgIDE2MTgzMSBCL29wCiAgRnVzZWRKU09OLmxvYWQgICAgICAgICAgIDIyMjQwNCBCL29wCiAgRnVzZWRKU09OIGNhY2hlZCAgICAgICAgIDIwMDcxMSBCL29wCgpjYW5hZGEuanNvbjogMjI1MTA1MSBieXRlcwogIEZ1c2VkSlNPTiBjYWNoZWQgMTM4LjAxICAoICA3LjI1bXMpICjCsSA4LjM4JSkgIDguNTRNQi9vcCAgIDEuMDPDlyBzbG93ZXIKICAgIEZ1c2VkSlNPTi5sb2FkIDE0MS45NiAgKCAgNy4wNG1zKSAowrEgNC4wNSUpICA4LjU0TUIvb3AgICAgICAgIGZhc3Rlc3QKQ3J5c3RhbCBKU09OLnBhcnNlICA3OS42OSAgKCAxMi41NW1zKSAowrEgMy42MCUpICAxMi43TUIvb3AgICAxLjc4w5cgc2xvd2VyCiAgRnVzZWRKU09OIGNhY2hlZCAgICAgIDI5Ni4yNzA1NjYgTWlCL3MgIChSU0QgIDguMzglKQogIEZ1c2VkSlNPTi5sb2FkICAgICAgICAzMDQuNzUyMjI4IE1pQi9zICAoUlNEICA0LjA1JSkKICBDcnlzdGFsIEpTT04ucGFyc2UgICAgMTcxLjA3MDYzNyBNaUIvcyAgKFJTRCAgMy42MCUpCiAgTWFuYWdlZCBhbGxvY2F0aW9ucwogIENyeXN0YWwgSlNPTi5wYXJzZSAgICAgMTMzMjYzMjAgQi9vcAogIEZ1c2VkSlNPTi5sb2FkICAgICAgICAgIDg5NjI0MTcgQi9vcAogIEZ1c2VkSlNPTiBjYWNoZWQgICAgICAgIDg5NjIxMzEgQi9vcAoKY2l0bV9jYXRhbG9nLmpzb246IDE3MjcyMDQgYnl0ZXMKICBGdXNlZEpTT04gY2FjaGVkIDMwNi41NyAgKCAgMy4yNm1zKSAowrEgNC4wMyUpICAzLjI4TUIvb3AgICAgICAgIGZhc3Rlc3QKICAgIEZ1c2VkSlNPTi5sb2FkIDI5MS4xNSAgKCAgMy40M21zKSAowrEgNC4xMCUpICA0LjA1TUIvb3AgICAxLjA1w5cgc2xvd2VyCkNyeXN0YWwgSlNPTi5wYXJzZSAxNDguNzYgICggIDYuNzJtcykgKMKxIDQuMDElKSAgMy43M01CL29wICAgMi4wNsOXIHNsb3dlcgogIEZ1c2VkSlNPTiBjYWNoZWQgICAgICA1MDQuOTg2OTgzIE1pQi9zICAoUlNEICA0LjAzJSkKICBGdXNlZEpTT04ubG9hZCAgICAgICAgNDc5LjU3MjgzNSBNaUIvcyAgKFJTRCAgNC4xMCUpCiAgQ3J5c3RhbCBKU09OLnBhcnNlICAgIDI0NS4wNDAzMjMgTWlCL3MgIChSU0QgIDQuMDElKQogIE1hbmFnZWQgYWxsb2NhdGlvbnMKICBDcnlzdGFsIEpTT04ucGFyc2UgICAgICAzOTA1MTU3IEIvb3AKICBGdXNlZEpTT04ubG9hZCAgICAgICAgICA0MjUyOTI1IEIvb3AKICBGdXNlZEpTT04gY2FjaGVkICAgICAgICAzNDQ1MDY5IEIvb3AKCm9oYWkuanNvbjogMzI0NDQgYnl0ZXMKICBGdXNlZEpTT04gY2FjaGVkICAxMS40M2sgKCA4Ny41McK1cykgKMKxIDUuNTAlKSAgMTQya0Ivb3AgICAxLjIww5cgc2xvd2VyCiAgICBGdXNlZEpTT04ubG9hZCAgMTMuNjZrICggNzMuMTjCtXMpICjCsSAzLjA3JSkgIDEyNWtCL29wICAgICAgICBmYXN0ZXN0CkNyeXN0YWwgSlNPTi5wYXJzZSAgIDYuNzZrICgxNDcuODbCtXMpICjCsSAxLjcyJSkgIDE0NWtCL29wICAgMi4wMsOXIHNsb3dlcgogIEZ1c2VkSlNPTiBjYWNoZWQgICAgICAzNTMuNTU5Mzk2IE1pQi9zICAoUlNEICA1LjUwJSkKICBGdXNlZEpTT04ubG9hZCAgICAgICAgNDIyLjgwMzkzNSBNaUIvcyAgKFJTRCAgMy4wNyUpCiAgQ3J5c3RhbCBKU09OLnBhcnNlICAgIDIwOS4yNTY0OTIgTWlCL3MgIChSU0QgIDEuNzIlKQogIE1hbmFnZWQgYWxsb2NhdGlvbnMKICBDcnlzdGFsIEpTT04ucGFyc2UgICAgICAgMTQ4MzgyIEIvb3AKICBGdXNlZEpTT04ubG9hZCAgICAgICAgICAgMTI3Mjk2IEIvb3AKICBGdXNlZEpTT04gY2FjaGVkICAgICAgICAgMTQ1MTc4IEIvb3AKCnR3aXR0ZXIuanNvbjogNjMxNTE0IGJ5dGVzCiAgRnVzZWRKU09OIGNhY2hlZCA3MTcuMTQgICggIDEuMzltcykgKMKxIDUuMTQlKSAgMS44NE1CL29wICAgICAgICBmYXN0ZXN0CiAgICBGdXNlZEpTT04ubG9hZCA2OTkuNDMgICggIDEuNDNtcykgKMKxIDIuMzQlKSAgMi4yOE1CL29wICAgMS4wM8OXIHNsb3dlcgpDcnlzdGFsIEpTT04ucGFyc2UgNDEyLjY0ICAoICAyLjQybXMpICjCsSAyLjE5JSkgICAxLjhNQi9vcCAgIDEuNzTDlyBzbG93ZXIKICBGdXNlZEpTT04gY2FjaGVkICAgICAgNDMxLjkwNTk4OCBNaUIvcyAgKFJTRCAgNS4xNCUpCiAgRnVzZWRKU09OLmxvYWQgICAgICAgIDQyMS4yMzUzNzggTWlCL3MgIChSU0QgIDIuMzQlKQogIENyeXN0YWwgSlNPTi5wYXJzZSAgICAyNDguNTEzMjAwIE1pQi9zICAoUlNEICAyLjE5JSkKICBNYW5hZ2VkIGFsbG9jYXRpb25zCiAgQ3J5c3RhbCBKU09OLnBhcnNlICAgICAgMTg5MDA2NiBCL29wCiAgRnVzZWRKU09OLmxvYWQgICAgICAgICAgMjM4NjYzOSBCL29wCiAgRnVzZWRKU09OIGNhY2hlZCAgICAgICAgMTkyNzc4OSBCL29wCg==",
+          "utf8": "\nactivitypub.json: 58160 bytes\n  FusedJSON cached   9.34k (107.11µs) (± 1.96%)  196kB/op        fastest\n    FusedJSON.load   9.13k (109.57µs) (± 1.26%)  217kB/op   1.02× slower\nCrystal JSON.parse   4.36k (229.23µs) (± 1.02%)  157kB/op   2.14× slower\n  FusedJSON cached      517.832935 MiB/s  (RSD  1.96%)\n  FusedJSON.load        506.221664 MiB/s  (RSD  1.26%)\n  Crystal JSON.parse    241.962572 MiB/s  (RSD  1.02%)\n  Managed allocations\n  Crystal JSON.parse       161831 B/op\n  FusedJSON.load           222404 B/op\n  FusedJSON cached         200711 B/op\n\ncanada.json: 2251051 bytes\n  FusedJSON cached 138.01  (  7.25ms) (± 8.38%)  8.54MB/op   1.03× slower\n    FusedJSON.load 141.96  (  7.04ms) (± 4.05%)  8.54MB/op        fastest\nCrystal JSON.parse  79.69  ( 12.55ms) (± 3.60%)  12.7MB/op   1.78× slower\n  FusedJSON cached      296.270566 MiB/s  (RSD  8.38%)\n  FusedJSON.load        304.752228 MiB/s  (RSD  4.05%)\n  Crystal JSON.parse    171.070637 MiB/s  (RSD  3.60%)\n  Managed allocations\n  Crystal JSON.parse     13326320 B/op\n  FusedJSON.load          8962417 B/op\n  FusedJSON cached        8962131 B/op\n\ncitm_catalog.json: 1727204 bytes\n  FusedJSON cached 306.57  (  3.26ms) (± 4.03%)  3.28MB/op        fastest\n    FusedJSON.load 291.15  (  3.43ms) (± 4.10%)  4.05MB/op   1.05× slower\nCrystal JSON.parse 148.76  (  6.72ms) (± 4.01%)  3.73MB/op   2.06× slower\n  FusedJSON cached      504.986983 MiB/s  (RSD  4.03%)\n  FusedJSON.load        479.572835 MiB/s  (RSD  4.10%)\n  Crystal JSON.parse    245.040323 MiB/s  (RSD  4.01%)\n  Managed allocations\n  Crystal JSON.parse      3905157 B/op\n  FusedJSON.load          4252925 B/op\n  FusedJSON cached        3445069 B/op\n\nohai.json: 32444 bytes\n  FusedJSON cached  11.43k ( 87.51µs) (± 5.50%)  142kB/op   1.20× slower\n    FusedJSON.load  13.66k ( 73.18µs) (± 3.07%)  125kB/op        fastest\nCrystal JSON.parse   6.76k (147.86µs) (± 1.72%)  145kB/op   2.02× slower\n  FusedJSON cached      353.559396 MiB/s  (RSD  5.50%)\n  FusedJSON.load        422.803935 MiB/s  (RSD  3.07%)\n  Crystal JSON.parse    209.256492 MiB/s  (RSD  1.72%)\n  Managed allocations\n  Crystal JSON.parse       148382 B/op\n  FusedJSON.load           127296 B/op\n  FusedJSON cached         145178 B/op\n\ntwitter.json: 631514 bytes\n  FusedJSON cached 717.14  (  1.39ms) (± 5.14%)  1.84MB/op        fastest\n    FusedJSON.load 699.43  (  1.43ms) (± 2.34%)  2.28MB/op   1.03× slower\nCrystal JSON.parse 412.64  (  2.42ms) (± 2.19%)   1.8MB/op   1.74× slower\n  FusedJSON cached      431.905988 MiB/s  (RSD  5.14%)\n  FusedJSON.load        421.235378 MiB/s  (RSD  2.34%)\n  Crystal JSON.parse    248.513200 MiB/s  (RSD  2.19%)\n  Managed allocations\n  Crystal JSON.parse      1890066 B/op\n  FusedJSON.load          2386639 B/op\n  FusedJSON cached        1927789 B/op\n"
+        },
+        "stderr": {
+          "bytes": 0,
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "encoding": "base64",
+          "base64": "",
+          "utf8": ""
+        },
+        "task_audit": {
+          "bytes": 1191,
+          "sha256": "c3dd19ce23178d7c3c1e374d350e623b33badcc8340ab5fec31905f73c01a79e",
+          "encoding": "base64",
+          "base64": "CUNvbW1hbmQgYmVpbmcgdGltZWQ6ICIvdXNyL2Jpbi90YXNrc2V0IC1jIDMgL3RtcC9mdXNlZC1qc29uLW9wdC00Y2E4NjVjL2Jpbi9wYXJzZS1iZW5jaCAvbWVkaWEvd3loYWluZXMvaG9tZS93eWhhaW5lcy9naHEvZ2l0aHViLmNvbS9vaGxlcjU1L29qL3Rlc3QvZGF0YS9hY3Rpdml0eXB1Yi5qc29uIC9tZWRpYS93eWhhaW5lcy9ob21lL3d5aGFpbmVzL2docS9naXRodWIuY29tL29obGVyNTUvb2ovdGVzdC9kYXRhL2NhbmFkYS5qc29uIC9tZWRpYS93eWhhaW5lcy9ob21lL3d5aGFpbmVzL2docS9naXRodWIuY29tL29obGVyNTUvb2ovdGVzdC9kYXRhL2NpdG1fY2F0YWxvZy5qc29uIC9tZWRpYS93eWhhaW5lcy9ob21lL3d5aGFpbmVzL2docS9naXRodWIuY29tL29obGVyNTUvb2ovdGVzdC9kYXRhL29oYWkuanNvbiAvbWVkaWEvd3loYWluZXMvaG9tZS93eWhhaW5lcy9naHEvZ2l0aHViLmNvbS9vaGxlcjU1L29qL3Rlc3QvZGF0YS90d2l0dGVyLmpzb24iCglVc2VyIHRpbWUgKHNlY29uZHMpOiA0Ni41OAoJU3lzdGVtIHRpbWUgKHNlY29uZHMpOiAwLjQyCglQZXJjZW50IG9mIENQVSB0aGlzIGpvYiBnb3Q6IDk5JQoJRWxhcHNlZCAod2FsbCBjbG9jaykgdGltZSAoaDptbTpzcyBvciBtOnNzKTogMDo0Ny4wMQoJQXZlcmFnZSBzaGFyZWQgdGV4dCBzaXplIChrYnl0ZXMpOiAwCglBdmVyYWdlIHVuc2hhcmVkIGRhdGEgc2l6ZSAoa2J5dGVzKTogMAoJQXZlcmFnZSBzdGFjayBzaXplIChrYnl0ZXMpOiAwCglBdmVyYWdlIHRvdGFsIHNpemUgKGtieXRlcyk6IDAKCU1heGltdW0gcmVzaWRlbnQgc2V0IHNpemUgKGtieXRlcyk6IDY2MzA0CglBdmVyYWdlIHJlc2lkZW50IHNldCBzaXplIChrYnl0ZXMpOiAwCglNYWpvciAocmVxdWlyaW5nIEkvTykgcGFnZSBmYXVsdHM6IDAKCU1pbm9yIChyZWNsYWltaW5nIGEgZnJhbWUpIHBhZ2UgZmF1bHRzOiAyNDg0MwoJVm9sdW50YXJ5IGNvbnRleHQgc3dpdGNoZXM6IDMzODkzCglJbnZvbHVudGFyeSBjb250ZXh0IHN3aXRjaGVzOiAzNDEzMQoJU3dhcHM6IDAKCUZpbGUgc3lzdGVtIGlucHV0czogMAoJRmlsZSBzeXN0ZW0gb3V0cHV0czogMTYKCVNvY2tldCBtZXNzYWdlcyBzZW50OiAwCglTb2NrZXQgbWVzc2FnZXMgcmVjZWl2ZWQ6IDAKCVNpZ25hbHMgZGVsaXZlcmVkOiAwCglQYWdlIHNpemUgKGJ5dGVzKTogNDA5NgoJRXhpdCBzdGF0dXM6IDAK",
+          "utf8": "\tCommand being timed: \"/usr/bin/taskset -c 3 /tmp/fused-json-opt-4ca865c/bin/parse-bench /media/wyhaines/home/wyhaines/ghq/github.com/ohler55/oj/test/data/activitypub.json /media/wyhaines/home/wyhaines/ghq/github.com/ohler55/oj/test/data/canada.json /media/wyhaines/home/wyhaines/ghq/github.com/ohler55/oj/test/data/citm_catalog.json /media/wyhaines/home/wyhaines/ghq/github.com/ohler55/oj/test/data/ohai.json /media/wyhaines/home/wyhaines/ghq/github.com/ohler55/oj/test/data/twitter.json\"\n\tUser time (seconds): 46.58\n\tSystem time (seconds): 0.42\n\tPercent of CPU this job got: 99%\n\tElapsed (wall clock) time (h:mm:ss or m:ss): 0:47.01\n\tAverage shared text size (kbytes): 0\n\tAverage unshared data size (kbytes): 0\n\tAverage stack size (kbytes): 0\n\tAverage total size (kbytes): 0\n\tMaximum resident set size (kbytes): 66304\n\tAverage resident set size (kbytes): 0\n\tMajor (requiring I/O) page faults: 0\n\tMinor (reclaiming a frame) page faults: 24843\n\tVoluntary context switches: 33893\n\tInvoluntary context switches: 34131\n\tSwaps: 0\n\tFile system inputs: 0\n\tFile system outputs: 16\n\tSocket messages sent: 0\n\tSocket messages received: 0\n\tSignals delivered: 0\n\tPage size (bytes): 4096\n\tExit status: 0\n"
+        }
+      },
+      "parsed_stdout_sha256": "d55fd498c416f5c4e3ea19f9aac5d4f3b2698c7f74fe3c7abe32028aed13e4e8",
+      "parsed_output": {
+        "schema": "fused-json-parse-custom-output-v1",
+        "corpora": [
+          {
+            "name": "activitypub.json",
+            "bytes": 58160,
+            "throughput_order": [
+              "FusedJSON cached",
+              "FusedJSON.load",
+              "Crystal JSON.parse"
+            ],
+            "allocation_order": [
+              "Crystal JSON.parse",
+              "FusedJSON.load",
+              "FusedJSON cached"
+            ],
+            "implementations": {
+              "fused_json_cached": {
+                "label": "FusedJSON cached",
+                "mib_per_second": 517.832935,
+                "relative_stddev_percent": 1.96,
+                "managed_bytes_per_operation": 200711
+              },
+              "fused_json_load": {
+                "label": "FusedJSON.load",
+                "mib_per_second": 506.221664,
+                "relative_stddev_percent": 1.26,
+                "managed_bytes_per_operation": 222404
+              },
+              "crystal_json_parse": {
+                "label": "Crystal JSON.parse",
+                "mib_per_second": 241.962572,
+                "relative_stddev_percent": 1.02,
+                "managed_bytes_per_operation": 161831
+              }
+            },
+            "fused_load_to_crystal_ratio": 2.092148631979329
+          },
+          {
+            "name": "canada.json",
+            "bytes": 2251051,
+            "throughput_order": [
+              "FusedJSON cached",
+              "FusedJSON.load",
+              "Crystal JSON.parse"
+            ],
+            "allocation_order": [
+              "Crystal JSON.parse",
+              "FusedJSON.load",
+              "FusedJSON cached"
+            ],
+            "implementations": {
+              "fused_json_cached": {
+                "label": "FusedJSON cached",
+                "mib_per_second": 296.270566,
+                "relative_stddev_percent": 8.38,
+                "managed_bytes_per_operation": 8962131
+              },
+              "fused_json_load": {
+                "label": "FusedJSON.load",
+                "mib_per_second": 304.752228,
+                "relative_stddev_percent": 4.05,
+                "managed_bytes_per_operation": 8962417
+              },
+              "crystal_json_parse": {
+                "label": "Crystal JSON.parse",
+                "mib_per_second": 171.070637,
+                "relative_stddev_percent": 3.6,
+                "managed_bytes_per_operation": 13326320
+              }
+            },
+            "fused_load_to_crystal_ratio": 1.7814408909928827
+          },
+          {
+            "name": "citm_catalog.json",
+            "bytes": 1727204,
+            "throughput_order": [
+              "FusedJSON cached",
+              "FusedJSON.load",
+              "Crystal JSON.parse"
+            ],
+            "allocation_order": [
+              "Crystal JSON.parse",
+              "FusedJSON.load",
+              "FusedJSON cached"
+            ],
+            "implementations": {
+              "fused_json_cached": {
+                "label": "FusedJSON cached",
+                "mib_per_second": 504.986983,
+                "relative_stddev_percent": 4.03,
+                "managed_bytes_per_operation": 3445069
+              },
+              "fused_json_load": {
+                "label": "FusedJSON.load",
+                "mib_per_second": 479.572835,
+                "relative_stddev_percent": 4.1,
+                "managed_bytes_per_operation": 4252925
+              },
+              "crystal_json_parse": {
+                "label": "Crystal JSON.parse",
+                "mib_per_second": 245.040323,
+                "relative_stddev_percent": 4.01,
+                "managed_bytes_per_operation": 3905157
+              }
+            },
+            "fused_load_to_crystal_ratio": 1.9571180331818285
+          },
+          {
+            "name": "ohai.json",
+            "bytes": 32444,
+            "throughput_order": [
+              "FusedJSON cached",
+              "FusedJSON.load",
+              "Crystal JSON.parse"
+            ],
+            "allocation_order": [
+              "Crystal JSON.parse",
+              "FusedJSON.load",
+              "FusedJSON cached"
+            ],
+            "implementations": {
+              "fused_json_cached": {
+                "label": "FusedJSON cached",
+                "mib_per_second": 353.559396,
+                "relative_stddev_percent": 5.5,
+                "managed_bytes_per_operation": 145178
+              },
+              "fused_json_load": {
+                "label": "FusedJSON.load",
+                "mib_per_second": 422.803935,
+                "relative_stddev_percent": 3.07,
+                "managed_bytes_per_operation": 127296
+              },
+              "crystal_json_parse": {
+                "label": "Crystal JSON.parse",
+                "mib_per_second": 209.256492,
+                "relative_stddev_percent": 1.72,
+                "managed_bytes_per_operation": 148382
+              }
+            },
+            "fused_load_to_crystal_ratio": 2.0205057007263605
+          },
+          {
+            "name": "twitter.json",
+            "bytes": 631514,
+            "throughput_order": [
+              "FusedJSON cached",
+              "FusedJSON.load",
+              "Crystal JSON.parse"
+            ],
+            "allocation_order": [
+              "Crystal JSON.parse",
+              "FusedJSON.load",
+              "FusedJSON cached"
+            ],
+            "implementations": {
+              "fused_json_cached": {
+                "label": "FusedJSON cached",
+                "mib_per_second": 431.905988,
+                "relative_stddev_percent": 5.14,
+                "managed_bytes_per_operation": 1927789
+              },
+              "fused_json_load": {
+                "label": "FusedJSON.load",
+                "mib_per_second": 421.235378,
+                "relative_stddev_percent": 2.34,
+                "managed_bytes_per_operation": 2386639
+              },
+              "crystal_json_parse": {
+                "label": "Crystal JSON.parse",
+                "mib_per_second": 248.5132,
+                "relative_stddev_percent": 2.19,
+                "managed_bytes_per_operation": 1890066
+              }
+            },
+            "fused_load_to_crystal_ratio": 1.695022147716902
+          }
+        ]
+      },
+      "output_parse_error": null,
+      "parsed_task_audit_sha256": "c3dd19ce23178d7c3c1e374d350e623b33badcc8340ab5fec31905f73c01a79e",
+      "task_audit": {
+        "schema": "gnu-time-v1-verbose-v1",
+        "user_cpu_seconds": 46.58,
+        "system_cpu_seconds": 0.42,
+        "task_cpu_seconds": 47,
+        "reported_cpu_percent": 99,
+        "reported_cpu_share": 0.99,
+        "elapsed_wall": "0:47.01",
+        "elapsed_wall_seconds": 47.01,
+        "maximum_resident_kibibytes": 66304,
+        "major_page_faults": 0,
+        "minor_page_faults": 24843,
+        "voluntary_context_switches": 33893,
+        "involuntary_context_switches": 34131,
+        "exit_status": 0,
+        "cpu_time_over_wall_from_rounded_seconds": 0.9997872793022762,
+        "total_context_switches": 68024
+      },
+      "task_audit_error": null,
+      "validity_issues": [],
+      "valid": true
+    },
+    {
+      "receipt": "fused-json-m6-dynamic-child",
+      "version": 2,
+      "schedule_index": 4,
+      "process_id": "m6-dynamic-04-normal",
+      "order": "normal",
+      "attempt": 1,
+      "retry_policy": "none",
+      "commit_argument": "4ca865c4e8ad8716041df4069181a5523493de08",
+      "fused_json_commit": "4ca865c4e8ad8716041df4069181a5523493de08",
+      "cpu_affinity": "3",
+      "environment": {
+        "PATH": "/usr/bin:/bin",
+        "LANG": "C",
+        "LC_ALL": "C",
+        "TZ": "UTC",
+        "GC_NPROCS": "1",
+        "GC_MARKERS": "1",
+        "FUSED_JSON_BENCH_WARMUP": "1",
+        "FUSED_JSON_BENCH_TIME": "2",
+        "FUSED_JSON_BENCH_ALLOCATIONS": "20",
+        "FUSED_JSON_BENCH_REVERSE": "0",
+        "FUSED_JSON_BENCH_COMMIT": "4ca865c4e8ad8716041df4069181a5523493de08"
+      },
+      "environment_policy": "sanitized; parent environment is not inherited",
+      "time_command": [
+        "/usr/bin/time",
+        "-v",
+        "-o",
+        "/tmp/fused-json-m6-dynamic-8tNDBW/process-04.time-v.txt",
+        "/usr/bin/taskset",
+        "-c",
+        "3",
+        "/tmp/fused-json-opt-4ca865c/bin/parse-bench",
+        "/media/wyhaines/home/wyhaines/ghq/github.com/ohler55/oj/test/data/activitypub.json",
+        "/media/wyhaines/home/wyhaines/ghq/github.com/ohler55/oj/test/data/canada.json",
+        "/media/wyhaines/home/wyhaines/ghq/github.com/ohler55/oj/test/data/citm_catalog.json",
+        "/media/wyhaines/home/wyhaines/ghq/github.com/ohler55/oj/test/data/ohai.json",
+        "/media/wyhaines/home/wyhaines/ghq/github.com/ohler55/oj/test/data/twitter.json"
+      ],
+      "benchmark_command": [
+        "/usr/bin/taskset",
+        "-c",
+        "3",
+        "/tmp/fused-json-opt-4ca865c/bin/parse-bench",
+        "/media/wyhaines/home/wyhaines/ghq/github.com/ohler55/oj/test/data/activitypub.json",
+        "/media/wyhaines/home/wyhaines/ghq/github.com/ohler55/oj/test/data/canada.json",
+        "/media/wyhaines/home/wyhaines/ghq/github.com/ohler55/oj/test/data/citm_catalog.json",
+        "/media/wyhaines/home/wyhaines/ghq/github.com/ohler55/oj/test/data/ohai.json",
+        "/media/wyhaines/home/wyhaines/ghq/github.com/ohler55/oj/test/data/twitter.json"
+      ],
+      "wrapper_pid": 21,
+      "binary_sha256": "eb2224c58a9a2547931efbf219f5dc85cad15cf9d8373142dac36f5b108126a6",
+      "runner_sha256": "65a3b78670a3d35e105c8943500061516d88a807e80de8d5127881a29ec77020",
+      "gnu_time_sha256": "7310b9b4c51a8f4d26c1af0da250f03a49ec8a8141033123e79196ad18f6c81b",
+      "taskset_sha256": "63e52c4b99a688ccd7bab6edbc6df2af1acad124eb852adcb4d20043d28eb2d3",
+      "node_executable_sha256": "53fb205ae78805130177e24bcb459a69a1518c8d98f8965f31d85aae7ea840fc",
+      "corpora": [
+        {
+          "name": "activitypub.json",
+          "realpath": "/media/wyhaines/home/wyhaines/ghq/github.com/ohler55/oj/test/data/activitypub.json",
+          "bytes": 58160,
+          "sha256": "4f4a68f2a0b0f5022e1eeff93ed6871845dc0e4e479dc4c32082225e1dbb3f7c"
+        },
+        {
+          "name": "canada.json",
+          "realpath": "/media/wyhaines/home/wyhaines/ghq/github.com/ohler55/oj/test/data/canada.json",
+          "bytes": 2251051,
+          "sha256": "f83b3b354030d5dd58740c68ac4fecef64cb730a0d12a90362a7f23077f50d78"
+        },
+        {
+          "name": "citm_catalog.json",
+          "realpath": "/media/wyhaines/home/wyhaines/ghq/github.com/ohler55/oj/test/data/citm_catalog.json",
+          "bytes": 1727204,
+          "sha256": "b3a1f8d7eda4d74551ee8c47639d2896fdcdb0d3ed8ffdb4d4d93ddbb07fdb90"
+        },
+        {
+          "name": "ohai.json",
+          "realpath": "/media/wyhaines/home/wyhaines/ghq/github.com/ohler55/oj/test/data/ohai.json",
+          "bytes": 32444,
+          "sha256": "4a56817d69aaedb1689944d9af6d8487dbd9742be415d9e22390236022be50f8"
+        },
+        {
+          "name": "twitter.json",
+          "realpath": "/media/wyhaines/home/wyhaines/ghq/github.com/ohler55/oj/test/data/twitter.json",
+          "bytes": 631514,
+          "sha256": "a08b769f32b95f426cbc3abafcec65c1a19d3eb544d4ddf320eae142c99efc5d"
+        }
+      ],
+      "identity_verification_before": {
+        "verified_at": "2026-08-25T19:38:03.383Z",
+        "matched": true,
+        "mismatches": [],
+        "observed": {
+          "tools": {
+            "gnu_time": {
+              "realpath": "/usr/bin/time",
+              "basename": "time",
+              "bytes": 27160,
+              "sha256": "7310b9b4c51a8f4d26c1af0da250f03a49ec8a8141033123e79196ad18f6c81b",
+              "executable": true
+            },
+            "taskset": {
+              "realpath": "/usr/bin/taskset",
+              "basename": "taskset",
+              "bytes": 22912,
+              "sha256": "63e52c4b99a688ccd7bab6edbc6df2af1acad124eb852adcb4d20043d28eb2d3",
+              "executable": true
+            },
+            "node": {
+              "realpath": "/media/wyhaines/home/wyhaines/.nvm/versions/node/v24.13.0/bin/node",
+              "basename": "node",
+              "bytes": 121158216,
+              "sha256": "53fb205ae78805130177e24bcb459a69a1518c8d98f8965f31d85aae7ea840fc",
+              "executable": true
+            }
+          },
+          "corpora": [
+            {
+              "name": "activitypub.json",
+              "identity": {
+                "realpath": "/media/wyhaines/home/wyhaines/ghq/github.com/ohler55/oj/test/data/activitypub.json",
+                "basename": "activitypub.json",
+                "bytes": 58160,
+                "sha256": "4f4a68f2a0b0f5022e1eeff93ed6871845dc0e4e479dc4c32082225e1dbb3f7c",
+                "executable": false
+              }
+            },
+            {
+              "name": "canada.json",
+              "identity": {
+                "realpath": "/media/wyhaines/home/wyhaines/ghq/github.com/ohler55/oj/test/data/canada.json",
+                "basename": "canada.json",
+                "bytes": 2251051,
+                "sha256": "f83b3b354030d5dd58740c68ac4fecef64cb730a0d12a90362a7f23077f50d78",
+                "executable": false
+              }
+            },
+            {
+              "name": "citm_catalog.json",
+              "identity": {
+                "realpath": "/media/wyhaines/home/wyhaines/ghq/github.com/ohler55/oj/test/data/citm_catalog.json",
+                "basename": "citm_catalog.json",
+                "bytes": 1727204,
+                "sha256": "b3a1f8d7eda4d74551ee8c47639d2896fdcdb0d3ed8ffdb4d4d93ddbb07fdb90",
+                "executable": false
+              }
+            },
+            {
+              "name": "ohai.json",
+              "identity": {
+                "realpath": "/media/wyhaines/home/wyhaines/ghq/github.com/ohler55/oj/test/data/ohai.json",
+                "basename": "ohai.json",
+                "bytes": 32444,
+                "sha256": "4a56817d69aaedb1689944d9af6d8487dbd9742be415d9e22390236022be50f8",
+                "executable": false
+              }
+            },
+            {
+              "name": "twitter.json",
+              "identity": {
+                "realpath": "/media/wyhaines/home/wyhaines/ghq/github.com/ohler55/oj/test/data/twitter.json",
+                "basename": "twitter.json",
+                "bytes": 631514,
+                "sha256": "a08b769f32b95f426cbc3abafcec65c1a19d3eb544d4ddf320eae142c99efc5d",
+                "executable": false
+              }
+            }
+          ],
+          "binary": {
+            "realpath": "/tmp/fused-json-opt-4ca865c/bin/parse-bench",
+            "basename": "parse-bench",
+            "bytes": 1011576,
+            "sha256": "eb2224c58a9a2547931efbf219f5dc85cad15cf9d8373142dac36f5b108126a6",
+            "executable": true
+          },
+          "runner": {
+            "realpath": "/media/wyhaines/home/wyhaines/ghq/github.com/wyhaines/fused-json.cr/scripts/dynamic_gate.mjs",
+            "basename": "dynamic_gate.mjs",
+            "bytes": 121078,
+            "sha256": "65a3b78670a3d35e105c8943500061516d88a807e80de8d5127881a29ec77020",
+            "executable": false
+          }
+        }
+      },
+      "identity_verification_after": {
+        "verified_at": "2026-08-25T19:38:50.480Z",
+        "matched": true,
+        "mismatches": [],
+        "observed": {
+          "tools": {
+            "gnu_time": {
+              "realpath": "/usr/bin/time",
+              "basename": "time",
+              "bytes": 27160,
+              "sha256": "7310b9b4c51a8f4d26c1af0da250f03a49ec8a8141033123e79196ad18f6c81b",
+              "executable": true
+            },
+            "taskset": {
+              "realpath": "/usr/bin/taskset",
+              "basename": "taskset",
+              "bytes": 22912,
+              "sha256": "63e52c4b99a688ccd7bab6edbc6df2af1acad124eb852adcb4d20043d28eb2d3",
+              "executable": true
+            },
+            "node": {
+              "realpath": "/media/wyhaines/home/wyhaines/.nvm/versions/node/v24.13.0/bin/node",
+              "basename": "node",
+              "bytes": 121158216,
+              "sha256": "53fb205ae78805130177e24bcb459a69a1518c8d98f8965f31d85aae7ea840fc",
+              "executable": true
+            }
+          },
+          "corpora": [
+            {
+              "name": "activitypub.json",
+              "identity": {
+                "realpath": "/media/wyhaines/home/wyhaines/ghq/github.com/ohler55/oj/test/data/activitypub.json",
+                "basename": "activitypub.json",
+                "bytes": 58160,
+                "sha256": "4f4a68f2a0b0f5022e1eeff93ed6871845dc0e4e479dc4c32082225e1dbb3f7c",
+                "executable": false
+              }
+            },
+            {
+              "name": "canada.json",
+              "identity": {
+                "realpath": "/media/wyhaines/home/wyhaines/ghq/github.com/ohler55/oj/test/data/canada.json",
+                "basename": "canada.json",
+                "bytes": 2251051,
+                "sha256": "f83b3b354030d5dd58740c68ac4fecef64cb730a0d12a90362a7f23077f50d78",
+                "executable": false
+              }
+            },
+            {
+              "name": "citm_catalog.json",
+              "identity": {
+                "realpath": "/media/wyhaines/home/wyhaines/ghq/github.com/ohler55/oj/test/data/citm_catalog.json",
+                "basename": "citm_catalog.json",
+                "bytes": 1727204,
+                "sha256": "b3a1f8d7eda4d74551ee8c47639d2896fdcdb0d3ed8ffdb4d4d93ddbb07fdb90",
+                "executable": false
+              }
+            },
+            {
+              "name": "ohai.json",
+              "identity": {
+                "realpath": "/media/wyhaines/home/wyhaines/ghq/github.com/ohler55/oj/test/data/ohai.json",
+                "basename": "ohai.json",
+                "bytes": 32444,
+                "sha256": "4a56817d69aaedb1689944d9af6d8487dbd9742be415d9e22390236022be50f8",
+                "executable": false
+              }
+            },
+            {
+              "name": "twitter.json",
+              "identity": {
+                "realpath": "/media/wyhaines/home/wyhaines/ghq/github.com/ohler55/oj/test/data/twitter.json",
+                "basename": "twitter.json",
+                "bytes": 631514,
+                "sha256": "a08b769f32b95f426cbc3abafcec65c1a19d3eb544d4ddf320eae142c99efc5d",
+                "executable": false
+              }
+            }
+          ],
+          "binary": {
+            "realpath": "/tmp/fused-json-opt-4ca865c/bin/parse-bench",
+            "basename": "parse-bench",
+            "bytes": 1011576,
+            "sha256": "eb2224c58a9a2547931efbf219f5dc85cad15cf9d8373142dac36f5b108126a6",
+            "executable": true
+          },
+          "runner": {
+            "realpath": "/media/wyhaines/home/wyhaines/ghq/github.com/wyhaines/fused-json.cr/scripts/dynamic_gate.mjs",
+            "basename": "dynamic_gate.mjs",
+            "bytes": 121078,
+            "sha256": "65a3b78670a3d35e105c8943500061516d88a807e80de8d5127881a29ec77020",
+            "executable": false
+          }
+        }
+      },
+      "started_at": "2026-08-25T19:38:03.384Z",
+      "finished_at": "2026-08-25T19:38:50.343Z",
+      "started_monotonic_ms": 1161923.730866,
+      "finished_monotonic_ms": 1208883.349753,
+      "elapsed_monotonic_seconds": 46.95961888700002,
+      "environment_start_gate": {
+        "policy_name": "busy-pinned-v2",
+        "policy_version": 2,
+        "label": "m6-dynamic-04-normal",
+        "required_continuous_seconds": 6,
+        "wait_started_monotonic_ms": 1136778.440621,
+        "block_gate_deadline_seconds": 180,
+        "absolute_deadline_monotonic_ms": 1316778.440621,
+        "admitted_evaluated_monotonic_ms": 1161768.3502,
+        "first_acceptable_sample_sequence": 575,
+        "first_acceptable_monotonic_ms": 1155728.356733,
+        "admitted_sample_sequence": 578,
+        "admitted_monotonic_ms": 1161758.351326,
+        "continuous_seconds": 6.02999459300004,
+        "sample_sequences": [
+          575,
+          576,
+          577,
+          578
+        ],
+        "sample_count": 4,
+        "tctl_minimum_c": 63.25,
+        "tctl_maximum_c": 68.125,
+        "tctl_range_c": 4.875
+      },
+      "environment_start_sample_sequence": 578,
+      "environment_end_sample_sequence": 601,
+      "child_environment_window": {
+        "cpu": "2",
+        "maximum_busy_percent": 25,
+        "before": {
+          "observed_at": "2026-08-25T19:38:03.383Z",
+          "monotonic_ms": 1161923.597116,
+          "proc_stat_cpu_line": "cpu2 5118281 1874811 676551 26506132 23186 0 8818 0 0 0",
+          "counters": [
+            "5118281",
+            "1874811",
+            "676551",
+            "26506132",
+            "23186",
+            "0",
+            "8818",
+            "0",
+            "0",
+            "0"
+          ],
+          "total_ticks": "34207779",
+          "idle_ticks": "26529318",
+          "tctl_raw_millicelsius": "64250",
+          "tctl_c": 64.25
+        },
+        "after": {
+          "observed_at": "2026-08-25T19:38:50.343Z",
+          "monotonic_ms": 1208883.354752,
+          "proc_stat_cpu_line": "cpu2 5118325 1874855 676573 26510683 23188 0 8818 0 0 0",
+          "counters": [
+            "5118325",
+            "1874855",
+            "676573",
+            "26510683",
+            "23188",
+            "0",
+            "8818",
+            "0",
+            "0",
+            "0"
+          ],
+          "total_ticks": "34212442",
+          "idle_ticks": "26533871",
+          "tctl_raw_millicelsius": "95875",
+          "tctl_c": 95.875
+        },
+        "delta_total_ticks": "4663",
+        "delta_idle_ticks": "4553",
+        "delta_busy_ticks": "110",
+        "cpu_busy_percent": 2.3589963542783616,
+        "within_busy_limit": true
+      },
+      "exit": {
+        "code": 0,
+        "signal": null,
+        "spawn_error": null
+      },
+      "raw": {
+        "stdout": {
+          "bytes": 2800,
+          "sha256": "7bb557ce6f3f6f22ee7e7f49747c7598fd728afedf06fbcdccf60754fae9abc2",
+          "encoding": "base64",
+          "base64": "CmFjdGl2aXR5cHViLmpzb246IDU4MTYwIGJ5dGVzCkNyeXN0YWwgSlNPTi5wYXJzZSAgIDQuNDFrICgyMjYuNTPCtXMpICjCsSAwLjk1JSkgIDE1N2tCL29wICAgMi4xMMOXIHNsb3dlcgogICAgRnVzZWRKU09OLmxvYWQgICA5LjE4ayAoMTA4LjkxwrVzKSAowrEgMy40MyUpICAyMTdrQi9vcCAgIDEuMDHDlyBzbG93ZXIKICBGdXNlZEpTT04gY2FjaGVkICAgOS4yNmsgKDEwNy45NcK1cykgKMKxIDcuNDUlKSAgMTk2a0Ivb3AgICAgICAgIGZhc3Rlc3QKICBDcnlzdGFsIEpTT04ucGFyc2UgICAgMjQ0Ljg0NzM4NCBNaUIvcyAgKFJTRCAgMC45NSUpCiAgRnVzZWRKU09OLmxvYWQgICAgICAgIDUwOS4yODUwNTUgTWlCL3MgIChSU0QgIDMuNDMlKQogIEZ1c2VkSlNPTiBjYWNoZWQgICAgICA1MTMuNzk5NjAxIE1pQi9zICAoUlNEICA3LjQ1JSkKICBNYW5hZ2VkIGFsbG9jYXRpb25zCiAgQ3J5c3RhbCBKU09OLnBhcnNlICAgICAgIDE2MjA0NSBCL29wCiAgRnVzZWRKU09OLmxvYWQgICAgICAgICAgIDIyMTkyNiBCL29wCiAgRnVzZWRKU09OIGNhY2hlZCAgICAgICAgIDIwMDY2NSBCL29wCgpjYW5hZGEuanNvbjogMjI1MTA1MSBieXRlcwpDcnlzdGFsIEpTT04ucGFyc2UgIDgwLjU0ICAoIDEyLjQybXMpICjCsSAzLjcyJSkgIDEyLjdNQi9vcCAgIDEuODHDlyBzbG93ZXIKICAgIEZ1c2VkSlNPTi5sb2FkIDEzOS42OCAgKCAgNy4xNm1zKSAowrEgNy41NCUpICA4LjU0TUIvb3AgICAxLjA0w5cgc2xvd2VyCiAgRnVzZWRKU09OIGNhY2hlZCAxNDUuODcgICggIDYuODZtcykgKMKxIDQuNDQlKSAgOC41NE1CL29wICAgICAgICBmYXN0ZXN0CiAgQ3J5c3RhbCBKU09OLnBhcnNlICAgIDE3Mi44OTcyNzIgTWlCL3MgIChSU0QgIDMuNzIlKQogIEZ1c2VkSlNPTi5sb2FkICAgICAgICAyOTkuODYyMzA4IE1pQi9zICAoUlNEICA3LjU0JSkKICBGdXNlZEpTT04gY2FjaGVkICAgICAgMzEzLjEzODY4OCBNaUIvcyAgKFJTRCAgNC40NCUpCiAgTWFuYWdlZCBhbGxvY2F0aW9ucwogIENyeXN0YWwgSlNPTi5wYXJzZSAgICAgMTMzMjYyMzYgQi9vcAogIEZ1c2VkSlNPTi5sb2FkICAgICAgICAgIDg5NjIxMzAgQi9vcAogIEZ1c2VkSlNPTiBjYWNoZWQgICAgICAgIDg5NjIzMjAgQi9vcAoKY2l0bV9jYXRhbG9nLmpzb246IDE3MjcyMDQgYnl0ZXMKQ3J5c3RhbCBKU09OLnBhcnNlIDE1MS41NyAgKCAgNi42MG1zKSAowrEgMi44NiUpICAzLjczTUIvb3AgICAyLjEzw5cgc2xvd2VyCiAgICBGdXNlZEpTT04ubG9hZCAzMDkuMTUgICggIDMuMjNtcykgKMKxIDIuOTQlKSAgNC4wNU1CL29wICAgMS4wNMOXIHNsb3dlcgogIEZ1c2VkSlNPTiBjYWNoZWQgMzIyLjkxICAoICAzLjEwbXMpICjCsSAzLjc3JSkgIDMuMjhNQi9vcCAgICAgICAgZmFzdGVzdAogIENyeXN0YWwgSlNPTi5wYXJzZSAgICAyNDkuNjU3Nzc2IE1pQi9zICAoUlNEICAyLjg2JSkKICBGdXNlZEpTT04ubG9hZCAgICAgICAgNTA5LjIzMTM3NCBNaUIvcyAgKFJTRCAgMi45NCUpCiAgRnVzZWRKU09OIGNhY2hlZCAgICAgIDUzMS44OTY1NTIgTWlCL3MgIChSU0QgIDMuNzclKQogIE1hbmFnZWQgYWxsb2NhdGlvbnMKICBDcnlzdGFsIEpTT04ucGFyc2UgICAgICAzOTA1NTk0IEIvb3AKICBGdXNlZEpTT04ubG9hZCAgICAgICAgICA0MjUyNzYwIEIvb3AKICBGdXNlZEpTT04gY2FjaGVkICAgICAgICAzNDQ1MDUzIEIvb3AKCm9oYWkuanNvbjogMzI0NDQgYnl0ZXMKQ3J5c3RhbCBKU09OLnBhcnNlICAgNi44OWsgKDE0NS4yM8K1cykgKMKxIDEuMzQlKSAgMTQ1a0Ivb3AgICAyLjA2w5cgc2xvd2VyCiAgICBGdXNlZEpTT04ubG9hZCAgMTQuMTlrICggNzAuNDfCtXMpICjCsSAxLjcxJSkgIDEyNWtCL29wICAgICAgICBmYXN0ZXN0CiAgRnVzZWRKU09OIGNhY2hlZCAgMTIuNTdrICggNzkuNTPCtXMpICjCsSAyLjgzJSkgIDE0MmtCL29wICAgMS4xM8OXIHNsb3dlcgogIENyeXN0YWwgSlNPTi5wYXJzZSAgICAyMTMuMDU1MjE3IE1pQi9zICAoUlNEICAxLjM0JSkKICBGdXNlZEpTT04ubG9hZCAgICAgICAgNDM5LjA2MTA4NSBNaUIvcyAgKFJTRCAgMS43MSUpCiAgRnVzZWRKU09OIGNhY2hlZCAgICAgIDM4OS4wNzIwODEgTWlCL3MgIChSU0QgIDIuODMlKQogIE1hbmFnZWQgYWxsb2NhdGlvbnMKICBDcnlzdGFsIEpTT04ucGFyc2UgICAgICAgMTQ4MTUwIEIvb3AKICBGdXNlZEpTT04ubG9hZCAgICAgICAgICAgMTI3MjM0IEIvb3AKICBGdXNlZEpTT04gY2FjaGVkICAgICAgICAgMTQ1MzcwIEIvb3AKCnR3aXR0ZXIuanNvbjogNjMxNTE0IGJ5dGVzCkNyeXN0YWwgSlNPTi5wYXJzZSA0MjYuODcgICggIDIuMzRtcykgKMKxIDEuMDclKSAgIDEuOE1CL29wICAgMS43M8OXIHNsb3dlcgogICAgRnVzZWRKU09OLmxvYWQgNzI3LjE4ICAoICAxLjM4bXMpICjCsSAxLjAzJSkgIDIuMjhNQi9vcCAgIDEuMDHDlyBzbG93ZXIKICBGdXNlZEpTT04gY2FjaGVkIDczNy45MiAgKCAgMS4zNm1zKSAowrEgNi43MiUpICAxLjg0TUIvb3AgICAgICAgIGZhc3Rlc3QKICBDcnlzdGFsIEpTT04ucGFyc2UgICAgMjU3LjA4ODAzMyBNaUIvcyAgKFJTRCAgMS4wNyUpCiAgRnVzZWRKU09OLmxvYWQgICAgICAgIDQzNy45NDgxNDcgTWlCL3MgIChSU0QgIDEuMDMlKQogIEZ1c2VkSlNPTiBjYWNoZWQgICAgICA0NDQuNDIxMDY1IE1pQi9zICAoUlNEICA2LjcyJSkKICBNYW5hZ2VkIGFsbG9jYXRpb25zCiAgQ3J5c3RhbCBKU09OLnBhcnNlICAgICAgMTg5MDM3NSBCL29wCiAgRnVzZWRKU09OLmxvYWQgICAgICAgICAgMjM4NjYxOCBCL29wCiAgRnVzZWRKU09OIGNhY2hlZCAgICAgICAgMTkyNzg4OCBCL29wCg==",
+          "utf8": "\nactivitypub.json: 58160 bytes\nCrystal JSON.parse   4.41k (226.53µs) (± 0.95%)  157kB/op   2.10× slower\n    FusedJSON.load   9.18k (108.91µs) (± 3.43%)  217kB/op   1.01× slower\n  FusedJSON cached   9.26k (107.95µs) (± 7.45%)  196kB/op        fastest\n  Crystal JSON.parse    244.847384 MiB/s  (RSD  0.95%)\n  FusedJSON.load        509.285055 MiB/s  (RSD  3.43%)\n  FusedJSON cached      513.799601 MiB/s  (RSD  7.45%)\n  Managed allocations\n  Crystal JSON.parse       162045 B/op\n  FusedJSON.load           221926 B/op\n  FusedJSON cached         200665 B/op\n\ncanada.json: 2251051 bytes\nCrystal JSON.parse  80.54  ( 12.42ms) (± 3.72%)  12.7MB/op   1.81× slower\n    FusedJSON.load 139.68  (  7.16ms) (± 7.54%)  8.54MB/op   1.04× slower\n  FusedJSON cached 145.87  (  6.86ms) (± 4.44%)  8.54MB/op        fastest\n  Crystal JSON.parse    172.897272 MiB/s  (RSD  3.72%)\n  FusedJSON.load        299.862308 MiB/s  (RSD  7.54%)\n  FusedJSON cached      313.138688 MiB/s  (RSD  4.44%)\n  Managed allocations\n  Crystal JSON.parse     13326236 B/op\n  FusedJSON.load          8962130 B/op\n  FusedJSON cached        8962320 B/op\n\ncitm_catalog.json: 1727204 bytes\nCrystal JSON.parse 151.57  (  6.60ms) (± 2.86%)  3.73MB/op   2.13× slower\n    FusedJSON.load 309.15  (  3.23ms) (± 2.94%)  4.05MB/op   1.04× slower\n  FusedJSON cached 322.91  (  3.10ms) (± 3.77%)  3.28MB/op        fastest\n  Crystal JSON.parse    249.657776 MiB/s  (RSD  2.86%)\n  FusedJSON.load        509.231374 MiB/s  (RSD  2.94%)\n  FusedJSON cached      531.896552 MiB/s  (RSD  3.77%)\n  Managed allocations\n  Crystal JSON.parse      3905594 B/op\n  FusedJSON.load          4252760 B/op\n  FusedJSON cached        3445053 B/op\n\nohai.json: 32444 bytes\nCrystal JSON.parse   6.89k (145.23µs) (± 1.34%)  145kB/op   2.06× slower\n    FusedJSON.load  14.19k ( 70.47µs) (± 1.71%)  125kB/op        fastest\n  FusedJSON cached  12.57k ( 79.53µs) (± 2.83%)  142kB/op   1.13× slower\n  Crystal JSON.parse    213.055217 MiB/s  (RSD  1.34%)\n  FusedJSON.load        439.061085 MiB/s  (RSD  1.71%)\n  FusedJSON cached      389.072081 MiB/s  (RSD  2.83%)\n  Managed allocations\n  Crystal JSON.parse       148150 B/op\n  FusedJSON.load           127234 B/op\n  FusedJSON cached         145370 B/op\n\ntwitter.json: 631514 bytes\nCrystal JSON.parse 426.87  (  2.34ms) (± 1.07%)   1.8MB/op   1.73× slower\n    FusedJSON.load 727.18  (  1.38ms) (± 1.03%)  2.28MB/op   1.01× slower\n  FusedJSON cached 737.92  (  1.36ms) (± 6.72%)  1.84MB/op        fastest\n  Crystal JSON.parse    257.088033 MiB/s  (RSD  1.07%)\n  FusedJSON.load        437.948147 MiB/s  (RSD  1.03%)\n  FusedJSON cached      444.421065 MiB/s  (RSD  6.72%)\n  Managed allocations\n  Crystal JSON.parse      1890375 B/op\n  FusedJSON.load          2386618 B/op\n  FusedJSON cached        1927888 B/op\n"
+        },
+        "stderr": {
+          "bytes": 0,
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "encoding": "base64",
+          "base64": "",
+          "utf8": ""
+        },
+        "task_audit": {
+          "bytes": 1191,
+          "sha256": "34533badec9eb9b10a58b1d7c23c1e12270e165925b7a683fb042a077d2461dd",
+          "encoding": "base64",
+          "base64": "CUNvbW1hbmQgYmVpbmcgdGltZWQ6ICIvdXNyL2Jpbi90YXNrc2V0IC1jIDMgL3RtcC9mdXNlZC1qc29uLW9wdC00Y2E4NjVjL2Jpbi9wYXJzZS1iZW5jaCAvbWVkaWEvd3loYWluZXMvaG9tZS93eWhhaW5lcy9naHEvZ2l0aHViLmNvbS9vaGxlcjU1L29qL3Rlc3QvZGF0YS9hY3Rpdml0eXB1Yi5qc29uIC9tZWRpYS93eWhhaW5lcy9ob21lL3d5aGFpbmVzL2docS9naXRodWIuY29tL29obGVyNTUvb2ovdGVzdC9kYXRhL2NhbmFkYS5qc29uIC9tZWRpYS93eWhhaW5lcy9ob21lL3d5aGFpbmVzL2docS9naXRodWIuY29tL29obGVyNTUvb2ovdGVzdC9kYXRhL2NpdG1fY2F0YWxvZy5qc29uIC9tZWRpYS93eWhhaW5lcy9ob21lL3d5aGFpbmVzL2docS9naXRodWIuY29tL29obGVyNTUvb2ovdGVzdC9kYXRhL29oYWkuanNvbiAvbWVkaWEvd3loYWluZXMvaG9tZS93eWhhaW5lcy9naHEvZ2l0aHViLmNvbS9vaGxlcjU1L29qL3Rlc3QvZGF0YS90d2l0dGVyLmpzb24iCglVc2VyIHRpbWUgKHNlY29uZHMpOiA0Ni41NAoJU3lzdGVtIHRpbWUgKHNlY29uZHMpOiAwLjM5CglQZXJjZW50IG9mIENQVSB0aGlzIGpvYiBnb3Q6IDk5JQoJRWxhcHNlZCAod2FsbCBjbG9jaykgdGltZSAoaDptbTpzcyBvciBtOnNzKTogMDo0Ni45NAoJQXZlcmFnZSBzaGFyZWQgdGV4dCBzaXplIChrYnl0ZXMpOiAwCglBdmVyYWdlIHVuc2hhcmVkIGRhdGEgc2l6ZSAoa2J5dGVzKTogMAoJQXZlcmFnZSBzdGFjayBzaXplIChrYnl0ZXMpOiAwCglBdmVyYWdlIHRvdGFsIHNpemUgKGtieXRlcyk6IDAKCU1heGltdW0gcmVzaWRlbnQgc2V0IHNpemUgKGtieXRlcyk6IDY2MTkyCglBdmVyYWdlIHJlc2lkZW50IHNldCBzaXplIChrYnl0ZXMpOiAwCglNYWpvciAocmVxdWlyaW5nIEkvTykgcGFnZSBmYXVsdHM6IDAKCU1pbm9yIChyZWNsYWltaW5nIGEgZnJhbWUpIHBhZ2UgZmF1bHRzOiAyODQ4OQoJVm9sdW50YXJ5IGNvbnRleHQgc3dpdGNoZXM6IDMzMDc5CglJbnZvbHVudGFyeSBjb250ZXh0IHN3aXRjaGVzOiAzMzI3OAoJU3dhcHM6IDAKCUZpbGUgc3lzdGVtIGlucHV0czogMAoJRmlsZSBzeXN0ZW0gb3V0cHV0czogMTYKCVNvY2tldCBtZXNzYWdlcyBzZW50OiAwCglTb2NrZXQgbWVzc2FnZXMgcmVjZWl2ZWQ6IDAKCVNpZ25hbHMgZGVsaXZlcmVkOiAwCglQYWdlIHNpemUgKGJ5dGVzKTogNDA5NgoJRXhpdCBzdGF0dXM6IDAK",
+          "utf8": "\tCommand being timed: \"/usr/bin/taskset -c 3 /tmp/fused-json-opt-4ca865c/bin/parse-bench /media/wyhaines/home/wyhaines/ghq/github.com/ohler55/oj/test/data/activitypub.json /media/wyhaines/home/wyhaines/ghq/github.com/ohler55/oj/test/data/canada.json /media/wyhaines/home/wyhaines/ghq/github.com/ohler55/oj/test/data/citm_catalog.json /media/wyhaines/home/wyhaines/ghq/github.com/ohler55/oj/test/data/ohai.json /media/wyhaines/home/wyhaines/ghq/github.com/ohler55/oj/test/data/twitter.json\"\n\tUser time (seconds): 46.54\n\tSystem time (seconds): 0.39\n\tPercent of CPU this job got: 99%\n\tElapsed (wall clock) time (h:mm:ss or m:ss): 0:46.94\n\tAverage shared text size (kbytes): 0\n\tAverage unshared data size (kbytes): 0\n\tAverage stack size (kbytes): 0\n\tAverage total size (kbytes): 0\n\tMaximum resident set size (kbytes): 66192\n\tAverage resident set size (kbytes): 0\n\tMajor (requiring I/O) page faults: 0\n\tMinor (reclaiming a frame) page faults: 28489\n\tVoluntary context switches: 33079\n\tInvoluntary context switches: 33278\n\tSwaps: 0\n\tFile system inputs: 0\n\tFile system outputs: 16\n\tSocket messages sent: 0\n\tSocket messages received: 0\n\tSignals delivered: 0\n\tPage size (bytes): 4096\n\tExit status: 0\n"
+        }
+      },
+      "parsed_stdout_sha256": "7bb557ce6f3f6f22ee7e7f49747c7598fd728afedf06fbcdccf60754fae9abc2",
+      "parsed_output": {
+        "schema": "fused-json-parse-custom-output-v1",
+        "corpora": [
+          {
+            "name": "activitypub.json",
+            "bytes": 58160,
+            "throughput_order": [
+              "Crystal JSON.parse",
+              "FusedJSON.load",
+              "FusedJSON cached"
+            ],
+            "allocation_order": [
+              "Crystal JSON.parse",
+              "FusedJSON.load",
+              "FusedJSON cached"
+            ],
+            "implementations": {
+              "crystal_json_parse": {
+                "label": "Crystal JSON.parse",
+                "mib_per_second": 244.847384,
+                "relative_stddev_percent": 0.95,
+                "managed_bytes_per_operation": 162045
+              },
+              "fused_json_load": {
+                "label": "FusedJSON.load",
+                "mib_per_second": 509.285055,
+                "relative_stddev_percent": 3.43,
+                "managed_bytes_per_operation": 221926
+              },
+              "fused_json_cached": {
+                "label": "FusedJSON cached",
+                "mib_per_second": 513.799601,
+                "relative_stddev_percent": 7.45,
+                "managed_bytes_per_operation": 200665
+              }
+            },
+            "fused_load_to_crystal_ratio": 2.0800101952488084
+          },
+          {
+            "name": "canada.json",
+            "bytes": 2251051,
+            "throughput_order": [
+              "Crystal JSON.parse",
+              "FusedJSON.load",
+              "FusedJSON cached"
+            ],
+            "allocation_order": [
+              "Crystal JSON.parse",
+              "FusedJSON.load",
+              "FusedJSON cached"
+            ],
+            "implementations": {
+              "crystal_json_parse": {
+                "label": "Crystal JSON.parse",
+                "mib_per_second": 172.897272,
+                "relative_stddev_percent": 3.72,
+                "managed_bytes_per_operation": 13326236
+              },
+              "fused_json_load": {
+                "label": "FusedJSON.load",
+                "mib_per_second": 299.862308,
+                "relative_stddev_percent": 7.54,
+                "managed_bytes_per_operation": 8962130
+              },
+              "fused_json_cached": {
+                "label": "FusedJSON cached",
+                "mib_per_second": 313.138688,
+                "relative_stddev_percent": 4.44,
+                "managed_bytes_per_operation": 8962320
+              }
+            },
+            "fused_load_to_crystal_ratio": 1.7343379946445887
+          },
+          {
+            "name": "citm_catalog.json",
+            "bytes": 1727204,
+            "throughput_order": [
+              "Crystal JSON.parse",
+              "FusedJSON.load",
+              "FusedJSON cached"
+            ],
+            "allocation_order": [
+              "Crystal JSON.parse",
+              "FusedJSON.load",
+              "FusedJSON cached"
+            ],
+            "implementations": {
+              "crystal_json_parse": {
+                "label": "Crystal JSON.parse",
+                "mib_per_second": 249.657776,
+                "relative_stddev_percent": 2.86,
+                "managed_bytes_per_operation": 3905594
+              },
+              "fused_json_load": {
+                "label": "FusedJSON.load",
+                "mib_per_second": 509.231374,
+                "relative_stddev_percent": 2.94,
+                "managed_bytes_per_operation": 4252760
+              },
+              "fused_json_cached": {
+                "label": "FusedJSON cached",
+                "mib_per_second": 531.896552,
+                "relative_stddev_percent": 3.77,
+                "managed_bytes_per_operation": 3445053
+              }
+            },
+            "fused_load_to_crystal_ratio": 2.039717657342265
+          },
+          {
+            "name": "ohai.json",
+            "bytes": 32444,
+            "throughput_order": [
+              "Crystal JSON.parse",
+              "FusedJSON.load",
+              "FusedJSON cached"
+            ],
+            "allocation_order": [
+              "Crystal JSON.parse",
+              "FusedJSON.load",
+              "FusedJSON cached"
+            ],
+            "implementations": {
+              "crystal_json_parse": {
+                "label": "Crystal JSON.parse",
+                "mib_per_second": 213.055217,
+                "relative_stddev_percent": 1.34,
+                "managed_bytes_per_operation": 148150
+              },
+              "fused_json_load": {
+                "label": "FusedJSON.load",
+                "mib_per_second": 439.061085,
+                "relative_stddev_percent": 1.71,
+                "managed_bytes_per_operation": 127234
+              },
+              "fused_json_cached": {
+                "label": "FusedJSON cached",
+                "mib_per_second": 389.072081,
+                "relative_stddev_percent": 2.83,
+                "managed_bytes_per_operation": 145370
+              }
+            },
+            "fused_load_to_crystal_ratio": 2.0607854207109138
+          },
+          {
+            "name": "twitter.json",
+            "bytes": 631514,
+            "throughput_order": [
+              "Crystal JSON.parse",
+              "FusedJSON.load",
+              "FusedJSON cached"
+            ],
+            "allocation_order": [
+              "Crystal JSON.parse",
+              "FusedJSON.load",
+              "FusedJSON cached"
+            ],
+            "implementations": {
+              "crystal_json_parse": {
+                "label": "Crystal JSON.parse",
+                "mib_per_second": 257.088033,
+                "relative_stddev_percent": 1.07,
+                "managed_bytes_per_operation": 1890375
+              },
+              "fused_json_load": {
+                "label": "FusedJSON.load",
+                "mib_per_second": 437.948147,
+                "relative_stddev_percent": 1.03,
+                "managed_bytes_per_operation": 2386618
+              },
+              "fused_json_cached": {
+                "label": "FusedJSON cached",
+                "mib_per_second": 444.421065,
+                "relative_stddev_percent": 6.72,
+                "managed_bytes_per_operation": 1927888
+              }
+            },
+            "fused_load_to_crystal_ratio": 1.7034948764029012
+          }
+        ]
+      },
+      "output_parse_error": null,
+      "parsed_task_audit_sha256": "34533badec9eb9b10a58b1d7c23c1e12270e165925b7a683fb042a077d2461dd",
+      "task_audit": {
+        "schema": "gnu-time-v1-verbose-v1",
+        "user_cpu_seconds": 46.54,
+        "system_cpu_seconds": 0.39,
+        "task_cpu_seconds": 46.93,
+        "reported_cpu_percent": 99,
+        "reported_cpu_share": 0.99,
+        "elapsed_wall": "0:46.94",
+        "elapsed_wall_seconds": 46.94,
+        "maximum_resident_kibibytes": 66192,
+        "major_page_faults": 0,
+        "minor_page_faults": 28489,
+        "voluntary_context_switches": 33079,
+        "involuntary_context_switches": 33278,
+        "exit_status": 0,
+        "cpu_time_over_wall_from_rounded_seconds": 0.9997869620792501,
+        "total_context_switches": 66357
+      },
+      "task_audit_error": null,
+      "validity_issues": [],
+      "valid": true
+    }
+  ],
+  "admission": {
+    "policy_name": "busy-pinned-v2",
+    "policy_version": 2,
+    "label": "initial-admission",
+    "required_continuous_seconds": 60,
+    "wait_started_monotonic_ms": 339.89397,
+    "block_gate_deadline_seconds": null,
+    "absolute_deadline_monotonic_ms": null,
+    "admitted_evaluated_monotonic_ms": 884439.573208,
+    "first_acceptable_sample_sequence": 410,
+    "first_acceptable_monotonic_ms": 824130.780779,
+    "admitted_sample_sequence": 440,
+    "admitted_monotonic_ms": 884429.365774,
+    "continuous_seconds": 60.29858499499993,
+    "sample_sequences": [
+      410,
+      411,
+      412,
+      413,
+      414,
+      415,
+      416,
+      417,
+      418,
+      419,
+      420,
+      421,
+      422,
+      423,
+      424,
+      425,
+      426,
+      427,
+      428,
+      429,
+      430,
+      431,
+      432,
+      433,
+      434,
+      435,
+      436,
+      437,
+      438,
+      439,
+      440
+    ],
+    "sample_count": 31,
+    "tctl_minimum_c": 58.875,
+    "tctl_maximum_c": 63.75,
+    "tctl_range_c": 4.875
+  },
+  "interruption": null,
+  "invalid_reason": null,
+  "environment": {
+    "policy": {
+      "name": "busy-pinned-v2",
+      "version": 2,
+      "sample_interval_ms": 2000,
+      "initial_admission_seconds": 60,
+      "block_admission_seconds": 6,
+      "gate_load1_maximum": 5,
+      "gate_load5_maximum": 5,
+      "gate_tctl_maximum_c": 94,
+      "gate_tctl_range_maximum_c": 5,
+      "gate_sibling_cpu_busy_maximum_percent": 25,
+      "gate_benchmark_cpu_busy_maximum_percent": 10,
+      "block_gate_deadline_seconds": 180,
+      "invalid_tctl_minimum_c": 100,
+      "invalid_load1_strictly_greater_than": 7,
+      "invalid_sibling_busy_strictly_greater_than_percent": 35,
+      "consecutive_breach_samples": 2,
+      "maximum_monitor_gap_seconds": 5,
+      "minimum_parser_task_cpu_percent": 99,
+      "child_window_sibling_busy_maximum_percent": 25,
+      "cpu_frequency_policy": "diagnostic-only; never gates, excludes, or normalizes"
+    },
+    "tctl_path": "/sys/devices/pci0000:00/0000:00:18.3/hwmon/hwmon10/temp1_input",
+    "journal": "/tmp/fused-json-opt-4ca865c/receipts/dynamic-gate.json.environment.jsonl",
+    "sample_count": 602,
+    "latest_sample_sequence": 601
+  },
+  "analysis": {
+    "estimator": "geometric-mean-of-five-per-corpus-medians-v1",
+    "independent_processes": 5,
+    "samples_per_corpus": 5,
+    "corpora": [
+      {
+        "name": "activitypub.json",
+        "bytes": 58160,
+        "samples": [
+          {
+            "schedule_index": 0,
+            "process_id": "m6-dynamic-00-normal",
+            "order": "normal",
+            "crystal_mib_per_second": 238.804291,
+            "fused_load_mib_per_second": 509.341404,
+            "fused_load_to_crystal_ratio": 2.132882126477367,
+            "crystal_managed_bytes_per_operation": 161872,
+            "fused_load_managed_bytes_per_operation": 222115
+          },
+          {
+            "schedule_index": 1,
+            "process_id": "m6-dynamic-01-reverse",
+            "order": "reverse",
+            "crystal_mib_per_second": 240.086974,
+            "fused_load_mib_per_second": 504.112493,
+            "fused_load_to_crystal_ratio": 2.099707804222648,
+            "crystal_managed_bytes_per_operation": 161844,
+            "fused_load_managed_bytes_per_operation": 222046
+          },
+          {
+            "schedule_index": 2,
+            "process_id": "m6-dynamic-02-normal",
+            "order": "normal",
+            "crystal_mib_per_second": 239.116043,
+            "fused_load_mib_per_second": 511.133603,
+            "fused_load_to_crystal_ratio": 2.1375964430793126,
+            "crystal_managed_bytes_per_operation": 162082,
+            "fused_load_managed_bytes_per_operation": 222106
+          },
+          {
+            "schedule_index": 3,
+            "process_id": "m6-dynamic-03-reverse",
+            "order": "reverse",
+            "crystal_mib_per_second": 241.962572,
+            "fused_load_mib_per_second": 506.221664,
+            "fused_load_to_crystal_ratio": 2.092148631979329,
+            "crystal_managed_bytes_per_operation": 161831,
+            "fused_load_managed_bytes_per_operation": 222404
+          },
+          {
+            "schedule_index": 4,
+            "process_id": "m6-dynamic-04-normal",
+            "order": "normal",
+            "crystal_mib_per_second": 244.847384,
+            "fused_load_mib_per_second": 509.285055,
+            "fused_load_to_crystal_ratio": 2.0800101952488084,
+            "crystal_managed_bytes_per_operation": 162045,
+            "fused_load_managed_bytes_per_operation": 221926
+          }
+        ],
+        "median_fused_load_to_crystal_ratio": 2.099707804222648,
+        "minimum_ratio": 2.0800101952488084,
+        "maximum_ratio": 2.1375964430793126,
+        "median_crystal_managed_bytes_per_operation": 161872,
+        "median_fused_load_managed_bytes_per_operation": 222106
+      },
+      {
+        "name": "canada.json",
+        "bytes": 2251051,
+        "samples": [
+          {
+            "schedule_index": 0,
+            "process_id": "m6-dynamic-00-normal",
+            "order": "normal",
+            "crystal_mib_per_second": 173.501139,
+            "fused_load_mib_per_second": 307.924793,
+            "fused_load_to_crystal_ratio": 1.7747710174974702,
+            "crystal_managed_bytes_per_operation": 13326631,
+            "fused_load_managed_bytes_per_operation": 8962217
+          },
+          {
+            "schedule_index": 1,
+            "process_id": "m6-dynamic-01-reverse",
+            "order": "reverse",
+            "crystal_mib_per_second": 173.556327,
+            "fused_load_mib_per_second": 318.383246,
+            "fused_load_to_crystal_ratio": 1.8344663747118823,
+            "crystal_managed_bytes_per_operation": 13326302,
+            "fused_load_managed_bytes_per_operation": 8962379
+          },
+          {
+            "schedule_index": 2,
+            "process_id": "m6-dynamic-02-normal",
+            "order": "normal",
+            "crystal_mib_per_second": 162.496343,
+            "fused_load_mib_per_second": 309.810835,
+            "fused_load_to_crystal_ratio": 1.9065711220344201,
+            "crystal_managed_bytes_per_operation": 13326044,
+            "fused_load_managed_bytes_per_operation": 8962261
+          },
+          {
+            "schedule_index": 3,
+            "process_id": "m6-dynamic-03-reverse",
+            "order": "reverse",
+            "crystal_mib_per_second": 171.070637,
+            "fused_load_mib_per_second": 304.752228,
+            "fused_load_to_crystal_ratio": 1.7814408909928827,
+            "crystal_managed_bytes_per_operation": 13326320,
+            "fused_load_managed_bytes_per_operation": 8962417
+          },
+          {
+            "schedule_index": 4,
+            "process_id": "m6-dynamic-04-normal",
+            "order": "normal",
+            "crystal_mib_per_second": 172.897272,
+            "fused_load_mib_per_second": 299.862308,
+            "fused_load_to_crystal_ratio": 1.7343379946445887,
+            "crystal_managed_bytes_per_operation": 13326236,
+            "fused_load_managed_bytes_per_operation": 8962130
+          }
+        ],
+        "median_fused_load_to_crystal_ratio": 1.7814408909928827,
+        "minimum_ratio": 1.7343379946445887,
+        "maximum_ratio": 1.9065711220344201,
+        "median_crystal_managed_bytes_per_operation": 13326302,
+        "median_fused_load_managed_bytes_per_operation": 8962261
+      },
+      {
+        "name": "citm_catalog.json",
+        "bytes": 1727204,
+        "samples": [
+          {
+            "schedule_index": 0,
+            "process_id": "m6-dynamic-00-normal",
+            "order": "normal",
+            "crystal_mib_per_second": 258.254131,
+            "fused_load_mib_per_second": 494.190076,
+            "fused_load_to_crystal_ratio": 1.9135805266170167,
+            "crystal_managed_bytes_per_operation": 3905732,
+            "fused_load_managed_bytes_per_operation": 4252563
+          },
+          {
+            "schedule_index": 1,
+            "process_id": "m6-dynamic-01-reverse",
+            "order": "reverse",
+            "crystal_mib_per_second": 246.229204,
+            "fused_load_mib_per_second": 494.51945,
+            "fused_load_to_crystal_ratio": 2.0083704205939763,
+            "crystal_managed_bytes_per_operation": 3906026,
+            "fused_load_managed_bytes_per_operation": 4252686
+          },
+          {
+            "schedule_index": 2,
+            "process_id": "m6-dynamic-02-normal",
+            "order": "normal",
+            "crystal_mib_per_second": 251.376527,
+            "fused_load_mib_per_second": 475.148923,
+            "fused_load_to_crystal_ratio": 1.8901881121143822,
+            "crystal_managed_bytes_per_operation": 3905434,
+            "fused_load_managed_bytes_per_operation": 4252940
+          },
+          {
+            "schedule_index": 3,
+            "process_id": "m6-dynamic-03-reverse",
+            "order": "reverse",
+            "crystal_mib_per_second": 245.040323,
+            "fused_load_mib_per_second": 479.572835,
+            "fused_load_to_crystal_ratio": 1.9571180331818285,
+            "crystal_managed_bytes_per_operation": 3905157,
+            "fused_load_managed_bytes_per_operation": 4252925
+          },
+          {
+            "schedule_index": 4,
+            "process_id": "m6-dynamic-04-normal",
+            "order": "normal",
+            "crystal_mib_per_second": 249.657776,
+            "fused_load_mib_per_second": 509.231374,
+            "fused_load_to_crystal_ratio": 2.039717657342265,
+            "crystal_managed_bytes_per_operation": 3905594,
+            "fused_load_managed_bytes_per_operation": 4252760
+          }
+        ],
+        "median_fused_load_to_crystal_ratio": 1.9571180331818285,
+        "minimum_ratio": 1.8901881121143822,
+        "maximum_ratio": 2.039717657342265,
+        "median_crystal_managed_bytes_per_operation": 3905594,
+        "median_fused_load_managed_bytes_per_operation": 4252760
+      },
+      {
+        "name": "ohai.json",
+        "bytes": 32444,
+        "samples": [
+          {
+            "schedule_index": 0,
+            "process_id": "m6-dynamic-00-normal",
+            "order": "normal",
+            "crystal_mib_per_second": 210.133353,
+            "fused_load_mib_per_second": 425.298193,
+            "fused_load_to_crystal_ratio": 2.023944256959532,
+            "crystal_managed_bytes_per_operation": 148166,
+            "fused_load_managed_bytes_per_operation": 127387
+          },
+          {
+            "schedule_index": 1,
+            "process_id": "m6-dynamic-01-reverse",
+            "order": "reverse",
+            "crystal_mib_per_second": 214.912444,
+            "fused_load_mib_per_second": 429.814918,
+            "fused_load_to_crystal_ratio": 1.9999536090148413,
+            "crystal_managed_bytes_per_operation": 147585,
+            "fused_load_managed_bytes_per_operation": 127320
+          },
+          {
+            "schedule_index": 2,
+            "process_id": "m6-dynamic-02-normal",
+            "order": "normal",
+            "crystal_mib_per_second": 212.316049,
+            "fused_load_mib_per_second": 436.119869,
+            "fused_load_to_crystal_ratio": 2.05410693658867,
+            "crystal_managed_bytes_per_operation": 147444,
+            "fused_load_managed_bytes_per_operation": 127729
+          },
+          {
+            "schedule_index": 3,
+            "process_id": "m6-dynamic-03-reverse",
+            "order": "reverse",
+            "crystal_mib_per_second": 209.256492,
+            "fused_load_mib_per_second": 422.803935,
+            "fused_load_to_crystal_ratio": 2.0205057007263605,
+            "crystal_managed_bytes_per_operation": 148382,
+            "fused_load_managed_bytes_per_operation": 127296
+          },
+          {
+            "schedule_index": 4,
+            "process_id": "m6-dynamic-04-normal",
+            "order": "normal",
+            "crystal_mib_per_second": 213.055217,
+            "fused_load_mib_per_second": 439.061085,
+            "fused_load_to_crystal_ratio": 2.0607854207109138,
+            "crystal_managed_bytes_per_operation": 148150,
+            "fused_load_managed_bytes_per_operation": 127234
+          }
+        ],
+        "median_fused_load_to_crystal_ratio": 2.023944256959532,
+        "minimum_ratio": 1.9999536090148413,
+        "maximum_ratio": 2.0607854207109138,
+        "median_crystal_managed_bytes_per_operation": 148150,
+        "median_fused_load_managed_bytes_per_operation": 127320
+      },
+      {
+        "name": "twitter.json",
+        "bytes": 631514,
+        "samples": [
+          {
+            "schedule_index": 0,
+            "process_id": "m6-dynamic-00-normal",
+            "order": "normal",
+            "crystal_mib_per_second": 251.765542,
+            "fused_load_mib_per_second": 419.003408,
+            "fused_load_to_crystal_ratio": 1.664260345841926,
+            "crystal_managed_bytes_per_operation": 1890197,
+            "fused_load_managed_bytes_per_operation": 2386224
+          },
+          {
+            "schedule_index": 1,
+            "process_id": "m6-dynamic-01-reverse",
+            "order": "reverse",
+            "crystal_mib_per_second": 257.817182,
+            "fused_load_mib_per_second": 429.545696,
+            "fused_load_to_crystal_ratio": 1.6660863820938048,
+            "crystal_managed_bytes_per_operation": 1889414,
+            "fused_load_managed_bytes_per_operation": 2386109
+          },
+          {
+            "schedule_index": 2,
+            "process_id": "m6-dynamic-02-normal",
+            "order": "normal",
+            "crystal_mib_per_second": 251.546755,
+            "fused_load_mib_per_second": 429.649683,
+            "fused_load_to_crystal_ratio": 1.708031109365732,
+            "crystal_managed_bytes_per_operation": 1889741,
+            "fused_load_managed_bytes_per_operation": 2385741
+          },
+          {
+            "schedule_index": 3,
+            "process_id": "m6-dynamic-03-reverse",
+            "order": "reverse",
+            "crystal_mib_per_second": 248.5132,
+            "fused_load_mib_per_second": 421.235378,
+            "fused_load_to_crystal_ratio": 1.695022147716902,
+            "crystal_managed_bytes_per_operation": 1890066,
+            "fused_load_managed_bytes_per_operation": 2386639
+          },
+          {
+            "schedule_index": 4,
+            "process_id": "m6-dynamic-04-normal",
+            "order": "normal",
+            "crystal_mib_per_second": 257.088033,
+            "fused_load_mib_per_second": 437.948147,
+            "fused_load_to_crystal_ratio": 1.7034948764029012,
+            "crystal_managed_bytes_per_operation": 1890375,
+            "fused_load_managed_bytes_per_operation": 2386618
+          }
+        ],
+        "median_fused_load_to_crystal_ratio": 1.695022147716902,
+        "minimum_ratio": 1.664260345841926,
+        "maximum_ratio": 1.708031109365732,
+        "median_crystal_managed_bytes_per_operation": 1890066,
+        "median_fused_load_managed_bytes_per_operation": 2386224
+      }
+    ],
+    "geometric_mean_of_corpus_median_ratios": 1.9053915919085902
+  },
+  "analysis_error": null,
+  "gates": {
+    "evaluable": true,
+    "thresholds": {
+      "corpus_median_ratio": 0.98,
+      "geometric_mean_ratio": 1.5,
+      "minimum_task_cpu_percent": 99
+    },
+    "per_corpus": [
+      {
+        "name": "activitypub.json",
+        "value": 2.099707804222648,
+        "threshold": 0.98,
+        "comparison": ">=",
+        "passed": true
+      },
+      {
+        "name": "canada.json",
+        "value": 1.7814408909928827,
+        "threshold": 0.98,
+        "comparison": ">=",
+        "passed": true
+      },
+      {
+        "name": "citm_catalog.json",
+        "value": 1.9571180331818285,
+        "threshold": 0.98,
+        "comparison": ">=",
+        "passed": true
+      },
+      {
+        "name": "ohai.json",
+        "value": 2.023944256959532,
+        "threshold": 0.98,
+        "comparison": ">=",
+        "passed": true
+      },
+      {
+        "name": "twitter.json",
+        "value": 1.695022147716902,
+        "threshold": 0.98,
+        "comparison": ">=",
+        "passed": true
+      }
+    ],
+    "every_corpus_median": true,
+    "geometric_mean": true,
+    "geometric_mean_value": 1.9053915919085902,
+    "passed": true
+  }
+}

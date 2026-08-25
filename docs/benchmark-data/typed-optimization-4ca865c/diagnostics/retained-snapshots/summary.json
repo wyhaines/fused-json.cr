@@ -1,0 +1,80 @@
+{
+  "schema": "fused-json-retained-snapshot-diagnostic-v1",
+  "status": "verified",
+  "disposition": "report-only; not part of the frozen Milestone 6 acceptance schedule",
+  "commit": "4ca865c4e8ad8716041df4069181a5523493de08",
+  "recorded_at_utc": "2026-08-25",
+  "fixture": {
+    "profile": "many-small",
+    "bytes": 67108864,
+    "seed": "7",
+    "document_sha256": "f647d8dfe2e50d127f519b1c41a361ee244079b170576dde59173ef1cc3ecbfd",
+    "provider_records": 16,
+    "scalar_values": 157898,
+    "price_records": 157898,
+    "total_retained_values": 315812
+  },
+  "configuration": {
+    "fresh_processes": true,
+    "pairs": 4,
+    "order": [
+      ["fused", "crystal"],
+      ["crystal", "fused"],
+      ["fused", "crystal"],
+      ["crystal", "fused"]
+    ],
+    "page_cache_warm_receipt": "page-cache-warm.json",
+    "cpu": 3,
+    "buffer_size": 32768,
+    "max_nesting": 512,
+    "gc_nprocs": 1,
+    "gc_markers": 1,
+    "crystal_workers": 1,
+    "omp_num_threads": 1,
+    "retained_memory_snapshots": true
+  },
+  "validation": {
+    "all_receipts_match_commit_fixture_and_retained_counts": true,
+    "all_children_exit_successfully": true,
+    "all_children_task_cpu_percent_at_least_99": true
+  },
+  "fused": {
+    "observations": 4,
+    "median_mib_per_second": 201.87266967699952,
+    "median_managed_allocated_mib": 195.42707061767578,
+    "median_peak_process_rss_mib": 67.384765625,
+    "median_before_parse_current_rss_mib": 6.26953125,
+    "median_after_parse_current_rss_mib": 65.263671875,
+    "median_after_full_gc_current_rss_mib": 65.263671875,
+    "median_after_full_gc_heap_mib": 56.669921875,
+    "median_after_full_gc_free_mib": 10.68359375,
+    "median_after_full_gc_unmapped_mib": 8.896484375,
+    "median_gc_cycles_during_parse": 23
+  },
+  "crystal": {
+    "observations": 4,
+    "median_mib_per_second": 73.91638530240891,
+    "median_managed_allocated_mib": 113.50460815429688,
+    "median_peak_process_rss_mib": 58.255859375,
+    "median_before_parse_current_rss_mib": 6.279296875,
+    "median_after_parse_current_rss_mib": 56.1796875,
+    "median_after_full_gc_current_rss_mib": 56.1875,
+    "median_after_full_gc_heap_mib": 47.984375,
+    "median_after_full_gc_free_mib": 7.30078125,
+    "median_after_full_gc_unmapped_mib": 5.51171875,
+    "median_gc_cycles_during_parse": 16
+  },
+  "paired_throughput_ratios": [
+    2.6192639937493665,
+    2.801866010298542,
+    2.7482995956640366,
+    2.7142253613294596
+  ],
+  "geometric_mean_throughput_ratio": 2.720095509222156,
+  "notes": [
+    "Snapshot collection and the forced full collection occur after measured parser timing.",
+    "The forced collection can affect the GNU-time process peak.",
+    "GC heap, free, and unmapped values are allocator diagnostics and are not an exact retained-object size.",
+    "No shared-host admission or acceptance threshold applies to this diagnostic."
+  ]
+}

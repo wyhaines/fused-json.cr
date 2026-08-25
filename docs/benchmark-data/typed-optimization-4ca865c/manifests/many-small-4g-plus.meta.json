@@ -1,0 +1,48 @@
+{
+  "format": "fused-json-tic-fixture",
+  "version": 1,
+  "profile": "many-small",
+  "seed": "7",
+  "requested_bytes": 4362076160,
+  "decompressed_bytes": 4362076160,
+  "document_sha256": "465ebb198c30a3734ea8960cab82fe338cb3a08b2f51d2844e4b2ce38ace632a",
+  "root_key_order": [
+    "reporting_entity_name",
+    "reporting_entity_type",
+    "last_updated_on",
+    "version",
+    "provider_references",
+    "in_network",
+    "_fixture_padding"
+  ],
+  "counts": {
+    "provider_references": 16,
+    "provider_groups": 16,
+    "in_network": 10263703,
+    "negotiated_rates": 10263703,
+    "negotiated_prices": 10263703
+  },
+  "maximum_nesting": 8,
+  "largest_token": {
+    "bytes": 357,
+    "kind": "string",
+    "path": "/_fixture_padding"
+  },
+  "largest_item": {
+    "bytes": 424,
+    "kind": "array-item",
+    "path": "/in_network/*"
+  },
+  "unicode_splits": [],
+  "projection": {
+    "format": "fused-json-tic-prices-jsonl",
+    "version": 1,
+    "algorithm": "sha256",
+    "lines": 10263703,
+    "sha256": "e13ac5b6a82b55d0acdd74b9ae93178bb192806df9006d803f5118f89331524c",
+    "checksum_algorithm": "fnv1a64-fields-v1",
+    "checksum": "0xcfe6c16e87f462a5",
+    "raw_number_checksum_algorithm": "fnv1a64-fields-raw-number-v2",
+    "raw_number_checksum": "0x7e7f1bb219ff967f"
+  }
+}

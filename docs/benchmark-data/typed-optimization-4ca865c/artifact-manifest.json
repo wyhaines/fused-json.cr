@@ -1,0 +1,100 @@
+{
+  "schema": "fused-json-typed-optimization-artifact-manifest-v1",
+  "status": "accepted",
+  "candidate_commit": "4ca865c4e8ad8716041df4069181a5523493de08",
+  "baseline_commit": "b7a54566de0faabc492cae37df92ea0028cdc151",
+  "protocol": {
+    "id": "fused-json-m6-tic-v2",
+    "policy": "busy-pinned-v2",
+    "policy_version": 2,
+    "document": "docs/milestone-6-protocol.md",
+    "reuse": "A new build, preflight, and two complete campaigns reused the immutable protocol and schedules."
+  },
+  "recorded_at_utc": "2026-08-25",
+  "receipt_root": "receipts",
+  "fixture_manifest_root": "manifests",
+  "diagnostic_root": "diagnostics/retained-snapshots",
+  "checksums": "SHA256SUMS",
+  "archive": {
+    "receipts": {
+      "count": 41,
+      "total_bytes": 32681745
+    },
+    "fixture_manifests": {
+      "count": 5,
+      "total_bytes": 6599
+    },
+    "retained_snapshot_diagnostic_files": {
+      "count": 18,
+      "total_bytes": 47957
+    },
+    "hash_algorithm": "sha256"
+  },
+  "accepted_evidence": {
+    "build_attestation": "receipts/build-attestation.json",
+    "semantic_preflight": "receipts/preflight.json",
+    "campaign_1": "receipts/campaign-1-run-4.json",
+    "campaign_2": "receipts/campaign-2-run-3.json",
+    "cross_campaign_audit": "receipts/campaign-acceptance.json",
+    "dynamic_gate": "receipts/dynamic-gate.json",
+    "large_offset": "receipts/large-offset.txt",
+    "sunlight_oracle": "receipts/sunlight-oj.json",
+    "sunlight_fused": "receipts/sunlight-fused.json",
+    "sunlight_comparison": "receipts/sunlight-compare.json",
+    "retained_snapshot_summary": "diagnostics/retained-snapshots/summary.json"
+  },
+  "invalid_attempts": [
+    {
+      "receipt": "receipts/campaign-1.json",
+      "observations": 0,
+      "reason": "CPU 2 exceeded 35% for two consecutive samples during initial admission."
+    },
+    {
+      "receipt": "receipts/campaign-1-run-2.json",
+      "observations": 133,
+      "reason": "Boundary Tctl reached 100 C after rss-large-2."
+    },
+    {
+      "receipt": "receipts/campaign-1-run-3.json",
+      "observations": 0,
+      "reason": "CPU 2 exceeded 35% for two consecutive samples during initial admission."
+    },
+    {
+      "receipt": "receipts/campaign-2.json",
+      "observations": 6,
+      "reason": "CPU 2 exceeded 35% for two consecutive samples during a block-start gate."
+    },
+    {
+      "receipt": "receipts/campaign-2-run-2.json",
+      "observations": 40,
+      "reason": "The performance-13 page-warm child window reached 40% CPU 2 busy."
+    }
+  ],
+  "preservation": {
+    "included": [
+      "all composite final receipts",
+      "all latest partial receipts",
+      "all append-only event journals",
+      "all append-only environment journals",
+      "five immutable generated fixture manifests",
+      "all retained-snapshot JSON and GNU-time records"
+    ],
+    "omitted": [
+      "four compiled benchmark and compatibility binaries",
+      "five plain fixture payloads and one gzip payload",
+      "the Oj canonical corpus and local Sunlight corpus",
+      "temporary GNU-time and dynamic scratch files",
+      "tool executables and duplicate copies of commit-bound runner scripts"
+    ],
+    "omission_reason": "Payloads and executables are large or reproducible. Their commands, identities, and source commit remain bound by preserved receipts. External corpora are identity-bound but are not suitable repository data."
+  },
+  "disclosure_review": {
+    "credential_markers_detected": false,
+    "receipts_redacted_or_modified": false,
+    "absolute_machine_paths_present": true,
+    "host_and_cpu_metadata_present": true,
+    "environment_telemetry_present": true,
+    "sunlight_filename_inventory_present": true,
+    "corpus_payloads_present": false
+  }
+}

@@ -183,6 +183,9 @@ The [accepted Milestone 6 results](milestone-6-benchmark-results.md) preserve
 both complete campaigns, the independent audit, additional gates, and every
 invalid attempt. They are comparative measurements from a hot shared host,
 not quiet-host or peak-throughput estimates.
+The [typed-decoding optimization results](typed-optimization-results.md)
+reuse that frozen protocol to quantify adapter, scalar, cache-bound, and
+retained-output improvements at `4ca865c`.
 The [Milestone 7 stable release review](milestone-7-release-review.md) records
 the 0.2.0 candidate's stable-compiler correctness, bounded-RSS gate, exact
 offset check, and diagnostic three-pair timing. It does not replace Milestone

@@ -207,19 +207,25 @@ throughput, paired-bootstrap, and managed-allocation gate passed; the
 [complete results and unsuccessful attempts](docs/milestone-5-benchmark-results.md)
 are retained for review.
 
-At current-repository commit `b7a54566`, Crystal 1.22.0-dev `[6c6a5e988]`
-built the programs for Milestone 6's two complete typed-streaming campaigns.
+At Milestone 6 baseline commit `b7a54566`, Crystal 1.22.0-dev
+`[6c6a5e988]` built the programs for two complete typed-streaming campaigns.
 Both passed. FusedJSON's geometric-mean throughput was 2.568x-2.592x Crystal
 on the many-small profile and 2.127x-2.130x on the wide-item profile. Process
 RSS stayed below 8.9 MiB in all six 4.0625 GiB no-retention runs, well under
 the frozen 24.7-24.8 MiB ceilings. The dynamic-parser, exact post-4-GiB offset,
 and Sunlight compatibility gates passed as well. See the
 [complete Milestone 6 results](docs/milestone-6-benchmark-results.md),
-including the hot shared-host caveat and every invalid attempt. Bounded live
-RSS did not mean lower cumulative allocation: typed FusedJSON allocated about
-5.0x-5.2x Crystal in those profiles, and retaining all selected values used
-about 84-85 MiB versus Crystal's 57-59 MiB. Reducing that typed-adapter churn is
-post-release optimization work.
+including the hot shared-host caveat and every invalid attempt.
+
+Candidate `4ca865c4` repeated that frozen protocol after adding native scalar
+reads, prototype-copy typed adapters, and a cache-only fast path. Across two
+complete campaigns, the geometric-mean ratios rose to 3.230x-3.286x on
+many-small and 2.685x-2.707x on wide-item. FusedJSON managed allocation fell
+56.85% and 55.22% respectively; median retained-output peak RSS fell about 24%
+to 64.6-64.9 MiB. Bounded no-retention RSS, dynamic parsing, exact offsets, and
+Sunlight compatibility all passed again. See the
+[typed-decoding optimization results](docs/typed-optimization-results.md) and
+their checksummed receipts.
 
 Milestone 7 rechecked candidate `fbe44913` with Crystal 1.21.0
 `[57cf7da50]`, LLVM 20.1.8, and `x86_64-unknown-linux-gnu`. Its abbreviated
@@ -240,17 +246,20 @@ They add raw-number access, typed cursor and array reads, TiC workflows, one
 resource policy across all parsing APIs, and stable-compiler release evidence.
 See the [Milestone 5 resource results](docs/milestone-5-benchmark-results.md),
 [Milestone 6 performance results](docs/milestone-6-benchmark-results.md), and
-[Milestone 7 stable review](docs/milestone-7-release-review.md).
+[Milestone 7 stable review](docs/milestone-7-release-review.md). The later
+[typed-decoding optimization](docs/typed-optimization-results.md) removes the
+largest measured typed-adapter churn while preserving those gates.
 Current priorities are:
 
 - Add a separate reader for NDJSON or repeated JSON documents, with buffer
   reuse between records. `load` and `parse` will remain eager, strict,
   single-document operations.
 - An opt-in dynamic value type that can hold integers beyond `Int64`, exact decimals, or the original number spelling. The existing `JSON::Any` API will keep its Crystal-compatible numeric behavior. Explicit typed decoding already supports `BigInt`, `BigFloat`, and `BigDecimal` after loading `big/json`.
-- Fewer allocations in dynamic and typed decoding. Streaming tree construction
-  will build values directly from `IO` instead of routing them through pull
-  events. Future work must be rechecked on stable x86-64 and consult the
-  report-only ARM64 and macOS workflow results.
+- Further allocation reduction in dynamic tree construction and the remaining
+  typed value and key paths. Streaming tree construction will build values
+  directly from `IO` instead of routing them through pull events. Future work
+  must be rechecked on stable x86-64 and consult the report-only ARM64 and
+  macOS workflow results.
 - Expanded fuzz testing and broader platform coverage, beginning with ARM64 and macOS. The word scanner will be tested on real 32-bit and big-endian hardware when practical CI runners are available. The compiler-private float hook will either be replaced or moved behind a stable upstream API, while the tested public fallback remains available.
 
 Application feedback will shape the typed and pull interfaces before 1.0. The 1.0 release will define stable contracts for limits, numbers, errors, and compiler compatibility.

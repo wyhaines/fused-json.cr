@@ -389,6 +389,40 @@ Acceptance evidence:
   release workflow; no remote push, tag, or GitHub release was created during
   implementation.
 
+## Post-0.2 Typed-decoding Optimization — Complete
+
+Completed work:
+
+1. Added native `PullParser#read(T)` paths for compatible built-in scalar
+   events, preserving Crystal conversion and error behavior without allocating
+   a compatibility adapter.
+2. Changed adapter-backed decoding to shallow-copy valid initialized
+   prototypes. Each typed constructor still receives a distinct adapter
+   identity, but unused stdlib parser internals are no longer rebuilt for every
+   value.
+3. Separated resource-state requirements from per-event traversal hooks so a
+   standalone `max_cached_keys` bound checks only materialized keys and remains
+   inert when key caching is disabled.
+4. Expanded the typed cursor diagnostic across String and streaming
+   transports, cache policies, and scalar and record shapes. Added opt-in
+   retained-output snapshots before parsing, after parsing, and after a full GC.
+
+Acceptance evidence:
+
+- Default and combined portable suites, formatting, lint, documentation
+  examples, release builds, and all benchmark self-audits passed at
+  `4ca865c4`.
+- Two complete `busy-pinned-v2` campaigns and their independent audit passed.
+  Median FusedJSON throughput improved 27-29% on many-small and 26-27% on
+  wide-item relative to the accepted baseline.
+- Managed allocation fell 56.85% and 55.22% on the two 256 MiB profiles.
+  Retained-output cumulative allocation fell 50.58%, while its median process
+  peak fell about 24%.
+- The no-retention 4.0625 GiB RSS gate, dynamic-parser gate, exact post-`2^32`
+  offset check, and local Sunlight semantic comparison all passed. The
+  [complete results and checksummed evidence](typed-optimization-results.md)
+  preserve accepted and invalid attempts.
+
 ## Ideas Recorded at Version 0.1.0 Closeout
 
 These were the follow-up ideas recorded before version 0.1.0 was published.

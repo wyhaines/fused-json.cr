@@ -1,0 +1,1144 @@
+{
+  "format": "fused-json-sunlight-tic-compat-v2",
+  "projection_format": "sunlight-oj-selection-tagged-jsonl-v1",
+  "engine": "oj",
+  "engine_identity": {
+    "name": "oj",
+    "version": "3.17.1"
+  },
+  "contract_identity": {
+    "driver_sha256": "ab654d6153966e76d6a8ed6dd3cb8709fec3ffeb0d457e8ce45704c0a5778279",
+    "ruby": "ruby 4.0.5 (2026-05-20 revision 64336ffd0e) +PRISM [x86_64-linux]",
+    "json_version": "2.18.0",
+    "oj_version": "3.17.1",
+    "sunlight": {
+      "commit": "1614be55506d41998167cb051c1d9603c692889a",
+      "tracked_dirty": false,
+      "source_sha256": {
+        "lib/sunlight/reconcile/doc_stream.rb": "131073c3af91989d9c116af7192a999479a80f024640801ad449784e17f76ded",
+        "lib/sunlight/tic/row_handler.rb": "86704b41e4481a2e69001b95b32c2542d19f676fac5e816ebe13d2282bc43c3d",
+        "lib/sunlight/mrf/json_row_handler.rb": "edc7bb6326f40e4751eee6390dd1f18b715494b545597be9ae55ddb08df7220b"
+      }
+    },
+    "provenance": []
+  },
+  "corpus": "/media/wyhaines/home/wyhaines/ghq/github.com/wyhaines/sunlight/data/raw/payer-cache",
+  "item_limit_bytes": 67108864,
+  "selection": "Sunlight::Reconcile::DocStream + crystal:verify matched-id gate",
+  "files": [
+    {
+      "name": "wy-index-2026-08-01.json.gz",
+      "compressed_bytes": 198568,
+      "compressed_sha256": "0420266812e7c2da3028f21e87bb83bf25f882a1200ebc3024ce73d8286c94b1",
+      "classification": "excluded_index",
+      "classification_evidence": "top-level:reporting_structure",
+      "status": "not_scanned"
+    },
+    {
+      "name": "wy_inst_w40.json.gz",
+      "compressed_bytes": 657787,
+      "compressed_sha256": "03ac2f1c8244226f544ca83b2f9bd1d0eb740ba1076235c55c1d2cd4903fc025",
+      "classification": "accepted_in_network",
+      "classification_evidence": "top-level:in_network",
+      "status": "accepted",
+      "counts": {
+        "references": 1,
+        "prices": 19539
+      },
+      "digests": {
+        "reference_sha256": "8b7c7f2c0611291a193217b15c21a453ee4421f7428010d2d5fbdabeb3fe51cc",
+        "price_sha256": "5acd2ef4dcde738b5a0108ba7eb4597b31a8b4d1f4fdd78d8dbeeef629f875f2",
+        "semantic_sha256": "42290604d10a88b3bbfb5d71f6dd6363708166906cd6188d52a6fef8e357b239"
+      }
+    },
+    {
+      "name": "wy_inst_w49.json.gz",
+      "compressed_bytes": 662548,
+      "compressed_sha256": "343eef0542f2ccbd397010ebdf9ef6203c66752a533587d42e3e3fac01ffd2b9",
+      "classification": "accepted_in_network",
+      "classification_evidence": "top-level:in_network",
+      "status": "accepted",
+      "counts": {
+        "references": 7,
+        "prices": 19543
+      },
+      "digests": {
+        "reference_sha256": "9dc64d3d3d7a394a36e1b161b4dbeebe11fe3364e4877800920cddba82494e0f",
+        "price_sha256": "a54a4e116bec72d227e337f328ea804622d80340fe4f6f6aa096937479184405",
+        "semantic_sha256": "5461f51af0a6daaec9c445beb83c3afdd693fe6f4f8587bde5bfe32e17e6c9b2"
+      }
+    },
+    {
+      "name": "wy_local_2026_07_27_000005300_in_network_rates_01_of_09.json.gz",
+      "compressed_bytes": 992379,
+      "compressed_sha256": "c82036ffb0c073fba0083c8f44bb8f1afe2bf7298167beea36b38a09925b340d",
+      "classification": "accepted_in_network",
+      "classification_evidence": "top-level:in_network",
+      "status": "accepted",
+      "counts": {
+        "references": 110,
+        "prices": 35777
+      },
+      "digests": {
+        "reference_sha256": "43fca34897ea4d1916805a441554c555c32aa990dc6324bdeca90aeb46a6b6a4",
+        "price_sha256": "c48475b303fb118ff2fb2e2e27fe4b0d678d0ca644cd0a15a43e06df2c6c76fe",
+        "semantic_sha256": "79b00fc558f90c4b68523600608cdc437271eed2ce77030e4216f568f0e5bebe"
+      }
+    },
+    {
+      "name": "wy_local_2026_07_27_000005300_in_network_rates_02_of_09.json.gz",
+      "compressed_bytes": 1115175,
+      "compressed_sha256": "b74b9834d7c01bd9f9d2e23040d4fd122f1712a7e38d0e69a71dbda6c435a9b9",
+      "classification": "accepted_in_network",
+      "classification_evidence": "top-level:in_network",
+      "status": "accepted",
+      "counts": {
+        "references": 110,
+        "prices": 42813
+      },
+      "digests": {
+        "reference_sha256": "43fca34897ea4d1916805a441554c555c32aa990dc6324bdeca90aeb46a6b6a4",
+        "price_sha256": "fa159bd8ae7adff0d60604ef99e415a11f3695e0e777152d0d19fa4627906b9b",
+        "semantic_sha256": "08d1aa8a77580b33a876517450a8a8bc706843d2f4352cceb8e846f59fe723f8"
+      }
+    },
+    {
+      "name": "wy_local_2026_07_27_000005300_in_network_rates_03_of_09.json.gz",
+      "compressed_bytes": 950107,
+      "compressed_sha256": "0e17a06384a8c07088a39695020968cbacc08467cf653672955b6ea7a02450bc",
+      "classification": "accepted_in_network",
+      "classification_evidence": "top-level:in_network",
+      "status": "accepted",
+      "counts": {
+        "references": 110,
+        "prices": 33496
+      },
+      "digests": {
+        "reference_sha256": "43fca34897ea4d1916805a441554c555c32aa990dc6324bdeca90aeb46a6b6a4",
+        "price_sha256": "08e5166671647e3572d4dc037d69a78644cc8f85018c3ae2f1354b71965465d9",
+        "semantic_sha256": "232a9c19c5d5aa1060958a919927d148d325f26859cc5dabeef2986229fe46bf"
+      }
+    },
+    {
+      "name": "wy_local_2026_07_27_000005300_in_network_rates_04_of_09.json.gz",
+      "compressed_bytes": 952428,
+      "compressed_sha256": "b02a1eede45000224cdffc2b0993da88b414d486fc90a8d0b03d9dcea9aa7352",
+      "classification": "accepted_in_network",
+      "classification_evidence": "top-level:in_network",
+      "status": "accepted",
+      "counts": {
+        "references": 110,
+        "prices": 34032
+      },
+      "digests": {
+        "reference_sha256": "43fca34897ea4d1916805a441554c555c32aa990dc6324bdeca90aeb46a6b6a4",
+        "price_sha256": "b888ee99f13df06ae1ef0b296a31a21e816177763dc64ba03291a10d801c3e81",
+        "semantic_sha256": "f76253d9ab9e7e760132139060bc7b3db1e7b5d2b0af05049dde29f467ad7f77"
+      }
+    },
+    {
+      "name": "wy_local_2026_07_27_000005300_in_network_rates_05_of_09.json.gz",
+      "compressed_bytes": 1027182,
+      "compressed_sha256": "94ed58dfae0db8e2465efb966b3266371aa7c05775a81aab38856169258278f3",
+      "classification": "accepted_in_network",
+      "classification_evidence": "top-level:in_network",
+      "status": "accepted",
+      "counts": {
+        "references": 110,
+        "prices": 38168
+      },
+      "digests": {
+        "reference_sha256": "43fca34897ea4d1916805a441554c555c32aa990dc6324bdeca90aeb46a6b6a4",
+        "price_sha256": "bdd4d9c4e12780805e9ced90d57253a31895e74a72ffd1b0cc1cbb08fa481678",
+        "semantic_sha256": "e43cec752bd8984a67e7ee1b77608a1fcaa6291ca08a7390bd68c6a5fe9d083f"
+      }
+    },
+    {
+      "name": "wy_local_2026_07_27_000005300_in_network_rates_06_of_09.json.gz",
+      "compressed_bytes": 1041037,
+      "compressed_sha256": "a3a279d0084459f7f98dfb14bd4d0a5c9cce2f755bc0879f9aae1d590f3451cb",
+      "classification": "accepted_in_network",
+      "classification_evidence": "top-level:in_network",
+      "status": "accepted",
+      "counts": {
+        "references": 112,
+        "prices": 38548
+      },
+      "digests": {
+        "reference_sha256": "8b38e36efe02afb039c4189d8591cf88e63449e986c144d9d28121434f75bd79",
+        "price_sha256": "08c06ead6cf9fc5fe6dfb832c863c7aca8262cca54c674c1fff97a68d4b70e58",
+        "semantic_sha256": "5298bad94c4570edea740df7fa47b8d38653bef432acaa77ad5d3ee137efe7ae"
+      }
+    },
+    {
+      "name": "wy_local_2026_07_27_000005300_in_network_rates_07_of_09.json.gz",
+      "compressed_bytes": 1113008,
+      "compressed_sha256": "8e8547bbead1698feff6250415409c004c5e3e4b3db7c0eb5075ca8ccda6f847",
+      "classification": "accepted_in_network",
+      "classification_evidence": "top-level:in_network",
+      "status": "accepted",
+      "counts": {
+        "references": 110,
+        "prices": 42330
+      },
+      "digests": {
+        "reference_sha256": "43fca34897ea4d1916805a441554c555c32aa990dc6324bdeca90aeb46a6b6a4",
+        "price_sha256": "2ad641e7f97a46cccbb1c99d42aad7a79f234608f4faba6527ea4c09d6a9d168",
+        "semantic_sha256": "6c0f771d677f6cf19225915e09add3fceae07eb9e1b37ed7026ce4028b0f312e"
+      }
+    },
+    {
+      "name": "wy_local_2026_07_27_000005300_in_network_rates_08_of_09.json.gz",
+      "compressed_bytes": 320158,
+      "compressed_sha256": "4707513e503b9a85d15cdf89916ad0493b761401f214dd7be75d0c73e57f35a0",
+      "classification": "accepted_in_network",
+      "classification_evidence": "top-level:in_network",
+      "status": "accepted",
+      "counts": {
+        "references": 110,
+        "prices": 7253
+      },
+      "digests": {
+        "reference_sha256": "43fca34897ea4d1916805a441554c555c32aa990dc6324bdeca90aeb46a6b6a4",
+        "price_sha256": "11538aecac508cab6d9b50ac720ef4d9736fc5b266130258602d3d7d3ad4c956",
+        "semantic_sha256": "fe427b87d64f320ec7c69f8e8a76bad3218d79b5bb564cfa939de11073d48201"
+      }
+    },
+    {
+      "name": "wy_local_2026_07_27_000005300_in_network_rates_09_of_09.json.gz",
+      "compressed_bytes": 2356889,
+      "compressed_sha256": "f6fdae10376c650636be8e4f93aecc71c0f83d959515b5da7451e433ffe8e056",
+      "classification": "accepted_in_network",
+      "classification_evidence": "top-level:in_network",
+      "status": "accepted",
+      "counts": {
+        "references": 168,
+        "prices": 513259
+      },
+      "digests": {
+        "reference_sha256": "ae07e4e5f017017d8b5efeb3a46338806d4505b35476b0f57403f58877c5838e",
+        "price_sha256": "6ae407faea1b15560dc846b4b9ac3df1c5b52cf37effb9634dae62a8a7f196bf",
+        "semantic_sha256": "18af37dbc59b82db0dd4866b176e657c66a570ba8af7f7ad417d0072c0a212e2"
+      }
+    },
+    {
+      "name": "wy_local_2026_07_27_000005302_in_network_rates_01_of_09.json.gz",
+      "compressed_bytes": 626362,
+      "compressed_sha256": "1149d32951e2d768f3ca079cdd06b0b59649871568fee20a374f872e96971c2c",
+      "classification": "accepted_in_network",
+      "classification_evidence": "top-level:in_network",
+      "status": "accepted",
+      "counts": {
+        "references": 60,
+        "prices": 21647
+      },
+      "digests": {
+        "reference_sha256": "0b171ecb94fb5cf2a7bc06f7970a9c5145722dacf4e63b04dcbeccf6560b2121",
+        "price_sha256": "e5ae9aa0f4fe2a308649671b4f8ce48e6d1a6c8625b1c1eb1b1970e53f972154",
+        "semantic_sha256": "8f482f399d467e8832009be3c96e03a3541930e75266b92e4b71338f9a2b4128"
+      }
+    },
+    {
+      "name": "wy_local_2026_07_27_000005302_in_network_rates_02_of_09.json.gz",
+      "compressed_bytes": 596416,
+      "compressed_sha256": "ad5565c1e53557df1bb149b435c8f83c76c96383f332035e3701e1a17fa71b35",
+      "classification": "accepted_in_network",
+      "classification_evidence": "top-level:in_network",
+      "status": "accepted",
+      "counts": {
+        "references": 60,
+        "prices": 20460
+      },
+      "digests": {
+        "reference_sha256": "0b171ecb94fb5cf2a7bc06f7970a9c5145722dacf4e63b04dcbeccf6560b2121",
+        "price_sha256": "6e169bc9dbdf4f7b21fdef214a49a5aa4a781f5dc94ec0a20eedc72232b4013c",
+        "semantic_sha256": "eedcc03f2646ca15175af11ed66e6e22920f047ca65313102e8be3dc918fc5d3"
+      }
+    },
+    {
+      "name": "wy_local_2026_07_27_000005302_in_network_rates_03_of_09.json.gz",
+      "compressed_bytes": 563287,
+      "compressed_sha256": "2bb51e972ea886d5f2a3606f94a06e96c3a019adc61c07afba6500befaccab8d",
+      "classification": "accepted_in_network",
+      "classification_evidence": "top-level:in_network",
+      "status": "accepted",
+      "counts": {
+        "references": 60,
+        "prices": 18856
+      },
+      "digests": {
+        "reference_sha256": "0b171ecb94fb5cf2a7bc06f7970a9c5145722dacf4e63b04dcbeccf6560b2121",
+        "price_sha256": "9f539aa5bab121ad223b01c8ab053cb041162d85dfccdd268eb73bb46d83c9c4",
+        "semantic_sha256": "64688fb560c98b5b9d8806c34ceefcba8e3095460311b4d58104170248043ccf"
+      }
+    },
+    {
+      "name": "wy_local_2026_07_27_000005302_in_network_rates_04_of_09.json.gz",
+      "compressed_bytes": 631957,
+      "compressed_sha256": "1acb801d90e83e2a86f4264f8f52b44ebd77ef0eecedef71e1d43d0aae24afcb",
+      "classification": "accepted_in_network",
+      "classification_evidence": "top-level:in_network",
+      "status": "accepted",
+      "counts": {
+        "references": 60,
+        "prices": 22185
+      },
+      "digests": {
+        "reference_sha256": "0b171ecb94fb5cf2a7bc06f7970a9c5145722dacf4e63b04dcbeccf6560b2121",
+        "price_sha256": "33e1de43d0c8d92594798aabe5dd8ec2e76105612c6b8a55266fc4c23d225192",
+        "semantic_sha256": "1b6c21305b87286bd9127a7003769ce4455fbe7bfc905faa0bb003badefd6fbd"
+      }
+    },
+    {
+      "name": "wy_local_2026_07_27_000005302_in_network_rates_05_of_09.json.gz",
+      "compressed_bytes": 555761,
+      "compressed_sha256": "6f40430ce30d8f84f4e2e87c6cb5ae3ab7246c9c18a6e37db99960f0e03b6161",
+      "classification": "accepted_in_network",
+      "classification_evidence": "top-level:in_network",
+      "status": "accepted",
+      "counts": {
+        "references": 60,
+        "prices": 18364
+      },
+      "digests": {
+        "reference_sha256": "0b171ecb94fb5cf2a7bc06f7970a9c5145722dacf4e63b04dcbeccf6560b2121",
+        "price_sha256": "b6ece40ec7a7d4dc4e4f678a72f0bb58ee795a72c3aa7b561b0c9ab39998e85c",
+        "semantic_sha256": "f345c33906d4303191c998bf0bc4882872d0f26d2b095bc36c5889807e500f47"
+      }
+    },
+    {
+      "name": "wy_local_2026_07_27_000005302_in_network_rates_06_of_09.json.gz",
+      "compressed_bytes": 589019,
+      "compressed_sha256": "e637f4c3dd3ad0f65767cf9a792b50a2715329d9da47b5f9e69ca8b5015be56f",
+      "classification": "accepted_in_network",
+      "classification_evidence": "top-level:in_network",
+      "status": "accepted",
+      "counts": {
+        "references": 62,
+        "prices": 19788
+      },
+      "digests": {
+        "reference_sha256": "b1849ca28f1df21d657703ece3391f7842c58f4793efbc42b403724cf28f237a",
+        "price_sha256": "80690ac79c35650136f2474c7994c0a16393a3114ebe1fc8bc8a27c3db5f0b1f",
+        "semantic_sha256": "ad45f2ca40698e41dc8a9b5747776ffbc0124087eea2ab9f4a964ef5c9c48372"
+      }
+    },
+    {
+      "name": "wy_local_2026_07_27_000005302_in_network_rates_07_of_09.json.gz",
+      "compressed_bytes": 548874,
+      "compressed_sha256": "775093d0ad91e1307ba17e03687e6bd70b9494baff1cfea8624afe16ecf080b2",
+      "classification": "accepted_in_network",
+      "classification_evidence": "top-level:in_network",
+      "status": "accepted",
+      "counts": {
+        "references": 60,
+        "prices": 18022
+      },
+      "digests": {
+        "reference_sha256": "0b171ecb94fb5cf2a7bc06f7970a9c5145722dacf4e63b04dcbeccf6560b2121",
+        "price_sha256": "d21e24758b854f75c8783d0ae363cadc137ebfb924fb8116584a6d83f972dab4",
+        "semantic_sha256": "85d27f1d3332209b2d3ba8eaffa7f4f9b54bf587f4ead6c4674a4a7921700ac9"
+      }
+    },
+    {
+      "name": "wy_local_2026_07_27_000005302_in_network_rates_08_of_09.json.gz",
+      "compressed_bytes": 68723,
+      "compressed_sha256": "61d07a526409ad21574ec1ac574f2bdde44df4541998eb5b35083fda81511fe7",
+      "classification": "accepted_in_network",
+      "classification_evidence": "top-level:in_network",
+      "status": "accepted",
+      "counts": {
+        "references": 60,
+        "prices": 664
+      },
+      "digests": {
+        "reference_sha256": "0b171ecb94fb5cf2a7bc06f7970a9c5145722dacf4e63b04dcbeccf6560b2121",
+        "price_sha256": "7850a7c78f9bba22a9677db8fca56a39d321208d210c387d3ed8d77e2fe7a225",
+        "semantic_sha256": "f79d739d077f05cba69f06b9f79586f544c52b1accf2ab040fec94a3cb78c471"
+      }
+    },
+    {
+      "name": "wy_local_2026_07_27_000005302_in_network_rates_09_of_09.json.gz",
+      "compressed_bytes": 1073890,
+      "compressed_sha256": "724cc1c4f0efd6cb5b097107f985cb39d7521b64b6bac4813b9cb8b1271d1e8e",
+      "classification": "accepted_in_network",
+      "classification_evidence": "top-level:in_network",
+      "status": "accepted",
+      "counts": {
+        "references": 22,
+        "prices": 111575
+      },
+      "digests": {
+        "reference_sha256": "58211d674114fe6bd1018c45a87c4ac417a121bbc73a775fdfde5a6d4e8fa612",
+        "price_sha256": "94605d1adf98e1ea9c026a8cf3665b45ac08286277383e046364d854611d6f77",
+        "semantic_sha256": "655ce3b39a29e1e31f8cce4c2a844c0c2f6ddfb85e577b7911c4aa608ae9aca2"
+      }
+    },
+    {
+      "name": "wy_local_2026_07_27_000005303_in_network_rates_01_of_16.json.gz",
+      "compressed_bytes": 597226,
+      "compressed_sha256": "8f8ca18f43169cb75a59a6eeda38d1d703527216c2217f0ef0bb030bc5783fd1",
+      "classification": "accepted_in_network",
+      "classification_evidence": "top-level:in_network",
+      "status": "accepted",
+      "counts": {
+        "references": 58,
+        "prices": 18867
+      },
+      "digests": {
+        "reference_sha256": "334debede8132204824431e9d1ed3ca2018c5bad363f8c38737a9ba9b94ff0fc",
+        "price_sha256": "02e19bb6c6cf52e65b0dbc4a1b288157b5b00a505dc04cebdfc4e42eaad47924",
+        "semantic_sha256": "832cbbf41bb06a759910daf6f9a74fb5d8310070fe0bf17c95701f4738bd5e08"
+      }
+    },
+    {
+      "name": "wy_local_2026_07_27_000005303_in_network_rates_02_of_16.json.gz",
+      "compressed_bytes": 585033,
+      "compressed_sha256": "2a82489fc51a5e33c60560d888a139a7a6ce0002f0a7fae076f75827aba990fc",
+      "classification": "accepted_in_network",
+      "classification_evidence": "top-level:in_network",
+      "status": "accepted",
+      "counts": {
+        "references": 58,
+        "prices": 18237
+      },
+      "digests": {
+        "reference_sha256": "334debede8132204824431e9d1ed3ca2018c5bad363f8c38737a9ba9b94ff0fc",
+        "price_sha256": "9e55629572bb731acd9b5143f40b440bc41e295a7d7c96f14167d0f961ff7f71",
+        "semantic_sha256": "90e7192df90e7de06dab5d01c68361918efa5faba3434b74c724c24a9c132e3e"
+      }
+    },
+    {
+      "name": "wy_local_2026_07_27_000005303_in_network_rates_03_of_16.json.gz",
+      "compressed_bytes": 652944,
+      "compressed_sha256": "614040b7930b6d43e6cf668ff0f00390a78ffbedc294a7250c7661015f42553d",
+      "classification": "accepted_in_network",
+      "classification_evidence": "top-level:in_network",
+      "status": "accepted",
+      "counts": {
+        "references": 58,
+        "prices": 21116
+      },
+      "digests": {
+        "reference_sha256": "334debede8132204824431e9d1ed3ca2018c5bad363f8c38737a9ba9b94ff0fc",
+        "price_sha256": "603d9bda7a48db6daf968af639d891f1c2960464485e217b250192655c642022",
+        "semantic_sha256": "3898306e2769d8e7bae388f965f991a2db52406cbf061557375dce135359d8b5"
+      }
+    },
+    {
+      "name": "wy_local_2026_07_27_000005303_in_network_rates_04_of_16.json.gz",
+      "compressed_bytes": 593984,
+      "compressed_sha256": "0789ef68ae8903525954a186847f072d0be6d9ec1a0e2395ba86063ce29a32f9",
+      "classification": "accepted_in_network",
+      "classification_evidence": "top-level:in_network",
+      "status": "accepted",
+      "counts": {
+        "references": 58,
+        "prices": 18349
+      },
+      "digests": {
+        "reference_sha256": "334debede8132204824431e9d1ed3ca2018c5bad363f8c38737a9ba9b94ff0fc",
+        "price_sha256": "661cd4610047c1389a16f73117f614227878f251de4db66eb127164cde4eb468",
+        "semantic_sha256": "cef70533e3df468ceb6a113027c4c0c8b208a7423f8accb2481fa94fc25fb517"
+      }
+    },
+    {
+      "name": "wy_local_2026_07_27_000005303_in_network_rates_05_of_16.json.gz",
+      "compressed_bytes": 636350,
+      "compressed_sha256": "e3dd0d30e35875d02e6f24f118de1ca335c78b0aa75132954e2e3695b766c745",
+      "classification": "accepted_in_network",
+      "classification_evidence": "top-level:in_network",
+      "status": "accepted",
+      "counts": {
+        "references": 58,
+        "prices": 20507
+      },
+      "digests": {
+        "reference_sha256": "334debede8132204824431e9d1ed3ca2018c5bad363f8c38737a9ba9b94ff0fc",
+        "price_sha256": "e8db9c33a55121078955082e1fa27308e68281b8218ec35bd4b6701117166798",
+        "semantic_sha256": "f878b84818490d83541acb20480bec6577c7f3b8bdc406049c57412574ab3ae9"
+      }
+    },
+    {
+      "name": "wy_local_2026_07_27_000005303_in_network_rates_06_of_16.json.gz",
+      "compressed_bytes": 613489,
+      "compressed_sha256": "f9b3d7f5e26ecea88392045d20eb30b49af6b9daef9b162d27465e5023b59e1f",
+      "classification": "accepted_in_network",
+      "classification_evidence": "top-level:in_network",
+      "status": "accepted",
+      "counts": {
+        "references": 58,
+        "prices": 19543
+      },
+      "digests": {
+        "reference_sha256": "334debede8132204824431e9d1ed3ca2018c5bad363f8c38737a9ba9b94ff0fc",
+        "price_sha256": "f52e1de36859385a15ed6f323ba2f84c44d707c96cad8f75a31ea0bf56d732ca",
+        "semantic_sha256": "9cce4de1b055845dcbb3b25ad96c961af5e872e84b34ddb89c0e91e5f9c7f20f"
+      }
+    },
+    {
+      "name": "wy_local_2026_07_27_000005303_in_network_rates_07_of_16.json.gz",
+      "compressed_bytes": 638223,
+      "compressed_sha256": "8133d00e95d6dd4bb2c6d3840fbfdef256e69606e2ad8d5d2ac427ad9979ed9b",
+      "classification": "accepted_in_network",
+      "classification_evidence": "top-level:in_network",
+      "status": "accepted",
+      "counts": {
+        "references": 58,
+        "prices": 20926
+      },
+      "digests": {
+        "reference_sha256": "334debede8132204824431e9d1ed3ca2018c5bad363f8c38737a9ba9b94ff0fc",
+        "price_sha256": "1eb18ec3dc830d8f5224526ade7a11c2d4eb28b49580c11bbdd0bf9d2568aeee",
+        "semantic_sha256": "bc4571f363e983b425e183f9e25d6ffe03acb0419a928e272c72e42f5e251d1f"
+      }
+    },
+    {
+      "name": "wy_local_2026_07_27_000005303_in_network_rates_08_of_16.json.gz",
+      "compressed_bytes": 1163095,
+      "compressed_sha256": "2394d3162aa5f9e1b426af78b413937bccdeb0d38d7a71cb8eb892c1b86d3d42",
+      "classification": "accepted_in_network",
+      "classification_evidence": "top-level:in_network",
+      "status": "accepted",
+      "counts": {
+        "references": 138,
+        "prices": 50964
+      },
+      "digests": {
+        "reference_sha256": "cfac190091404ff80612e960c4fb387684a31185b498da00387d6d2d7b905e93",
+        "price_sha256": "7e1f7804fea64077baa91e2d971dd4ce186196dc37071fa728b51dfda59db1d6",
+        "semantic_sha256": "0a44a482bfda0ef5b19ee1bf94175193082ca3017beb01616af623ff4da60e43"
+      }
+    },
+    {
+      "name": "wy_local_2026_07_27_000005303_in_network_rates_09_of_16.json.gz",
+      "compressed_bytes": 1213611,
+      "compressed_sha256": "3215bae00dc640953b19585cfb9ef392fa515d4afa3236542a27c805cc20cb2f",
+      "classification": "accepted_in_network",
+      "classification_evidence": "top-level:in_network",
+      "status": "accepted",
+      "counts": {
+        "references": 111,
+        "prices": 54724
+      },
+      "digests": {
+        "reference_sha256": "852830047b5279930c174328e61b00c64dffc140eb33c77ec6d57b286e1668f0",
+        "price_sha256": "1c16f56592110e5a9358ef1cfe64dd09dc1843623caf17b311ed6ff443a0157b",
+        "semantic_sha256": "5ae52e422f85c26ee9b47f5bf78685297e5a76291ebff4b00926039a7263bc69"
+      }
+    },
+    {
+      "name": "wy_local_2026_07_27_000005303_in_network_rates_10_of_16.json.gz",
+      "compressed_bytes": 1057256,
+      "compressed_sha256": "da48d296ecf9531577df005ba31a509204328898a913d096a8321d0f3e7a7a6c",
+      "classification": "accepted_in_network",
+      "classification_evidence": "top-level:in_network",
+      "status": "accepted",
+      "counts": {
+        "references": 111,
+        "prices": 45131
+      },
+      "digests": {
+        "reference_sha256": "852830047b5279930c174328e61b00c64dffc140eb33c77ec6d57b286e1668f0",
+        "price_sha256": "2c846613b33823e11aabaf6caf9d4321b65007003f66c6937499302d9f6eeae6",
+        "semantic_sha256": "0873433e2837013ed4a7b96c149d17792ca5bda83d67671b7f153d1d4235cb4c"
+      }
+    },
+    {
+      "name": "wy_local_2026_07_27_000005303_in_network_rates_11_of_16.json.gz",
+      "compressed_bytes": 1288912,
+      "compressed_sha256": "594dfab8cd21aa56731d5b432bbeecabd0d7e1e46fe15372e0cfc606b820bcbd",
+      "classification": "accepted_in_network",
+      "classification_evidence": "top-level:in_network",
+      "status": "accepted",
+      "counts": {
+        "references": 111,
+        "prices": 59530
+      },
+      "digests": {
+        "reference_sha256": "852830047b5279930c174328e61b00c64dffc140eb33c77ec6d57b286e1668f0",
+        "price_sha256": "66c401da92a6d73bbf28b07cc8cc727bd706258f3c17aaddd47381a39b2b39aa",
+        "semantic_sha256": "5ab6ff8e55fdc6db899b66de0ff22b1ebd5e9822cbfe1cb3e2b8d8f0d95dec2c"
+      }
+    },
+    {
+      "name": "wy_local_2026_07_27_000005303_in_network_rates_12_of_16.json.gz",
+      "compressed_bytes": 1218389,
+      "compressed_sha256": "6600951dabd91ad0383aa16366a8b72ed6b280d33ec95b39a7a577c531705644",
+      "classification": "accepted_in_network",
+      "classification_evidence": "top-level:in_network",
+      "status": "accepted",
+      "counts": {
+        "references": 109,
+        "prices": 54667
+      },
+      "digests": {
+        "reference_sha256": "6401f62f1d669bc41a7a03a56242dbd0987ed6312bd85ff4803dcb0549d768e6",
+        "price_sha256": "a389fa65dca49a46aa3b5181c831a64c07a9808fe24205129b08a88abd7ddfcb",
+        "semantic_sha256": "ca725b3bec7f3fd9c1546a1932c7704d941133e455c96a463f24b89eb8bd8918"
+      }
+    },
+    {
+      "name": "wy_local_2026_07_27_000005303_in_network_rates_13_of_16.json.gz",
+      "compressed_bytes": 1274183,
+      "compressed_sha256": "a4252175eabd489b30876864dbaaf779337a53a69f373f7f2bc90afba643b29e",
+      "classification": "accepted_in_network",
+      "classification_evidence": "top-level:in_network",
+      "status": "accepted",
+      "counts": {
+        "references": 109,
+        "prices": 58064
+      },
+      "digests": {
+        "reference_sha256": "6401f62f1d669bc41a7a03a56242dbd0987ed6312bd85ff4803dcb0549d768e6",
+        "price_sha256": "12230834c9808d10990598568a8a1de96911dc4ecc16d3424705ad16f6db4308",
+        "semantic_sha256": "9d5151b6a195c2dfff19209ad8873e4f80e3f2267ed749130ca4d00da74c33e4"
+      }
+    },
+    {
+      "name": "wy_local_2026_07_27_000005303_in_network_rates_14_of_16.json.gz",
+      "compressed_bytes": 1163679,
+      "compressed_sha256": "71b9a0610ee6fef07b98acc5d52a6f7464faca129c66a1d6e61ab121e98a533d",
+      "classification": "accepted_in_network",
+      "classification_evidence": "top-level:in_network",
+      "status": "accepted",
+      "counts": {
+        "references": 109,
+        "prices": 51514
+      },
+      "digests": {
+        "reference_sha256": "6401f62f1d669bc41a7a03a56242dbd0987ed6312bd85ff4803dcb0549d768e6",
+        "price_sha256": "3431b4e7ec93ce50c23faa27cbe78ea2528e6fe964c4f6a81eb242f15dea9ee8",
+        "semantic_sha256": "5c0c006741279888401bb76396d990e2e39d263b647e9ceef26aed916efd517f"
+      }
+    },
+    {
+      "name": "wy_local_2026_07_27_000005303_in_network_rates_15_of_16.json.gz",
+      "compressed_bytes": 407789,
+      "compressed_sha256": "0ad0ba18418d77623a2bdc095427220162d306f4aecb2ba7b792a41ac8806ba1",
+      "classification": "accepted_in_network",
+      "classification_evidence": "top-level:in_network",
+      "status": "accepted",
+      "counts": {
+        "references": 111,
+        "prices": 12155
+      },
+      "digests": {
+        "reference_sha256": "852830047b5279930c174328e61b00c64dffc140eb33c77ec6d57b286e1668f0",
+        "price_sha256": "99bb903fad538382f4752ac32e1eddb16925b495c606c668ff824efa641383d8",
+        "semantic_sha256": "4d14c8fe0ba50dc92bc6608093015e922326e8302429bb046b81203291730459"
+      }
+    },
+    {
+      "name": "wy_local_2026_07_27_000005303_in_network_rates_16_of_16.json.gz",
+      "compressed_bytes": 2389967,
+      "compressed_sha256": "de03007a0402687d202132496755315755d5e574dafa3a4b0469b4d36d49c8f7",
+      "classification": "accepted_in_network",
+      "classification_evidence": "top-level:in_network",
+      "status": "accepted",
+      "counts": {
+        "references": 168,
+        "prices": 517304
+      },
+      "digests": {
+        "reference_sha256": "0512b64d0cf0e219bbb23319e7e727085d39769436d8bf44ddce22d36e2d9d0c",
+        "price_sha256": "e0b45f5775a3be0e59950488eabde5105ac319b81eddd5cba9f9012f35480ba8",
+        "semantic_sha256": "73ffe693e6982ad805021e45b5cb7bbd3fa7165f8f4738b2b3ecd87e267209e6"
+      }
+    },
+    {
+      "name": "wy_local_2026_07_27_000005307_W40_in_network_rates_01_of_01.json.gz",
+      "compressed_bytes": 657787,
+      "compressed_sha256": "03ac2f1c8244226f544ca83b2f9bd1d0eb740ba1076235c55c1d2cd4903fc025",
+      "classification": "accepted_in_network",
+      "classification_evidence": "top-level:in_network",
+      "status": "accepted",
+      "counts": {
+        "references": 1,
+        "prices": 19539
+      },
+      "digests": {
+        "reference_sha256": "8b7c7f2c0611291a193217b15c21a453ee4421f7428010d2d5fbdabeb3fe51cc",
+        "price_sha256": "5acd2ef4dcde738b5a0108ba7eb4597b31a8b4d1f4fdd78d8dbeeef629f875f2",
+        "semantic_sha256": "42290604d10a88b3bbfb5d71f6dd6363708166906cd6188d52a6fef8e357b239"
+      }
+    },
+    {
+      "name": "wy_local_2026_07_27_000005307_W49_in_network_rates_01_of_01.json.gz",
+      "compressed_bytes": 662548,
+      "compressed_sha256": "343eef0542f2ccbd397010ebdf9ef6203c66752a533587d42e3e3fac01ffd2b9",
+      "classification": "accepted_in_network",
+      "classification_evidence": "top-level:in_network",
+      "status": "accepted",
+      "counts": {
+        "references": 7,
+        "prices": 19543
+      },
+      "digests": {
+        "reference_sha256": "9dc64d3d3d7a394a36e1b161b4dbeebe11fe3364e4877800920cddba82494e0f",
+        "price_sha256": "a54a4e116bec72d227e337f328ea804622d80340fe4f6f6aa096937479184405",
+        "semantic_sha256": "5461f51af0a6daaec9c445beb83c3afdd693fe6f4f8587bde5bfe32e17e6c9b2"
+      }
+    },
+    {
+      "name": "wy_local_2026_07_27_000005307_in_network_rates_01_of_11.json.gz",
+      "compressed_bytes": 1467059,
+      "compressed_sha256": "76c3ed793dc216a0ba8222015236e100dbe9379a2f4555da63ab8f851c20877c",
+      "classification": "accepted_in_network",
+      "classification_evidence": "top-level:in_network",
+      "status": "accepted",
+      "counts": {
+        "references": 110,
+        "prices": 71283
+      },
+      "digests": {
+        "reference_sha256": "43dd07af2d39465a4e472dc03a586a982aad3331654589f0db1655babd838f48",
+        "price_sha256": "4ca808bd7b780bea60f9698daf5561b3c0c9c650d2e7913beb201f21f58c7500",
+        "semantic_sha256": "1f10e931070d176be239c2d89b1a52db435c0e86be8adbcfa8ee6592182c94c1"
+      }
+    },
+    {
+      "name": "wy_local_2026_07_27_000005307_in_network_rates_02_of_11.json.gz",
+      "compressed_bytes": 1147213,
+      "compressed_sha256": "9678e10871f0f9135d98f0b00e10ec780b0bbb6c71bfc8225f47fd855c9ac5f3",
+      "classification": "accepted_in_network",
+      "classification_evidence": "top-level:in_network",
+      "status": "accepted",
+      "counts": {
+        "references": 110,
+        "prices": 51249
+      },
+      "digests": {
+        "reference_sha256": "43dd07af2d39465a4e472dc03a586a982aad3331654589f0db1655babd838f48",
+        "price_sha256": "5b3cbd0e8073152c996af03784d2d3f631d92baa49e5367b56cdc3a6a573dba4",
+        "semantic_sha256": "a2783eddea5d006b188b871e701a463f4f392bb102cfcf3d8f9416da6fb3c1d8"
+      }
+    },
+    {
+      "name": "wy_local_2026_07_27_000005307_in_network_rates_03_of_11.json.gz",
+      "compressed_bytes": 1196338,
+      "compressed_sha256": "ddd2a72675034b0d2ddf3e0453234d741b140b5293d8d54d5a6c541068202700",
+      "classification": "accepted_in_network",
+      "classification_evidence": "top-level:in_network",
+      "status": "accepted",
+      "counts": {
+        "references": 110,
+        "prices": 53396
+      },
+      "digests": {
+        "reference_sha256": "43dd07af2d39465a4e472dc03a586a982aad3331654589f0db1655babd838f48",
+        "price_sha256": "9f748ae15d7b002e9a6a275d314c5d6f450f1b124e68032717cbc3e8703d8ce9",
+        "semantic_sha256": "2bf542427f0041079b6b0d90bc919cd49d9adefb393e0d420e1f6430f9099c39"
+      }
+    },
+    {
+      "name": "wy_local_2026_07_27_000005307_in_network_rates_04_of_11.json.gz",
+      "compressed_bytes": 1081837,
+      "compressed_sha256": "1bc2ecd8ffcb5006579252912e1c9c1060c3e1d8f2d4466b5c1b11419f211cb4",
+      "classification": "accepted_in_network",
+      "classification_evidence": "top-level:in_network",
+      "status": "accepted",
+      "counts": {
+        "references": 112,
+        "prices": 46999
+      },
+      "digests": {
+        "reference_sha256": "41a8f342c703aa72d9fca9f956883fbaffb02f002beb825c5181f64ff71d992f",
+        "price_sha256": "04fee7c26fe0888578ce96b918b38bbb9a7b8695d9e719d55f9c9ce2a7d4919b",
+        "semantic_sha256": "3a96d296c5852a6c1269002045890caf1360850d1d13bb9d20268177dc91e360"
+      }
+    },
+    {
+      "name": "wy_local_2026_07_27_000005307_in_network_rates_05_of_11.json.gz",
+      "compressed_bytes": 1171358,
+      "compressed_sha256": "639f3ea65589ec5592d9725f92aa6ad8d127a6f3d5512c671302ea5014ed202f",
+      "classification": "accepted_in_network",
+      "classification_evidence": "top-level:in_network",
+      "status": "accepted",
+      "counts": {
+        "references": 110,
+        "prices": 52489
+      },
+      "digests": {
+        "reference_sha256": "43dd07af2d39465a4e472dc03a586a982aad3331654589f0db1655babd838f48",
+        "price_sha256": "bb1e849009d2a66148a8ae0ee220215f8ce83a225b125cdb7b0e5b553607e80a",
+        "semantic_sha256": "53312366d29bb72c6bbf6005c6f4bf3e024b751369bb49088d7554f483cbd540"
+      }
+    },
+    {
+      "name": "wy_local_2026_07_27_000005307_in_network_rates_06_of_11.json.gz",
+      "compressed_bytes": 1190313,
+      "compressed_sha256": "2143a85b1c370447772995c5f307b2a47815e7f80a544a42d8105009c3e4cee3",
+      "classification": "accepted_in_network",
+      "classification_evidence": "top-level:in_network",
+      "status": "accepted",
+      "counts": {
+        "references": 110,
+        "prices": 53920
+      },
+      "digests": {
+        "reference_sha256": "43dd07af2d39465a4e472dc03a586a982aad3331654589f0db1655babd838f48",
+        "price_sha256": "a3ed4ad881cda9194f160db0acb9a33d1cc5b2c805777a6d29a4f6996468ddf0",
+        "semantic_sha256": "c2b890e2923b29ecceb3edabd71af8503747a3a20664aa8b8ea0251695811bdc"
+      }
+    },
+    {
+      "name": "wy_local_2026_07_27_000005307_in_network_rates_07_of_11.json.gz",
+      "compressed_bytes": 1056976,
+      "compressed_sha256": "4d02adf0fe8c6fea52bdd83f229586858de64fe885b456ec4bd646b7e51a3d40",
+      "classification": "accepted_in_network",
+      "classification_evidence": "top-level:in_network",
+      "status": "accepted",
+      "counts": {
+        "references": 112,
+        "prices": 45435
+      },
+      "digests": {
+        "reference_sha256": "41a8f342c703aa72d9fca9f956883fbaffb02f002beb825c5181f64ff71d992f",
+        "price_sha256": "cfdce6b267c566357c0982484727c39acb0225b84d47a1a3d3be4b7a804da682",
+        "semantic_sha256": "6dc3dc8f53c91c170481db7318ca3f7e8255e7a707b66fa1a37a0f4f3da1bb90"
+      }
+    },
+    {
+      "name": "wy_local_2026_07_27_000005307_in_network_rates_08_of_11.json.gz",
+      "compressed_bytes": 300150,
+      "compressed_sha256": "0ce8a47f5b71b3f6c9bba8eefd596a37fe1515418a3d3acb9514c9b95925c90a",
+      "classification": "accepted_in_network",
+      "classification_evidence": "top-level:in_network",
+      "status": "accepted",
+      "counts": {
+        "references": 112,
+        "prices": 6880
+      },
+      "digests": {
+        "reference_sha256": "41a8f342c703aa72d9fca9f956883fbaffb02f002beb825c5181f64ff71d992f",
+        "price_sha256": "454be010b125fad58aff91d110b4d6b7de3a883251c8cf3ebe6840064128a76c",
+        "semantic_sha256": "231789dbbf00bcd53485e28890e2f9d09c8d8996ec149ae09d22fd4b0cf44246"
+      }
+    },
+    {
+      "name": "wy_local_2026_07_27_000005307_in_network_rates_09_of_11.json.gz",
+      "compressed_bytes": 2493071,
+      "compressed_sha256": "3065abc20d0c1e50b5c35b3022d164f05f94e73f2f78f2477bc02073d97f5140",
+      "classification": "accepted_in_network",
+      "classification_evidence": "top-level:in_network",
+      "status": "accepted",
+      "counts": {
+        "references": 172,
+        "prices": 538746
+      },
+      "digests": {
+        "reference_sha256": "45a5883c80082d4eeb851e370efc0bec9c4f8ca9b3c5108bf8b14c3cf7ea6303",
+        "price_sha256": "675030186e6a6b1752b3200f610319096928d281c52ce9fed02c0c729b1c4c1d",
+        "semantic_sha256": "5b72096c8b420c999c72f873a52162bbba4f83ef325b283cc270a1fd69ec13c7"
+      }
+    },
+    {
+      "name": "wy_local_2026_07_27_000005307_in_network_rates_10_of_11.json.gz",
+      "compressed_bytes": 1067099,
+      "compressed_sha256": "c2e664cfe61064e424ffb5e1cd6598d0a353f1a94ffb6c6aac1e2dd79fa3ec3e",
+      "classification": "accepted_in_network",
+      "classification_evidence": "top-level:in_network",
+      "status": "accepted",
+      "counts": {
+        "references": 31,
+        "prices": 99995
+      },
+      "digests": {
+        "reference_sha256": "250c082c2a1f9049bd5f7d0aa72da2bab8eb50f65cdcdac6e7c1883dd9b17a01",
+        "price_sha256": "9164de1737fd55069417662aa9d0ab677c395845574fb1a7b3609a9c6da6cbf1",
+        "semantic_sha256": "a837dab7be29e0b43eaf28da7353a15b2acfbed455d4c0cdad35d3fb10eefbb7"
+      }
+    },
+    {
+      "name": "wy_local_2026_07_27_000005307_in_network_rates_11_of_11.json.gz",
+      "compressed_bytes": 1062815,
+      "compressed_sha256": "ebbb8c9041872fe1fb527fbc68b58762c4b5a094f6ce030145d2cf24b3f6c60d",
+      "classification": "accepted_in_network",
+      "classification_evidence": "top-level:in_network",
+      "status": "accepted",
+      "counts": {
+        "references": 27,
+        "prices": 99985
+      },
+      "digests": {
+        "reference_sha256": "f252e67566e65f0c36c64e2e523cb99ae0ad7cfe246a3b779125da5cf9c0fd88",
+        "price_sha256": "8638fe6f9d0874afc007c2efcb305493918ede6dd29c5238714e56e0a1996fb6",
+        "semantic_sha256": "db19eb2319cbf2cb9431eb3431d2fa0b2e7438482682675b2d153a2d294cb128"
+      }
+    },
+    {
+      "name": "wy_local_2026_07_27_000005308_in_network_rates_01_of_16.json.gz",
+      "compressed_bytes": 617666,
+      "compressed_sha256": "e0f239a955690771cea52a70c29bf3e3ada21a59bd409d71c402649b77a17733",
+      "classification": "accepted_in_network",
+      "classification_evidence": "top-level:in_network",
+      "status": "accepted",
+      "counts": {
+        "references": 58,
+        "prices": 19702
+      },
+      "digests": {
+        "reference_sha256": "fb062303a6274bd9e755c25482291e598e20f9f26a5f4ce33017b11b2aca21e3",
+        "price_sha256": "46b754a1db26384749f0533cd477da1c3bb5ca50082d550836e563f8e60c8bba",
+        "semantic_sha256": "a5e795e603e37898501e5ac87fb2b0ac9241c630c34fb59814a76c0c44ca1bf1"
+      }
+    },
+    {
+      "name": "wy_local_2026_07_27_000005308_in_network_rates_02_of_16.json.gz",
+      "compressed_bytes": 560310,
+      "compressed_sha256": "58667f860d49515c9908568515991c7a5d202020aece527ec28f0dfd1ceabe77",
+      "classification": "accepted_in_network",
+      "classification_evidence": "top-level:in_network",
+      "status": "accepted",
+      "counts": {
+        "references": 58,
+        "prices": 16796
+      },
+      "digests": {
+        "reference_sha256": "fb062303a6274bd9e755c25482291e598e20f9f26a5f4ce33017b11b2aca21e3",
+        "price_sha256": "f81108f365c71bc71c3d62011a4c5a2e90a704d25c9b4533252b258e2d6734b3",
+        "semantic_sha256": "932144ecd99a55966d42f8aafc37e90734402f805994786508a6d831445ca239"
+      }
+    },
+    {
+      "name": "wy_local_2026_07_27_000005308_in_network_rates_03_of_16.json.gz",
+      "compressed_bytes": 618523,
+      "compressed_sha256": "f91a7db25668f87a3b9b0993279b5be958ca250dc0040b86ebec0b4be7c235eb",
+      "classification": "accepted_in_network",
+      "classification_evidence": "top-level:in_network",
+      "status": "accepted",
+      "counts": {
+        "references": 58,
+        "prices": 19836
+      },
+      "digests": {
+        "reference_sha256": "fb062303a6274bd9e755c25482291e598e20f9f26a5f4ce33017b11b2aca21e3",
+        "price_sha256": "ca5117280ae77f8d18d21173798fe83c8b9324c4cc4c3dfaefe2d06eb86c5dfd",
+        "semantic_sha256": "6e42340910e4150288b2ba20f03449f9c425d1f120b86e0839bf9e68d7f9d054"
+      }
+    },
+    {
+      "name": "wy_local_2026_07_27_000005308_in_network_rates_04_of_16.json.gz",
+      "compressed_bytes": 638367,
+      "compressed_sha256": "48e093bd7d2157d8d784777a1c45c0a5978dd3d521bf86030919c1b6a1722018",
+      "classification": "accepted_in_network",
+      "classification_evidence": "top-level:in_network",
+      "status": "accepted",
+      "counts": {
+        "references": 58,
+        "prices": 20402
+      },
+      "digests": {
+        "reference_sha256": "fb062303a6274bd9e755c25482291e598e20f9f26a5f4ce33017b11b2aca21e3",
+        "price_sha256": "e50813cd0e6143ba950d633f091cc3c25987b98d85c7b08373c5e4119bfe7036",
+        "semantic_sha256": "b4d9fb945cb28c411f0fc603bc7054ee2e85fbc8246d0cdc7c6c804205dd13b8"
+      }
+    },
+    {
+      "name": "wy_local_2026_07_27_000005308_in_network_rates_05_of_16.json.gz",
+      "compressed_bytes": 605053,
+      "compressed_sha256": "041f9025b4e974bbc9b75353abe440e5d205e59025249993fd7f5d7df7a307c0",
+      "classification": "accepted_in_network",
+      "classification_evidence": "top-level:in_network",
+      "status": "accepted",
+      "counts": {
+        "references": 58,
+        "prices": 18963
+      },
+      "digests": {
+        "reference_sha256": "fb062303a6274bd9e755c25482291e598e20f9f26a5f4ce33017b11b2aca21e3",
+        "price_sha256": "6a0bd532b6adde1434d13001373488f87dca7e4371c6892f42b493afb4b9c4d4",
+        "semantic_sha256": "1f6836da3f39c5d6654e87a5af2f0eb738c2b5dbf1943aa9c457c5fa513874c6"
+      }
+    },
+    {
+      "name": "wy_local_2026_07_27_000005308_in_network_rates_06_of_16.json.gz",
+      "compressed_bytes": 625429,
+      "compressed_sha256": "943ed8fcb2b2d9e778a64f1eea835dc40d4cca2dd2397c98d85f8ad700dda92d",
+      "classification": "accepted_in_network",
+      "classification_evidence": "top-level:in_network",
+      "status": "accepted",
+      "counts": {
+        "references": 58,
+        "prices": 19904
+      },
+      "digests": {
+        "reference_sha256": "fb062303a6274bd9e755c25482291e598e20f9f26a5f4ce33017b11b2aca21e3",
+        "price_sha256": "c22a77bfc99309588e3881f1bb64f6393bc4c55305313c63eef466d796050a81",
+        "semantic_sha256": "18ba5f5490ec4a4a23e3c2835d0fac6cea43f8e246b2c1fdcb0c89c9bc39057a"
+      }
+    },
+    {
+      "name": "wy_local_2026_07_27_000005308_in_network_rates_07_of_16.json.gz",
+      "compressed_bytes": 659038,
+      "compressed_sha256": "6d0a6443b0be8f540d48ec37889259efb2bf59f8a9638beaab63f5b767b2eedb",
+      "classification": "accepted_in_network",
+      "classification_evidence": "top-level:in_network",
+      "status": "accepted",
+      "counts": {
+        "references": 58,
+        "prices": 21403
+      },
+      "digests": {
+        "reference_sha256": "fb062303a6274bd9e755c25482291e598e20f9f26a5f4ce33017b11b2aca21e3",
+        "price_sha256": "d55d3513db62e67a6c02c46ac75005defccca367841b5bb4eeba3d68ead0ad0d",
+        "semantic_sha256": "8e80f129036efd6d57fe14262b9821f8018523bc2bc9dff9bd645ed463925b1c"
+      }
+    },
+    {
+      "name": "wy_local_2026_07_27_000005308_in_network_rates_08_of_16.json.gz",
+      "compressed_bytes": 1176519,
+      "compressed_sha256": "5095e8c1e01a98ce36525d962414bda633ea7633c67dc867cc4d276e8e4a2444",
+      "classification": "accepted_in_network",
+      "classification_evidence": "top-level:in_network",
+      "status": "accepted",
+      "counts": {
+        "references": 140,
+        "prices": 52219
+      },
+      "digests": {
+        "reference_sha256": "76b57a2eb3c84c5b8a8b582c7c5ab13e9f430c5ebba440a4ba141effb1301cc8",
+        "price_sha256": "e995dbebf89c3bfcc5a4285beaaf502c4dc63577c9f867e4064fbe2ccf28c33b",
+        "semantic_sha256": "8d0e640acc0d5c3ab91e066c044b940888ccc3805e3e47fbc28406dd25ccd5f6"
+      }
+    },
+    {
+      "name": "wy_local_2026_07_27_000005308_in_network_rates_09_of_16.json.gz",
+      "compressed_bytes": 1235742,
+      "compressed_sha256": "51b294a039c31703b6b6e6374cfba9dfb62aff79e5aa5a9b253e1f4364e3e496",
+      "classification": "accepted_in_network",
+      "classification_evidence": "top-level:in_network",
+      "status": "accepted",
+      "counts": {
+        "references": 111,
+        "prices": 56755
+      },
+      "digests": {
+        "reference_sha256": "3dd0c9f5328756fc4031f9c20aab623a8736c98db9ca8943a43c3669d7d0f6cc",
+        "price_sha256": "30a71ff763488f72d6e4f7784c603de1bd003b0ad4707c9b82c065b8cdd80a1e",
+        "semantic_sha256": "d08d0c8cd55269077db2323ac5e3d114598f4f7e3f365aca101fd7b0aea7726d"
+      }
+    },
+    {
+      "name": "wy_local_2026_07_27_000005308_in_network_rates_10_of_16.json.gz",
+      "compressed_bytes": 1215048,
+      "compressed_sha256": "590abf8ba5ffb6f648754319da76f999a22dceabd15b15c7528f89cba291d942",
+      "classification": "accepted_in_network",
+      "classification_evidence": "top-level:in_network",
+      "status": "accepted",
+      "counts": {
+        "references": 109,
+        "prices": 55593
+      },
+      "digests": {
+        "reference_sha256": "e41bbb7f4ff3ec42bf2e044e99d681a695c2e6fe0e22d200932d5610bb782674",
+        "price_sha256": "affe7e378c021eab264c6a5bd9a4c7ba9b9ba6eeb6356d3345b419718ad4180d",
+        "semantic_sha256": "f53ea7860977e2605ba25c07f6163953c10d11262fa98ee6605adfdf78a215d4"
+      }
+    },
+    {
+      "name": "wy_local_2026_07_27_000005308_in_network_rates_11_of_16.json.gz",
+      "compressed_bytes": 1036091,
+      "compressed_sha256": "e6215b3ebfdc1983dbcf39b5be34c26e371afd8a87cc24df3233cf9487689ed9",
+      "classification": "accepted_in_network",
+      "classification_evidence": "top-level:in_network",
+      "status": "accepted",
+      "counts": {
+        "references": 111,
+        "prices": 43974
+      },
+      "digests": {
+        "reference_sha256": "3dd0c9f5328756fc4031f9c20aab623a8736c98db9ca8943a43c3669d7d0f6cc",
+        "price_sha256": "997962df5880d0dfcd901a7a958137152d0a896b939d0c0d6c3718fd0bd1665e",
+        "semantic_sha256": "91b4090375574371a5958c7331765542dac8176bb0a522d43910bdbc07a2b025"
+      }
+    },
+    {
+      "name": "wy_local_2026_07_27_000005308_in_network_rates_12_of_16.json.gz",
+      "compressed_bytes": 1303261,
+      "compressed_sha256": "897e78a1e1dc612390ce391b487d19be6cccb8b1a8133ad46b50d45fe592374e",
+      "classification": "accepted_in_network",
+      "classification_evidence": "top-level:in_network",
+      "status": "accepted",
+      "counts": {
+        "references": 109,
+        "prices": 61129
+      },
+      "digests": {
+        "reference_sha256": "e41bbb7f4ff3ec42bf2e044e99d681a695c2e6fe0e22d200932d5610bb782674",
+        "price_sha256": "651aacc35e87e7084554fced02ea68d0cd5b9a747225e1fb3f94425998853b18",
+        "semantic_sha256": "7627c1af3b8118bc6014dede2e778ea0a88891e77ca69966070ad17cb329697f"
+      }
+    },
+    {
+      "name": "wy_local_2026_07_27_000005308_in_network_rates_13_of_16.json.gz",
+      "compressed_bytes": 1137720,
+      "compressed_sha256": "9bb0eab951564755fb50d6f7f9675844c38968e4c1d99c4e1f71a61a97d53bbe",
+      "classification": "accepted_in_network",
+      "classification_evidence": "top-level:in_network",
+      "status": "accepted",
+      "counts": {
+        "references": 111,
+        "prices": 50723
+      },
+      "digests": {
+        "reference_sha256": "3dd0c9f5328756fc4031f9c20aab623a8736c98db9ca8943a43c3669d7d0f6cc",
+        "price_sha256": "d4d9b29f6646696de6895666941f3119f049beba1aa6ed8e2ff83bd68ac98523",
+        "semantic_sha256": "6ef03c0eece209b61ff9911ea0ea9c28d72714c5734b2e5e2b33fdef457e9b0f"
+      }
+    },
+    {
+      "name": "wy_local_2026_07_27_000005308_in_network_rates_14_of_16.json.gz",
+      "compressed_bytes": 1172443,
+      "compressed_sha256": "cde5a9e32a81a38f560680251dfc0ee6a5a9ce6a219280c76f142ab37c0e9f43",
+      "classification": "accepted_in_network",
+      "classification_evidence": "top-level:in_network",
+      "status": "accepted",
+      "counts": {
+        "references": 109,
+        "prices": 52528
+      },
+      "digests": {
+        "reference_sha256": "e41bbb7f4ff3ec42bf2e044e99d681a695c2e6fe0e22d200932d5610bb782674",
+        "price_sha256": "1a0ec0193b9cd5199a5cb99b81baa6e2e32f4cab0c2b8df79cba4776268e7172",
+        "semantic_sha256": "ccba856ad17d5b96e64196ef03313ef309d24d2111a7f614339f4f60cfd95317"
+      }
+    },
+    {
+      "name": "wy_local_2026_07_27_000005308_in_network_rates_15_of_16.json.gz",
+      "compressed_bytes": 440726,
+      "compressed_sha256": "734004ef6ebbf5943039e2ad786eb48883915a61708fad9202ae41dc3d91b9de",
+      "classification": "accepted_in_network",
+      "classification_evidence": "top-level:in_network",
+      "status": "accepted",
+      "counts": {
+        "references": 111,
+        "prices": 14023
+      },
+      "digests": {
+        "reference_sha256": "3dd0c9f5328756fc4031f9c20aab623a8736c98db9ca8943a43c3669d7d0f6cc",
+        "price_sha256": "8a4e261735b1f9e639584598200f6b61683122f27b63cda34ddff5303a6f7030",
+        "semantic_sha256": "a0108e11cd7a317ae5aad3ef40f1cb8a7fdca45ad477b57fe330a517162fc091"
+      }
+    },
+    {
+      "name": "wy_local_2026_07_27_000005308_in_network_rates_16_of_16.json.gz",
+      "compressed_bytes": 2400015,
+      "compressed_sha256": "35e46fe3e0c8b1d42cc8f5262749f973121bb74f130614a4379019fa290c13a6",
+      "classification": "accepted_in_network",
+      "classification_evidence": "top-level:in_network",
+      "status": "accepted",
+      "counts": {
+        "references": 168,
+        "prices": 517252
+      },
+      "digests": {
+        "reference_sha256": "fd83b32f3b8720fd14d4315a54685074d0475f1c4ae9f3997ac9728b86ed060b",
+        "price_sha256": "6645ea227b1a2e58bbad37993e4ceeebd57df01768455c6f2126bd8702c032d5",
+        "semantic_sha256": "1a487b4dffcaf69c9458ce48c67ef11f07ce3e80d6ddbe6e730ed1da2cbfc2fb"
+      }
+    }
+  ],
+  "corpus_sha256": "81267911499a62264cc39a425899f356c0f7f79f9d605f3263454080a020f8c2"
+}
