@@ -1,0 +1,139 @@
+{
+  "artifact": "fused-json-m6-build-attestation",
+  "version": 1,
+  "created_at": "2026-08-24T15:36:30.511Z",
+  "commit": "b7a54566de0faabc492cae37df92ea0028cdc151",
+  "git": {
+    "root": "/media/wyhaines/home/wyhaines/ghq/github.com/wyhaines/fused-json.cr",
+    "head": "b7a54566de0faabc492cae37df92ea0028cdc151",
+    "tree": "f329ad27ea7cefba091fb4a4d8e2fd019a3e9359",
+    "branch": "main",
+    "clean": true,
+    "status_porcelain": ""
+  },
+  "commands": [
+    "/usr/local/bin/crystal build --release --no-debug bench/tic_fixture.cr -o /tmp/fused-json-m6-formal-v2-b7a5456/bin/tic-fixture",
+    "/usr/local/bin/crystal build --release --no-debug bench/tic.cr -o /tmp/fused-json-m6-formal-v2-b7a5456/bin/tic-bench",
+    "/usr/local/bin/crystal build --release --no-debug bench/parse.cr -o /tmp/fused-json-m6-formal-v2-b7a5456/bin/parse-bench"
+  ],
+  "command_artifacts": {
+    "tic_fixture": 0,
+    "tic_bench": 1,
+    "parse_bench": 2
+  },
+  "toolchain": {
+    "crystal_version": "1.22.0-dev",
+    "crystal_build_commit": "6c6a5e988",
+    "llvm_version": "21.1.8",
+    "target": "x86_64-pc-linux-gnu",
+    "version_output": "Crystal 1.22.0-dev [6c6a5e988] (2026-08-22)\n\nLLVM: 21.1.8\nDefault target: x86_64-pc-linux-gnu"
+  },
+  "source": {
+    "git_tree": "f329ad27ea7cefba091fb4a4d8e2fd019a3e9359",
+    "entrypoints": {
+      "tic_fixture": {
+        "path": "bench/tic_fixture.cr",
+        "bytes": 9100,
+        "sha256": "5a6689957781e2070ab4d6ff141aa91032bff7af7449c77ea9e6276868759ff8"
+      },
+      "tic_bench": {
+        "path": "bench/tic.cr",
+        "bytes": 31055,
+        "sha256": "13d6f1e2ea748e6bb6aa3d543b2c99ed07af04d5c33717f69b64b293207a2bf6"
+      },
+      "parse_bench": {
+        "path": "bench/parse.cr",
+        "bytes": 2789,
+        "sha256": "0437c8c1d589eed0ddd5ef3ea52908d9568f41f6fd1e373eb56a882147d2ff55"
+      }
+    }
+  },
+  "artifacts": {
+    "tic_fixture": {
+      "path": "/tmp/fused-json-m6-formal-v2-b7a5456/bin/tic-fixture",
+      "realpath": "/tmp/fused-json-m6-formal-v2-b7a5456/bin/tic-fixture",
+      "device": "64513",
+      "inode": "42862842",
+      "bytes": 1140240,
+      "mtime_ns": "1787585674641709030",
+      "ctime_ns": "1787585674642709024",
+      "mode_octal": "0775",
+      "sha256": "8b52175124b5ba9f1835613013edff0b2f330312d3e769b87a5bae65ebbc945e",
+      "executable": true
+    },
+    "tic_bench": {
+      "path": "/tmp/fused-json-m6-formal-v2-b7a5456/bin/tic-bench",
+      "realpath": "/tmp/fused-json-m6-formal-v2-b7a5456/bin/tic-bench",
+      "device": "64513",
+      "inode": "42862843",
+      "bytes": 1379632,
+      "mtime_ns": "1787585724604427748",
+      "ctime_ns": "1787585724605427743",
+      "mode_octal": "0775",
+      "sha256": "803b144f025abe744c9355fdfdb19dfe8f829ce32c055262ddcefc0586f745fe",
+      "executable": true
+    },
+    "parse_bench": {
+      "path": "/tmp/fused-json-m6-formal-v2-b7a5456/bin/parse-bench",
+      "realpath": "/tmp/fused-json-m6-formal-v2-b7a5456/bin/parse-bench",
+      "device": "64513",
+      "inode": "42862844",
+      "bytes": 1010936,
+      "mtime_ns": "1787585751032278955",
+      "ctime_ns": "1787585751044278888",
+      "mode_octal": "0775",
+      "sha256": "178a72d85a439d22c542707819a84c0b99d35f1e5a7ccd46f5fb8a0b8f2f9371",
+      "executable": true
+    }
+  },
+  "tools": {
+    "generator": {
+      "path": "/media/wyhaines/home/wyhaines/ghq/github.com/wyhaines/fused-json.cr/scripts/m6_build_attestation.mjs",
+      "realpath": "/media/wyhaines/home/wyhaines/ghq/github.com/wyhaines/fused-json.cr/scripts/m6_build_attestation.mjs",
+      "device": "66309",
+      "inode": "17622559",
+      "bytes": 17249,
+      "mtime_ns": "1787580593023580988",
+      "ctime_ns": "1787580593023580988",
+      "mode_octal": "0664",
+      "sha256": "721615fa06f4edf81fd47323cc8db41f03530461c5456e4e8a995a8512d21bbe"
+    },
+    "node": {
+      "path": "/media/wyhaines/home/wyhaines/.nvm/versions/node/v24.13.0/bin/node",
+      "realpath": "/media/wyhaines/home/wyhaines/.nvm/versions/node/v24.13.0/bin/node",
+      "device": "66309",
+      "inode": "57455130",
+      "bytes": 121158216,
+      "mtime_ns": "1768240979000000000",
+      "ctime_ns": "1770156391033722190",
+      "mode_octal": "0755",
+      "sha256": "53fb205ae78805130177e24bcb459a69a1518c8d98f8965f31d85aae7ea840fc",
+      "executable": true
+    },
+    "crystal": {
+      "path": "/usr/local/bin/crystal",
+      "realpath": "/usr/local/bin/crystal",
+      "device": "64513",
+      "inode": "21889324",
+      "bytes": 39434928,
+      "mtime_ns": "1787435614503238410",
+      "ctime_ns": "1787435614503238410",
+      "mode_octal": "0755",
+      "sha256": "5f77d23693a498b0b0fd4760ba9a0fcbba4aa26fae0d9c806d1bdc11a8e70fff",
+      "executable": true
+    },
+    "git": {
+      "path": "/usr/bin/git",
+      "realpath": "/usr/bin/git",
+      "device": "64513",
+      "inode": "21758208",
+      "bytes": 3710360,
+      "mtime_ns": "1772135393000000000",
+      "ctime_ns": "1772649664469506334",
+      "mode_octal": "0755",
+      "sha256": "587ef21868c948b883993e23209b86a72a6ddc06aab1545c697ffc31075acd4a",
+      "executable": true
+    },
+    "node_version": "v24.13.0"
+  }
+}

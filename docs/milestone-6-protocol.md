@@ -1,11 +1,15 @@
 # Milestone 6 validation protocol
 
-Status: `busy-pinned-v2` frozen before any formal timed observation. The original
-quiet-host policy was superseded before timing because persistent shared GUI
-work could not satisfy its admission gate. Any later change to a gate, fixture,
-schedule, validity rule, build, or runner starts a new complete campaign. A
-failed or invalid campaign is retained in full; individual observations are
-never rerun selectively.
+Status: completed and accepted at
+`b7a54566de0faabc492cae37df92ea0028cdc151`. The
+[Milestone 6 results](milestone-6-benchmark-results.md) record both accepted
+campaigns and all unsuccessful attempts. The remainder of this document is the
+immutable `busy-pinned-v2` protocol frozen before any formal timed observation.
+The original quiet-host policy was superseded before timing because persistent
+shared GUI work could not satisfy its admission gate. Any later change to a
+gate, fixture, schedule, validity rule, build, or runner starts a new complete
+campaign. A failed or invalid campaign is retained in full; individual
+observations are never rerun selectively.
 
 ## Build and host
 
@@ -48,8 +52,9 @@ Invalidate the complete campaign if any of these occurs:
 Immediately before and after every child, record Tctl and the raw CPU 2
 `/proc/stat` counters. Recompute CPU 2 busy time across the exact child window
 and invalidate the campaign when it exceeds 25%. A boundary Tctl at or above
-100 C also invalidates immediately. These synchronous boundaries cover short
-excursions that the two-second monitor could miss.
+100 C also invalidates immediately. These synchronous boundaries add thermal
+endpoint evidence and exact-interval sibling-CPU accounting. They cannot rule
+out a Tctl excursion between recorded samples.
 
 CPU 3 frequency is diagnostic only. It is not an admission, exclusion,
 normalization, or adjustment rule. Warp and other shared-host activity are
@@ -245,3 +250,19 @@ also requires a valid, passing dynamic receipt, the exact post-`2^32` result,
 and a matching Sunlight receipt when that local corpus is available. Preserve
 every failed, invalid, or interrupted receipt; do not select successful
 observations from different campaigns.
+
+## Closeout record
+
+Campaign 1 attempt 3 and campaign 2 attempt 2 completed all 173 observations
+and passed independently. The cross-campaign audit, five-process dynamic gate,
+post-`2^32` offset check, and local Sunlight comparison also passed. The
+[results report](milestone-6-benchmark-results.md) gives the accepted estimates
+and dispositions of every earlier attempt.
+
+The durable [artifact manifest](benchmark-data/milestone-6/artifact-manifest.json)
+describes the archive and its attempt dispositions.
+[`SHA256SUMS`](benchmark-data/milestone-6/SHA256SUMS) indexes and verifies every
+preserved final receipt, partial, event journal, and environment journal.
+Compiled binaries, generated fixture payloads, and the local Sunlight corpus
+are omitted because they are large or local inputs; their commands and
+cryptographic identities remain bound by the receipts.

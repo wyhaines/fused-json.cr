@@ -1,7 +1,7 @@
 # Large-document typed streaming implementation plan
 
-Status: in progress. Milestones 1 through 5 are implemented. Milestone 6,
-controlled performance and scale validation, is now in progress. This plan
+Status: in progress. Milestones 1 through 6 are implemented and accepted.
+Milestone 7 documentation and release review is now in progress. This plan
 implements the requirements in the
 [Large-document typed streaming specification](large-document-processing.md).
 
@@ -181,7 +181,7 @@ bootstrap, and managed-allocation gate. Accepted receipts and all unsuccessful
 attempts are recorded in the
 [Milestone 5 benchmark results](milestone-5-benchmark-results.md).
 
-## Milestone 6: Performance and scale validation (in progress)
+## Milestone 6: Performance and scale validation (accepted)
 
 Use attested release builds and the CPU-pinned, predeclared host policy in the
 [Milestone 6 validation protocol](milestone-6-protocol.md). The current
@@ -229,7 +229,13 @@ complete performance and memory campaigns on the same compiler and host, keep
 all receipts, and require both to pass. Do not rerun selected failures until a
 passing pair appears.
 
-## Milestone 7: Documentation and release review
+Outcome: both complete `busy-pinned-v2` campaigns passed the typed-throughput
+and greater-than-4-GiB RSS gates at `b7a54566`. The independent audit, dynamic
+gate, exact offset check, and local Sunlight parity check also passed. The
+[Milestone 6 results](milestone-6-benchmark-results.md) retain the accepted
+statistics and every invalid attempt.
+
+## Milestone 7: Documentation and release review (in progress)
 
 Update `README.md`, `docs/api.md`, `docs/design.md`, `docs/streaming.md`,
 `docs/typed-decoding.md`, `docs/benchmarking.md`, and `CHANGELOG.md`. Document

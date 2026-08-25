@@ -1,0 +1,79 @@
+{
+  "schema": "fused-json-milestone-6-artifact-manifest-v1",
+  "milestone": 6,
+  "status": "accepted",
+  "commit": "b7a54566de0faabc492cae37df92ea0028cdc151",
+  "protocol": {
+    "id": "fused-json-m6-tic-v2",
+    "policy": "busy-pinned-v2",
+    "policy_version": 2,
+    "document": "docs/milestone-6-protocol.md"
+  },
+  "recorded_at_utc": "2026-08-25",
+  "receipt_root": "formal-v2-b7a5456/receipts",
+  "receipt_checksums": "SHA256SUMS",
+  "archive": {
+    "receipt_count": 33,
+    "total_bytes": 23262502,
+    "hash_algorithm": "sha256"
+  },
+  "accepted_evidence": {
+    "build_attestation": "build-attestation.json",
+    "semantic_preflight": "preflight.json",
+    "campaign_1": "campaign-1-run-3.json",
+    "campaign_2": "campaign-2-run-2.json",
+    "cross_campaign_audit": "campaign-acceptance.json",
+    "dynamic_gate": "dynamic-gate.json",
+    "large_offset": "large-offset.txt",
+    "sunlight_oracle": "sunlight-oj.json",
+    "sunlight_fused": "sunlight-fused.json",
+    "sunlight_comparison": "sunlight-compare.json"
+  },
+  "invalid_attempts": [
+    {
+      "receipt": "campaign-1.json",
+      "observations": 0,
+      "reason": "Tctl reached 100 C during initial admission"
+    },
+    {
+      "receipt": "campaign-1-run-2.json",
+      "observations": 0,
+      "reason": "load1 exceeded 7 for two consecutive samples during initial admission"
+    },
+    {
+      "receipt": "campaign-2.json",
+      "observations": 34,
+      "reason": "CPU 2 reached 40% during performance-11-warm"
+    }
+  ],
+  "superseded_policy": {
+    "disposition": "superseded_before_formal_observation",
+    "receipt": null,
+    "reason": "The original quiet-host admission gate could not admit persistent shared GUI work."
+  },
+  "preservation": {
+    "included": [
+      "all composite final receipts",
+      "all latest partial receipts",
+      "all append-only event journals",
+      "all append-only environment journals"
+    ],
+    "omitted": [
+      "the three attested benchmark binaries and Sunlight scanner binary",
+      "five plain fixture payloads, one gzip payload, and five fixture manifests",
+      "the Oj and local Sunlight source corpora",
+      "temporary GNU-time and dynamic scratch files",
+      "tool executables and duplicate copies of commit-bound runner scripts"
+    ],
+    "omission_reason": "Generated binaries and fixtures are reproducible from the recorded commands. External Oj and Sunlight corpora are not guaranteed reproducible, but their observed contents are identity-bound by the preserved receipts. None are suitable repository data."
+  },
+  "disclosure_review": {
+    "credential_markers_detected": false,
+    "receipts_redacted_or_modified": false,
+    "absolute_machine_paths_present": true,
+    "host_and_cpu_metadata_present": true,
+    "environment_telemetry_present": true,
+    "sunlight_filename_inventory_present": true,
+    "corpus_payloads_present": false
+  }
+}

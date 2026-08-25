@@ -1,0 +1,1412 @@
+{
+  "artifact": "fused-json-milestone-6-tic-campaign",
+  "version": 2,
+  "campaign_id": 1,
+  "status": "invalid",
+  "valid": false,
+  "passed": false,
+  "started_at": "2026-08-25T01:14:47.002Z",
+  "completed_at": "2026-08-25T01:14:57.390Z",
+  "commit": "b7a54566de0faabc492cae37df92ea0028cdc151",
+  "commit_binding": "caller attestation; the recorded benchmark binary SHA-256 is authoritative",
+  "paths": {
+    "final": "/tmp/fused-json-m6-formal-v2-b7a5456/receipts/campaign-1-run-2.json",
+    "partial": "/tmp/fused-json-m6-formal-v2-b7a5456/receipts/campaign-1-run-2.json.partial.json",
+    "journal": "/tmp/fused-json-m6-formal-v2-b7a5456/receipts/campaign-1-run-2.json.journal.jsonl",
+    "environment": "/tmp/fused-json-m6-formal-v2-b7a5456/receipts/campaign-1-run-2.json.environment.jsonl"
+  },
+  "definition": {
+    "protocol": "fused-json-m6-tic-v2",
+    "buffer_size": 32768,
+    "max_nesting": 512,
+    "seed": "7",
+    "sizes_bytes": {
+      "retained": 67108864,
+      "throughput": 268435456,
+      "rss256": 268435456,
+      "rss1g": 1073741824,
+      "rssLarge": 4362076160
+    },
+    "child_environment": {
+      "PATH": "/usr/bin:/bin",
+      "LANG": "C",
+      "LC_ALL": "C",
+      "TZ": "UTC",
+      "GC_NPROCS": "1",
+      "GC_MARKERS": "1",
+      "CRYSTAL_WORKERS": "1",
+      "OMP_NUM_THREADS": "1"
+    },
+    "performance": {
+      "pairsPerProfile": 20,
+      "geometricMeanGate": 1.05,
+      "bootstrapLowerGate": 1,
+      "bootstrapSeed": 20260824,
+      "bootstrapResamples": 10000,
+      "bootstrapLowerIndex": 500
+    },
+    "rss": {
+      "baselineRunsPerSize": 5,
+      "largeRuns": 3,
+      "minimumHeadroomKibibytes": 16384
+    },
+    "diagnostics": {
+      "plainDrainRunsPerProfile": 1,
+      "gzipDrainRssRuns": 3,
+      "gzipTypedPairs": 6,
+      "twoPassPairs": 6,
+      "wideItemRssRuns": 3,
+      "retainedPairs": 4
+    },
+    "environment_policy": {
+      "name": "busy-pinned-v2",
+      "version": 2,
+      "sampleIntervalMs": 2000,
+      "initialAdmissionSeconds": 60,
+      "blockAdmissionSeconds": 6,
+      "gateLoad1Maximum": 5,
+      "gateLoad5Maximum": 5,
+      "gateTctlMaximumC": 94,
+      "gateTctlRangeMaximumC": 5,
+      "gateSiblingCpuBusyMaximumPercent": 25,
+      "gateBenchmarkCpuBusyMaximumPercent": 10,
+      "blockGateDeadlineSeconds": 180,
+      "invalidTctlMinimumC": 100,
+      "invalidLoad1StrictlyGreaterThan": 7,
+      "invalidSiblingBusyStrictlyGreaterThanPercent": 35,
+      "consecutiveBreachSamples": 2,
+      "maximumMonitorGapSeconds": 5,
+      "minimumParserTaskCpuPercent": 99,
+      "childWindowSiblingBusyMaximumPercent": 25,
+      "cpuFrequencyPolicy": "diagnostic-only; never gates, excludes, or normalizes"
+    },
+    "exclusions": "no observation-level exclusions; child, receipt, identity, monitor, or task-CPU failure invalidates the complete campaign",
+    "retries": "none; an invalid, failed, or interrupted observation is never selectively rerun",
+    "semantic_verification": "one complete hash-bound preflight is shared by campaigns 1 and 2 and is not performance evidence",
+    "input_cache": "one validated plain-drain child immediately before every throughput pair",
+    "rss_ceiling_scope": "maximum of this campaign's ten bounded 256 MiB/1 GiB FusedJSON baselines only",
+    "rss_ceiling_comparison": "every >4 GiB peak must be strictly less than the frozen ceiling",
+    "gzip_first_item_and_two_pass": "reported diagnostics; never release gates",
+    "cpu_frequency": "diagnostic-only; never gates, excludes, or normalizes"
+  },
+  "schedule": {
+    "performance": [
+      {
+        "id": "performance-00",
+        "round": 0,
+        "slot": 0,
+        "profile": "many-small",
+        "fixture": "many-256m",
+        "order": [
+          "fused",
+          "crystal"
+        ]
+      },
+      {
+        "id": "performance-01",
+        "round": 0,
+        "slot": 1,
+        "profile": "wide-item",
+        "fixture": "wide-256m",
+        "order": [
+          "crystal",
+          "fused"
+        ]
+      },
+      {
+        "id": "performance-02",
+        "round": 1,
+        "slot": 0,
+        "profile": "wide-item",
+        "fixture": "wide-256m",
+        "order": [
+          "fused",
+          "crystal"
+        ]
+      },
+      {
+        "id": "performance-03",
+        "round": 1,
+        "slot": 1,
+        "profile": "many-small",
+        "fixture": "many-256m",
+        "order": [
+          "crystal",
+          "fused"
+        ]
+      },
+      {
+        "id": "performance-04",
+        "round": 2,
+        "slot": 0,
+        "profile": "many-small",
+        "fixture": "many-256m",
+        "order": [
+          "crystal",
+          "fused"
+        ]
+      },
+      {
+        "id": "performance-05",
+        "round": 2,
+        "slot": 1,
+        "profile": "wide-item",
+        "fixture": "wide-256m",
+        "order": [
+          "fused",
+          "crystal"
+        ]
+      },
+      {
+        "id": "performance-06",
+        "round": 3,
+        "slot": 0,
+        "profile": "wide-item",
+        "fixture": "wide-256m",
+        "order": [
+          "crystal",
+          "fused"
+        ]
+      },
+      {
+        "id": "performance-07",
+        "round": 3,
+        "slot": 1,
+        "profile": "many-small",
+        "fixture": "many-256m",
+        "order": [
+          "fused",
+          "crystal"
+        ]
+      },
+      {
+        "id": "performance-08",
+        "round": 4,
+        "slot": 0,
+        "profile": "many-small",
+        "fixture": "many-256m",
+        "order": [
+          "fused",
+          "crystal"
+        ]
+      },
+      {
+        "id": "performance-09",
+        "round": 4,
+        "slot": 1,
+        "profile": "wide-item",
+        "fixture": "wide-256m",
+        "order": [
+          "crystal",
+          "fused"
+        ]
+      },
+      {
+        "id": "performance-10",
+        "round": 5,
+        "slot": 0,
+        "profile": "wide-item",
+        "fixture": "wide-256m",
+        "order": [
+          "fused",
+          "crystal"
+        ]
+      },
+      {
+        "id": "performance-11",
+        "round": 5,
+        "slot": 1,
+        "profile": "many-small",
+        "fixture": "many-256m",
+        "order": [
+          "crystal",
+          "fused"
+        ]
+      },
+      {
+        "id": "performance-12",
+        "round": 6,
+        "slot": 0,
+        "profile": "many-small",
+        "fixture": "many-256m",
+        "order": [
+          "crystal",
+          "fused"
+        ]
+      },
+      {
+        "id": "performance-13",
+        "round": 6,
+        "slot": 1,
+        "profile": "wide-item",
+        "fixture": "wide-256m",
+        "order": [
+          "fused",
+          "crystal"
+        ]
+      },
+      {
+        "id": "performance-14",
+        "round": 7,
+        "slot": 0,
+        "profile": "wide-item",
+        "fixture": "wide-256m",
+        "order": [
+          "crystal",
+          "fused"
+        ]
+      },
+      {
+        "id": "performance-15",
+        "round": 7,
+        "slot": 1,
+        "profile": "many-small",
+        "fixture": "many-256m",
+        "order": [
+          "fused",
+          "crystal"
+        ]
+      },
+      {
+        "id": "performance-16",
+        "round": 8,
+        "slot": 0,
+        "profile": "many-small",
+        "fixture": "many-256m",
+        "order": [
+          "fused",
+          "crystal"
+        ]
+      },
+      {
+        "id": "performance-17",
+        "round": 8,
+        "slot": 1,
+        "profile": "wide-item",
+        "fixture": "wide-256m",
+        "order": [
+          "crystal",
+          "fused"
+        ]
+      },
+      {
+        "id": "performance-18",
+        "round": 9,
+        "slot": 0,
+        "profile": "wide-item",
+        "fixture": "wide-256m",
+        "order": [
+          "fused",
+          "crystal"
+        ]
+      },
+      {
+        "id": "performance-19",
+        "round": 9,
+        "slot": 1,
+        "profile": "many-small",
+        "fixture": "many-256m",
+        "order": [
+          "crystal",
+          "fused"
+        ]
+      },
+      {
+        "id": "performance-20",
+        "round": 10,
+        "slot": 0,
+        "profile": "many-small",
+        "fixture": "many-256m",
+        "order": [
+          "crystal",
+          "fused"
+        ]
+      },
+      {
+        "id": "performance-21",
+        "round": 10,
+        "slot": 1,
+        "profile": "wide-item",
+        "fixture": "wide-256m",
+        "order": [
+          "fused",
+          "crystal"
+        ]
+      },
+      {
+        "id": "performance-22",
+        "round": 11,
+        "slot": 0,
+        "profile": "wide-item",
+        "fixture": "wide-256m",
+        "order": [
+          "crystal",
+          "fused"
+        ]
+      },
+      {
+        "id": "performance-23",
+        "round": 11,
+        "slot": 1,
+        "profile": "many-small",
+        "fixture": "many-256m",
+        "order": [
+          "fused",
+          "crystal"
+        ]
+      },
+      {
+        "id": "performance-24",
+        "round": 12,
+        "slot": 0,
+        "profile": "many-small",
+        "fixture": "many-256m",
+        "order": [
+          "fused",
+          "crystal"
+        ]
+      },
+      {
+        "id": "performance-25",
+        "round": 12,
+        "slot": 1,
+        "profile": "wide-item",
+        "fixture": "wide-256m",
+        "order": [
+          "crystal",
+          "fused"
+        ]
+      },
+      {
+        "id": "performance-26",
+        "round": 13,
+        "slot": 0,
+        "profile": "wide-item",
+        "fixture": "wide-256m",
+        "order": [
+          "fused",
+          "crystal"
+        ]
+      },
+      {
+        "id": "performance-27",
+        "round": 13,
+        "slot": 1,
+        "profile": "many-small",
+        "fixture": "many-256m",
+        "order": [
+          "crystal",
+          "fused"
+        ]
+      },
+      {
+        "id": "performance-28",
+        "round": 14,
+        "slot": 0,
+        "profile": "many-small",
+        "fixture": "many-256m",
+        "order": [
+          "crystal",
+          "fused"
+        ]
+      },
+      {
+        "id": "performance-29",
+        "round": 14,
+        "slot": 1,
+        "profile": "wide-item",
+        "fixture": "wide-256m",
+        "order": [
+          "fused",
+          "crystal"
+        ]
+      },
+      {
+        "id": "performance-30",
+        "round": 15,
+        "slot": 0,
+        "profile": "wide-item",
+        "fixture": "wide-256m",
+        "order": [
+          "crystal",
+          "fused"
+        ]
+      },
+      {
+        "id": "performance-31",
+        "round": 15,
+        "slot": 1,
+        "profile": "many-small",
+        "fixture": "many-256m",
+        "order": [
+          "fused",
+          "crystal"
+        ]
+      },
+      {
+        "id": "performance-32",
+        "round": 16,
+        "slot": 0,
+        "profile": "many-small",
+        "fixture": "many-256m",
+        "order": [
+          "fused",
+          "crystal"
+        ]
+      },
+      {
+        "id": "performance-33",
+        "round": 16,
+        "slot": 1,
+        "profile": "wide-item",
+        "fixture": "wide-256m",
+        "order": [
+          "crystal",
+          "fused"
+        ]
+      },
+      {
+        "id": "performance-34",
+        "round": 17,
+        "slot": 0,
+        "profile": "wide-item",
+        "fixture": "wide-256m",
+        "order": [
+          "fused",
+          "crystal"
+        ]
+      },
+      {
+        "id": "performance-35",
+        "round": 17,
+        "slot": 1,
+        "profile": "many-small",
+        "fixture": "many-256m",
+        "order": [
+          "crystal",
+          "fused"
+        ]
+      },
+      {
+        "id": "performance-36",
+        "round": 18,
+        "slot": 0,
+        "profile": "many-small",
+        "fixture": "many-256m",
+        "order": [
+          "crystal",
+          "fused"
+        ]
+      },
+      {
+        "id": "performance-37",
+        "round": 18,
+        "slot": 1,
+        "profile": "wide-item",
+        "fixture": "wide-256m",
+        "order": [
+          "fused",
+          "crystal"
+        ]
+      },
+      {
+        "id": "performance-38",
+        "round": 19,
+        "slot": 0,
+        "profile": "wide-item",
+        "fixture": "wide-256m",
+        "order": [
+          "crystal",
+          "fused"
+        ]
+      },
+      {
+        "id": "performance-39",
+        "round": 19,
+        "slot": 1,
+        "profile": "many-small",
+        "fixture": "many-256m",
+        "order": [
+          "fused",
+          "crystal"
+        ]
+      }
+    ],
+    "bounded_rss_baselines": [
+      {
+        "id": "rss-baseline-00",
+        "fixture": "many-256m",
+        "mode": "fused-typed"
+      },
+      {
+        "id": "rss-baseline-01",
+        "fixture": "many-1g",
+        "mode": "fused-typed"
+      },
+      {
+        "id": "rss-baseline-02",
+        "fixture": "many-256m",
+        "mode": "fused-typed"
+      },
+      {
+        "id": "rss-baseline-03",
+        "fixture": "many-1g",
+        "mode": "fused-typed"
+      },
+      {
+        "id": "rss-baseline-04",
+        "fixture": "many-256m",
+        "mode": "fused-typed"
+      },
+      {
+        "id": "rss-baseline-05",
+        "fixture": "many-1g",
+        "mode": "fused-typed"
+      },
+      {
+        "id": "rss-baseline-06",
+        "fixture": "many-256m",
+        "mode": "fused-typed"
+      },
+      {
+        "id": "rss-baseline-07",
+        "fixture": "many-1g",
+        "mode": "fused-typed"
+      },
+      {
+        "id": "rss-baseline-08",
+        "fixture": "many-256m",
+        "mode": "fused-typed"
+      },
+      {
+        "id": "rss-baseline-09",
+        "fixture": "many-1g",
+        "mode": "fused-typed"
+      }
+    ],
+    "bounded_rss_large": [
+      {
+        "id": "rss-large-0",
+        "fixture": "many-4g-plus",
+        "mode": "fused-typed"
+      },
+      {
+        "id": "rss-large-1",
+        "fixture": "many-4g-plus",
+        "mode": "fused-typed"
+      },
+      {
+        "id": "rss-large-2",
+        "fixture": "many-4g-plus",
+        "mode": "fused-typed"
+      }
+    ],
+    "diagnostics": {
+      "plain_drains": [
+        {
+          "id": "diagnostic-plain-drain-many",
+          "fixture": "many-256m",
+          "mode": "plain-drain"
+        },
+        {
+          "id": "diagnostic-plain-drain-wide",
+          "fixture": "wide-256m",
+          "mode": "plain-drain"
+        }
+      ],
+      "gzip_drain_rss": [
+        {
+          "id": "diagnostic-gzip-drain-0",
+          "fixture": "many-256m",
+          "mode": "gzip-drain"
+        },
+        {
+          "id": "diagnostic-gzip-drain-1",
+          "fixture": "many-256m",
+          "mode": "gzip-drain"
+        },
+        {
+          "id": "diagnostic-gzip-drain-2",
+          "fixture": "many-256m",
+          "mode": "gzip-drain"
+        }
+      ],
+      "gzip_typed_pairs": [
+        {
+          "id": "diagnostic-gzip-typed-00",
+          "index": 0,
+          "fixture": "many-256m",
+          "order": [
+            "fused-gzip-typed",
+            "crystal-gzip-typed"
+          ]
+        },
+        {
+          "id": "diagnostic-gzip-typed-01",
+          "index": 1,
+          "fixture": "many-256m",
+          "order": [
+            "crystal-gzip-typed",
+            "fused-gzip-typed"
+          ]
+        },
+        {
+          "id": "diagnostic-gzip-typed-02",
+          "index": 2,
+          "fixture": "many-256m",
+          "order": [
+            "fused-gzip-typed",
+            "crystal-gzip-typed"
+          ]
+        },
+        {
+          "id": "diagnostic-gzip-typed-03",
+          "index": 3,
+          "fixture": "many-256m",
+          "order": [
+            "crystal-gzip-typed",
+            "fused-gzip-typed"
+          ]
+        },
+        {
+          "id": "diagnostic-gzip-typed-04",
+          "index": 4,
+          "fixture": "many-256m",
+          "order": [
+            "fused-gzip-typed",
+            "crystal-gzip-typed"
+          ]
+        },
+        {
+          "id": "diagnostic-gzip-typed-05",
+          "index": 5,
+          "fixture": "many-256m",
+          "order": [
+            "crystal-gzip-typed",
+            "fused-gzip-typed"
+          ]
+        }
+      ],
+      "two_pass_pairs": [
+        {
+          "id": "diagnostic-two-pass-00",
+          "index": 0,
+          "fixture": "many-256m",
+          "order": [
+            "fused-two-pass-typed",
+            "crystal-two-pass-typed"
+          ]
+        },
+        {
+          "id": "diagnostic-two-pass-01",
+          "index": 1,
+          "fixture": "many-256m",
+          "order": [
+            "crystal-two-pass-typed",
+            "fused-two-pass-typed"
+          ]
+        },
+        {
+          "id": "diagnostic-two-pass-02",
+          "index": 2,
+          "fixture": "many-256m",
+          "order": [
+            "fused-two-pass-typed",
+            "crystal-two-pass-typed"
+          ]
+        },
+        {
+          "id": "diagnostic-two-pass-03",
+          "index": 3,
+          "fixture": "many-256m",
+          "order": [
+            "crystal-two-pass-typed",
+            "fused-two-pass-typed"
+          ]
+        },
+        {
+          "id": "diagnostic-two-pass-04",
+          "index": 4,
+          "fixture": "many-256m",
+          "order": [
+            "fused-two-pass-typed",
+            "crystal-two-pass-typed"
+          ]
+        },
+        {
+          "id": "diagnostic-two-pass-05",
+          "index": 5,
+          "fixture": "many-256m",
+          "order": [
+            "crystal-two-pass-typed",
+            "fused-two-pass-typed"
+          ]
+        }
+      ],
+      "wide_item_rss": [
+        {
+          "id": "diagnostic-wide-rss-0",
+          "fixture": "wide-256m",
+          "mode": "fused-typed"
+        },
+        {
+          "id": "diagnostic-wide-rss-1",
+          "fixture": "wide-256m",
+          "mode": "fused-typed"
+        },
+        {
+          "id": "diagnostic-wide-rss-2",
+          "fixture": "wide-256m",
+          "mode": "fused-typed"
+        }
+      ],
+      "retained_pairs": [
+        {
+          "id": "diagnostic-retained-00",
+          "index": 0,
+          "fixture": "many-64m",
+          "order": [
+            "fused-retained-typed",
+            "crystal-retained-typed"
+          ]
+        },
+        {
+          "id": "diagnostic-retained-01",
+          "index": 1,
+          "fixture": "many-64m",
+          "order": [
+            "crystal-retained-typed",
+            "fused-retained-typed"
+          ]
+        },
+        {
+          "id": "diagnostic-retained-02",
+          "index": 2,
+          "fixture": "many-64m",
+          "order": [
+            "fused-retained-typed",
+            "crystal-retained-typed"
+          ]
+        },
+        {
+          "id": "diagnostic-retained-03",
+          "index": 3,
+          "fixture": "many-64m",
+          "order": [
+            "crystal-retained-typed",
+            "fused-retained-typed"
+          ]
+        }
+      ]
+    }
+  },
+  "identities": {
+    "runner": {
+      "path": "/media/wyhaines/home/wyhaines/ghq/github.com/wyhaines/fused-json.cr/scripts/tic_campaign.mjs",
+      "realpath": "/media/wyhaines/home/wyhaines/ghq/github.com/wyhaines/fused-json.cr/scripts/tic_campaign.mjs",
+      "device": "66309",
+      "inode": "17622557",
+      "bytes": "114187",
+      "mtime_ns": "1787620428618841193",
+      "ctime_ns": "1787620428618841193",
+      "sha256": "31ad22b09d4218731c437e4a1791f75f4c1ab67080ec4287ae69b77183464150"
+    },
+    "binary": {
+      "path": "/tmp/fused-json-m6-formal-v2-b7a5456/bin/tic-bench",
+      "realpath": "/tmp/fused-json-m6-formal-v2-b7a5456/bin/tic-bench",
+      "device": "64513",
+      "inode": "42862843",
+      "bytes": "1379632",
+      "mtime_ns": "1787585724604427748",
+      "ctime_ns": "1787585724605427743",
+      "sha256": "803b144f025abe744c9355fdfdb19dfe8f829ce32c055262ddcefc0586f745fe"
+    },
+    "node": {
+      "path": "/media/wyhaines/home/wyhaines/.nvm/versions/node/v24.13.0/bin/node",
+      "realpath": "/media/wyhaines/home/wyhaines/.nvm/versions/node/v24.13.0/bin/node",
+      "device": "66309",
+      "inode": "57455130",
+      "bytes": "121158216",
+      "mtime_ns": "1768240979000000000",
+      "ctime_ns": "1770156391033722190",
+      "sha256": "53fb205ae78805130177e24bcb459a69a1518c8d98f8965f31d85aae7ea840fc"
+    },
+    "gnu_time": {
+      "path": "/usr/bin/time",
+      "realpath": "/usr/bin/time",
+      "device": "64513",
+      "inode": "21759224",
+      "bytes": "27160",
+      "mtime_ns": "1648201942000000000",
+      "ctime_ns": "1726623548842813304",
+      "sha256": "7310b9b4c51a8f4d26c1af0da250f03a49ec8a8141033123e79196ad18f6c81b"
+    },
+    "taskset": {
+      "path": "/usr/bin/taskset",
+      "realpath": "/usr/bin/taskset",
+      "device": "64513",
+      "inode": "21763413",
+      "bytes": "22912",
+      "mtime_ns": "1772813404000000000",
+      "ctime_ns": "1773787297056003829",
+      "sha256": "63e52c4b99a688ccd7bab6edbc6df2af1acad124eb852adcb4d20043d28eb2d3"
+    },
+    "preflight": {
+      "path": "/tmp/fused-json-m6-formal-v2-b7a5456/receipts/preflight.json",
+      "realpath": "/tmp/fused-json-m6-formal-v2-b7a5456/receipts/preflight.json",
+      "device": "64513",
+      "inode": "42862857",
+      "bytes": "44183",
+      "mtime_ns": "1787588427640903710",
+      "ctime_ns": "1787588427649903657",
+      "sha256": "7a5ee589185db58b635b2e7f600210c6d048b998bfb394bf9eb8e5605bbb54a8"
+    }
+  },
+  "runner_runtime": {
+    "executable": "/media/wyhaines/home/wyhaines/.nvm/versions/node/v24.13.0/bin/node",
+    "version": "v24.13.0",
+    "versions": {
+      "acorn": "8.15.0",
+      "ada": "3.3.0",
+      "amaro": "1.1.5",
+      "ares": "1.34.6",
+      "brotli": "1.1.0",
+      "cjs_module_lexer": "2.1.0",
+      "cldr": "47.0",
+      "icu": "77.1",
+      "llhttp": "9.3.0",
+      "modules": "137",
+      "napi": "10",
+      "nbytes": "0.1.1",
+      "ncrypto": "0.0.1",
+      "nghttp2": "1.67.1",
+      "node": "24.13.0",
+      "openssl": "3.5.4",
+      "simdjson": "4.1.0",
+      "simdutf": "6.4.0",
+      "sqlite": "3.50.4",
+      "tz": "2025b",
+      "undici": "7.18.2",
+      "unicode": "16.0",
+      "uv": "1.51.0",
+      "uvwasi": "0.0.23",
+      "v8": "13.6.233.17-node.37",
+      "zlib": "1.3.1-470d3a2",
+      "zstd": "1.5.7"
+    }
+  },
+  "fixture_identities": {
+    "many-64m": {
+      "profile": "many-small",
+      "bytes": 67108864,
+      "document_sha256": "f647d8dfe2e50d127f519b1c41a361ee244079b170576dde59173ef1cc3ecbfd",
+      "projection_sha256": "53fd82515af625925b050e5bee427a05433a4a9b2789d22b310c06aa5c15ad29",
+      "projection_checksum": "0xaec6c94cbad53960",
+      "raw_number_checksum": "0x55cf8e7bb0445a93",
+      "identities": {
+        "input": {
+          "path": "/tmp/fused-json-m6-formal-v2-b7a5456/fixtures/many-small-64m.json",
+          "realpath": "/tmp/fused-json-m6-formal-v2-b7a5456/fixtures/many-small-64m.json",
+          "device": "64513",
+          "inode": "42862847",
+          "bytes": "67108864",
+          "mtime_ns": "1787585811721937267",
+          "ctime_ns": "1787585811723564860"
+        },
+        "manifest": {
+          "path": "/tmp/fused-json-m6-formal-v2-b7a5456/fixtures/many-small-64m.meta.json",
+          "realpath": "/tmp/fused-json-m6-formal-v2-b7a5456/fixtures/many-small-64m.meta.json",
+          "device": "64513",
+          "inode": "42862848",
+          "bytes": "1272",
+          "mtime_ns": "1787585811721937267",
+          "ctime_ns": "1787585811723564860",
+          "sha256": "2ff5f45b1b2249160cdc8ebe6f8021ef0d0997dd5a9a6bbc11ecc71130ceaeb3"
+        },
+        "gzip": null
+      }
+    },
+    "many-256m": {
+      "profile": "many-small",
+      "bytes": 268435456,
+      "document_sha256": "fe5d39438a3b972d4d868f714b7cd608c21cb55cd010ae7b7f65b0d114bac798",
+      "projection_sha256": "dc1c4645602739d09bde2c6d96832022cba9d6f54b0dbd7f7c69240fce74fa78",
+      "projection_checksum": "0x92483cae9de635b0",
+      "raw_number_checksum": "0x59529260326ad6b9",
+      "identities": {
+        "input": {
+          "path": "/tmp/fused-json-m6-formal-v2-b7a5456/fixtures/many-small-256m.json",
+          "realpath": "/tmp/fused-json-m6-formal-v2-b7a5456/fixtures/many-small-256m.json",
+          "device": "64513",
+          "inode": "42862849",
+          "bytes": "268435456",
+          "mtime_ns": "1787585844679751712",
+          "ctime_ns": "1787585848826728364"
+        },
+        "manifest": {
+          "path": "/tmp/fused-json-m6-formal-v2-b7a5456/fixtures/many-small-256m.meta.json",
+          "realpath": "/tmp/fused-json-m6-formal-v2-b7a5456/fixtures/many-small-256m.meta.json",
+          "device": "64513",
+          "inode": "42862852",
+          "bytes": "1488",
+          "mtime_ns": "1787585848826728364",
+          "ctime_ns": "1787585848828395538",
+          "sha256": "d9e59bddb1db74d127b4aa9ba3c572857a8c2d2ea0508af9bc46117fa3b74fa9"
+        },
+        "gzip": {
+          "path": "/tmp/fused-json-m6-formal-v2-b7a5456/fixtures/many-small-256m.json.gz",
+          "realpath": "/tmp/fused-json-m6-formal-v2-b7a5456/fixtures/many-small-256m.json.gz",
+          "device": "64513",
+          "inode": "42862851",
+          "bytes": "24206815",
+          "mtime_ns": "1787585848073732604",
+          "ctime_ns": "1787585848826728364"
+        }
+      }
+    },
+    "many-1g": {
+      "profile": "many-small",
+      "bytes": 1073741824,
+      "document_sha256": "1560d917d3ecf555aaf67564c27858b3c6f853f3a77daa88290176e7a13e1760",
+      "projection_sha256": "c3872c4771fde76b42420e5a26e99e5b9193dfbfd6c7211bfd3804885dbee111",
+      "projection_checksum": "0xf2e3294c1084cac4",
+      "raw_number_checksum": "0x31b33d7988d59675",
+      "identities": {
+        "input": {
+          "path": "/tmp/fused-json-m6-formal-v2-b7a5456/fixtures/many-small-1g.json",
+          "realpath": "/tmp/fused-json-m6-formal-v2-b7a5456/fixtures/many-small-1g.json",
+          "device": "64513",
+          "inode": "42862858",
+          "bytes": "1073741824",
+          "mtime_ns": "1787586870589957089",
+          "ctime_ns": "1787586870590957084"
+        },
+        "manifest": {
+          "path": "/tmp/fused-json-m6-formal-v2-b7a5456/fixtures/many-small-1g.meta.json",
+          "realpath": "/tmp/fused-json-m6-formal-v2-b7a5456/fixtures/many-small-1g.meta.json",
+          "device": "64513",
+          "inode": "42862859",
+          "bytes": "1280",
+          "mtime_ns": "1787586870590957084",
+          "ctime_ns": "1787586870591895005",
+          "sha256": "d92ed404997688fc1eb353eedc5d55dcb8d97aafb513b6226ac4e18c38dbf707"
+        },
+        "gzip": null
+      }
+    },
+    "many-4g-plus": {
+      "profile": "many-small",
+      "bytes": 4362076160,
+      "document_sha256": "465ebb198c30a3734ea8960cab82fe338cb3a08b2f51d2844e4b2ce38ace632a",
+      "projection_sha256": "e13ac5b6a82b55d0acdd74b9ae93178bb192806df9006d803f5118f89331524c",
+      "projection_checksum": "0xcfe6c16e87f462a5",
+      "raw_number_checksum": "0x7e7f1bb219ff967f",
+      "identities": {
+        "input": {
+          "path": "/tmp/fused-json-m6-formal-v2-b7a5456/fixtures/many-small-4g-plus.json",
+          "realpath": "/tmp/fused-json-m6-formal-v2-b7a5456/fixtures/many-small-4g-plus.json",
+          "device": "64513",
+          "inode": "42862853",
+          "bytes": "4362076160",
+          "mtime_ns": "1787587457715602142",
+          "ctime_ns": "1787587457716602136"
+        },
+        "manifest": {
+          "path": "/tmp/fused-json-m6-formal-v2-b7a5456/fixtures/many-small-4g-plus.meta.json",
+          "realpath": "/tmp/fused-json-m6-formal-v2-b7a5456/fixtures/many-small-4g-plus.meta.json",
+          "device": "64513",
+          "inode": "42862856",
+          "bytes": "1284",
+          "mtime_ns": "1787587457715602142",
+          "ctime_ns": "1787587457716602136",
+          "sha256": "2583c0a2430107718c0251d9c0af186a8e61f69168adf6461656c759eec2bede"
+        },
+        "gzip": null
+      }
+    },
+    "wide-256m": {
+      "profile": "wide-item",
+      "bytes": 268435456,
+      "document_sha256": "9f8f085b2e45e2f402f0e5f3f7e4e690d6fa843c960d0bd4a7a3af961a401e2b",
+      "projection_sha256": "de7e9415f33d37ff1056508e104e8f7fbc88e80266df8bd6dac3c067e444bf3b",
+      "projection_checksum": "0x4bf359cbb80696c4",
+      "raw_number_checksum": "0x4e2c7b4dee2a8a19",
+      "identities": {
+        "input": {
+          "path": "/tmp/fused-json-m6-formal-v2-b7a5456/fixtures/wide-item-256m.json",
+          "realpath": "/tmp/fused-json-m6-formal-v2-b7a5456/fixtures/wide-item-256m.json",
+          "device": "64513",
+          "inode": "42862850",
+          "bytes": "268435456",
+          "mtime_ns": "1787585884352528367",
+          "ctime_ns": "1787585884353528362"
+        },
+        "manifest": {
+          "path": "/tmp/fused-json-m6-formal-v2-b7a5456/fixtures/wide-item-256m.meta.json",
+          "realpath": "/tmp/fused-json-m6-formal-v2-b7a5456/fixtures/wide-item-256m.meta.json",
+          "device": "64513",
+          "inode": "42862854",
+          "bytes": "1275",
+          "mtime_ns": "1787585884353528362",
+          "ctime_ns": "1787585884353813524",
+          "sha256": "a3bb2408c459a211b8548cd32b3dac4f67e211a4a1abeda6b7b515a03d534a24"
+        },
+        "gzip": null
+      }
+    }
+  },
+  "semantic_preflight": {
+    "path": "/tmp/fused-json-m6-formal-v2-b7a5456/receipts/preflight.json",
+    "sha256": "7a5ee589185db58b635b2e7f600210c6d048b998bfb394bf9eb8e5605bbb54a8",
+    "artifact": "fused-json-m6-tic-preflight",
+    "version": 1,
+    "status": "complete",
+    "valid": true,
+    "completed_at": "2026-08-24T16:20:27.611Z",
+    "verification_fixtures": [
+      "many-64m",
+      "many-256m",
+      "many-1g",
+      "many-4g-plus",
+      "wide-256m"
+    ]
+  },
+  "host": {
+    "platform": "linux",
+    "architecture": "x64",
+    "kernel": "Linux version 7.0.11-76070011-generic (jenkins@warp.pop-os.org) (x86_64-linux-gnu-gcc-11 (Ubuntu 11.4.0-1ubuntu1~22.04.3) 11.4.0, GNU ld (GNU Binutils for Ubuntu) 2.38) #202606011647~1780583630~22.04~70ad774 SMP PREEMPT_DYNAMIC Thu J",
+    "cpu_model": "AMD Ryzen 9 7940HS w/ Radeon 780M Graphics",
+    "logical_cpu_count": 16,
+    "runner_cpu": "0",
+    "runner_affinity": "0",
+    "benchmark_cpu": "3",
+    "benchmark_sibling_cpu": "2",
+    "benchmark_thread_siblings_list": "2-3"
+  },
+  "admission": null,
+  "environment": {
+    "policy": {
+      "name": "busy-pinned-v2",
+      "version": 2,
+      "sampleIntervalMs": 2000,
+      "initialAdmissionSeconds": 60,
+      "blockAdmissionSeconds": 6,
+      "gateLoad1Maximum": 5,
+      "gateLoad5Maximum": 5,
+      "gateTctlMaximumC": 94,
+      "gateTctlRangeMaximumC": 5,
+      "gateSiblingCpuBusyMaximumPercent": 25,
+      "gateBenchmarkCpuBusyMaximumPercent": 10,
+      "blockGateDeadlineSeconds": 180,
+      "invalidTctlMinimumC": 100,
+      "invalidLoad1StrictlyGreaterThan": 7,
+      "invalidSiblingBusyStrictlyGreaterThanPercent": 35,
+      "consecutiveBreachSamples": 2,
+      "maximumMonitorGapSeconds": 5,
+      "minimumParserTaskCpuPercent": 99,
+      "childWindowSiblingBusyMaximumPercent": 25,
+      "cpuFrequencyPolicy": "diagnostic-only; never gates, excludes, or normalizes"
+    },
+    "tctl_path": "/sys/devices/pci0000:00/0000:00:18.3/hwmon/hwmon10/temp1_input",
+    "invalid_reason": {
+      "kind": "load",
+      "detail": "load1 exceeded 7 for 2 consecutive samples",
+      "observed_at": "2026-08-25T01:14:57.116Z",
+      "sample_sequence": 5
+    },
+    "samples": [
+      {
+        "sequence": 0,
+        "label": "monitor-start",
+        "observed_at": "2026-08-25T01:14:47.049Z",
+        "monotonic_ms": 315.615674,
+        "gap_seconds": null,
+        "load1": 6.39,
+        "load5": 9.05,
+        "tctl_c": 79.75,
+        "cpu2_busy_percent": null,
+        "cpu3_busy_percent": null,
+        "cpu3_scaling_cur_freq_khz": 3701003,
+        "cpu3_frequency_error": null,
+        "read_errors": []
+      },
+      {
+        "sequence": 1,
+        "label": "monitor",
+        "observed_at": "2026-08-25T01:14:49.066Z",
+        "monotonic_ms": 2332.934593,
+        "gap_seconds": 2.017318919,
+        "load1": 6.39,
+        "load5": 9.05,
+        "tctl_c": 78.75,
+        "cpu2_busy_percent": 9.45273631840796,
+        "cpu3_busy_percent": 2,
+        "cpu3_scaling_cur_freq_khz": 2373311,
+        "cpu3_frequency_error": null,
+        "read_errors": []
+      },
+      {
+        "sequence": 2,
+        "label": "monitor",
+        "observed_at": "2026-08-25T01:14:51.075Z",
+        "monotonic_ms": 4342.478985,
+        "gap_seconds": 2.0095443919999996,
+        "load1": 6.84,
+        "load5": 9.1,
+        "tctl_c": 81.625,
+        "cpu2_busy_percent": 13.636363636363635,
+        "cpu3_busy_percent": 5.527638190954774,
+        "cpu3_scaling_cur_freq_khz": 2662565,
+        "cpu3_frequency_error": null,
+        "read_errors": []
+      },
+      {
+        "sequence": 3,
+        "label": "monitor",
+        "observed_at": "2026-08-25T01:14:53.085Z",
+        "monotonic_ms": 6352.558285,
+        "gap_seconds": 2.0100793,
+        "load1": 6.84,
+        "load5": 9.1,
+        "tctl_c": 79.375,
+        "cpu2_busy_percent": 10.050251256281408,
+        "cpu3_busy_percent": 3.482587064676617,
+        "cpu3_scaling_cur_freq_khz": 402786,
+        "cpu3_frequency_error": null,
+        "read_errors": []
+      },
+      {
+        "sequence": 4,
+        "label": "monitor",
+        "observed_at": "2026-08-25T01:14:55.095Z",
+        "monotonic_ms": 8362.368344,
+        "gap_seconds": 2.0098100590000003,
+        "load1": 7.33,
+        "load5": 9.17,
+        "tctl_c": 80,
+        "cpu2_busy_percent": 9.045226130653267,
+        "cpu3_busy_percent": 3.0303030303030303,
+        "cpu3_scaling_cur_freq_khz": 3461972,
+        "cpu3_frequency_error": null,
+        "read_errors": []
+      },
+      {
+        "sequence": 5,
+        "label": "monitor",
+        "observed_at": "2026-08-25T01:14:57.105Z",
+        "monotonic_ms": 10372.409272,
+        "gap_seconds": 2.0100409280000004,
+        "load1": 7.33,
+        "load5": 9.17,
+        "tctl_c": 86.875,
+        "cpu2_busy_percent": 15.306122448979592,
+        "cpu3_busy_percent": 7.000000000000001,
+        "cpu3_scaling_cur_freq_khz": 3638020,
+        "cpu3_frequency_error": null,
+        "read_errors": []
+      }
+    ]
+  },
+  "observations": [],
+  "events": [
+    {
+      "event": "campaign-invalidated",
+      "at": "2026-08-25T01:14:57.117Z",
+      "reason": {
+        "kind": "load",
+        "detail": "load1 exceeded 7 for 2 consecutive samples",
+        "observed_at": "2026-08-25T01:14:57.116Z",
+        "sample_sequence": 5
+      }
+    }
+  ],
+  "rss_ceiling": null,
+  "analysis": null,
+  "errors": [
+    "Error: load: load1 exceeded 7 for 2 consecutive samples\n    at EnvironmentMonitor.assertValid (file:///media/wyhaines/home/wyhaines/ghq/github.com/wyhaines/fused-json.cr/scripts/tic_campaign.mjs:880:35)\n    at EnvironmentMonitor.awaitAdmission (file:///media/wyhaines/home/wyhaines/ghq/github.com/wyhaines/fused-json.cr/scripts/tic_campaign.mjs:890:12)\n    at async Campaign.execute (file:///media/wyhaines/home/wyhaines/ghq/github.com/wyhaines/fused-json.cr/scripts/tic_campaign.mjs:1896:28)\n    at async main (file:///media/wyhaines/home/wyhaines/ghq/github.com/wyhaines/fused-json.cr/scripts/tic_campaign.mjs:2448:5)"
+  ],
+  "interruption": null,
+  "completion": {
+    "expected_count": 173,
+    "actual_count": 0,
+    "missing": [
+      "performance-00-warm",
+      "performance-00-fused",
+      "performance-00-crystal",
+      "performance-01-warm",
+      "performance-01-fused",
+      "performance-01-crystal",
+      "performance-02-warm",
+      "performance-02-fused",
+      "performance-02-crystal",
+      "performance-03-warm",
+      "performance-03-fused",
+      "performance-03-crystal",
+      "performance-04-warm",
+      "performance-04-fused",
+      "performance-04-crystal",
+      "performance-05-warm",
+      "performance-05-fused",
+      "performance-05-crystal",
+      "performance-06-warm",
+      "performance-06-fused",
+      "performance-06-crystal",
+      "performance-07-warm",
+      "performance-07-fused",
+      "performance-07-crystal",
+      "performance-08-warm",
+      "performance-08-fused",
+      "performance-08-crystal",
+      "performance-09-warm",
+      "performance-09-fused",
+      "performance-09-crystal",
+      "performance-10-warm",
+      "performance-10-fused",
+      "performance-10-crystal",
+      "performance-11-warm",
+      "performance-11-fused",
+      "performance-11-crystal",
+      "performance-12-warm",
+      "performance-12-fused",
+      "performance-12-crystal",
+      "performance-13-warm",
+      "performance-13-fused",
+      "performance-13-crystal",
+      "performance-14-warm",
+      "performance-14-fused",
+      "performance-14-crystal",
+      "performance-15-warm",
+      "performance-15-fused",
+      "performance-15-crystal",
+      "performance-16-warm",
+      "performance-16-fused",
+      "performance-16-crystal",
+      "performance-17-warm",
+      "performance-17-fused",
+      "performance-17-crystal",
+      "performance-18-warm",
+      "performance-18-fused",
+      "performance-18-crystal",
+      "performance-19-warm",
+      "performance-19-fused",
+      "performance-19-crystal",
+      "performance-20-warm",
+      "performance-20-fused",
+      "performance-20-crystal",
+      "performance-21-warm",
+      "performance-21-fused",
+      "performance-21-crystal",
+      "performance-22-warm",
+      "performance-22-fused",
+      "performance-22-crystal",
+      "performance-23-warm",
+      "performance-23-fused",
+      "performance-23-crystal",
+      "performance-24-warm",
+      "performance-24-fused",
+      "performance-24-crystal",
+      "performance-25-warm",
+      "performance-25-fused",
+      "performance-25-crystal",
+      "performance-26-warm",
+      "performance-26-fused",
+      "performance-26-crystal",
+      "performance-27-warm",
+      "performance-27-fused",
+      "performance-27-crystal",
+      "performance-28-warm",
+      "performance-28-fused",
+      "performance-28-crystal",
+      "performance-29-warm",
+      "performance-29-fused",
+      "performance-29-crystal",
+      "performance-30-warm",
+      "performance-30-fused",
+      "performance-30-crystal",
+      "performance-31-warm",
+      "performance-31-fused",
+      "performance-31-crystal",
+      "performance-32-warm",
+      "performance-32-fused",
+      "performance-32-crystal",
+      "performance-33-warm",
+      "performance-33-fused",
+      "performance-33-crystal",
+      "performance-34-warm",
+      "performance-34-fused",
+      "performance-34-crystal",
+      "performance-35-warm",
+      "performance-35-fused",
+      "performance-35-crystal",
+      "performance-36-warm",
+      "performance-36-fused",
+      "performance-36-crystal",
+      "performance-37-warm",
+      "performance-37-fused",
+      "performance-37-crystal",
+      "performance-38-warm",
+      "performance-38-fused",
+      "performance-38-crystal",
+      "performance-39-warm",
+      "performance-39-fused",
+      "performance-39-crystal",
+      "rss-baseline-00",
+      "rss-baseline-01",
+      "rss-baseline-02",
+      "rss-baseline-03",
+      "rss-baseline-04",
+      "rss-baseline-05",
+      "rss-baseline-06",
+      "rss-baseline-07",
+      "rss-baseline-08",
+      "rss-baseline-09",
+      "rss-large-0",
+      "rss-large-1",
+      "rss-large-2",
+      "diagnostic-plain-drain-many",
+      "diagnostic-plain-drain-wide",
+      "diagnostic-gzip-drain-0",
+      "diagnostic-gzip-drain-1",
+      "diagnostic-gzip-drain-2",
+      "diagnostic-gzip-typed-00-fused",
+      "diagnostic-gzip-typed-00-crystal",
+      "diagnostic-gzip-typed-01-fused",
+      "diagnostic-gzip-typed-01-crystal",
+      "diagnostic-gzip-typed-02-fused",
+      "diagnostic-gzip-typed-02-crystal",
+      "diagnostic-gzip-typed-03-fused",
+      "diagnostic-gzip-typed-03-crystal",
+      "diagnostic-gzip-typed-04-fused",
+      "diagnostic-gzip-typed-04-crystal",
+      "diagnostic-gzip-typed-05-fused",
+      "diagnostic-gzip-typed-05-crystal",
+      "diagnostic-two-pass-00-fused",
+      "diagnostic-two-pass-00-crystal",
+      "diagnostic-two-pass-01-fused",
+      "diagnostic-two-pass-01-crystal",
+      "diagnostic-two-pass-02-fused",
+      "diagnostic-two-pass-02-crystal",
+      "diagnostic-two-pass-03-fused",
+      "diagnostic-two-pass-03-crystal",
+      "diagnostic-two-pass-04-fused",
+      "diagnostic-two-pass-04-crystal",
+      "diagnostic-two-pass-05-fused",
+      "diagnostic-two-pass-05-crystal",
+      "diagnostic-retained-00-fused",
+      "diagnostic-retained-00-crystal",
+      "diagnostic-retained-01-fused",
+      "diagnostic-retained-01-crystal",
+      "diagnostic-retained-02-fused",
+      "diagnostic-retained-02-crystal",
+      "diagnostic-retained-03-fused",
+      "diagnostic-retained-03-crystal",
+      "diagnostic-wide-rss-0",
+      "diagnostic-wide-rss-1",
+      "diagnostic-wide-rss-2"
+    ],
+    "unexpected": [],
+    "duplicate": [],
+    "invalid": [],
+    "complete": false
+  }
+}

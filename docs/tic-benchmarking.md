@@ -193,8 +193,10 @@ the explicit benchmark drain buffer instead of either parser.
 Typed parsing, gzip plus parsing, and the two-pass workflow are available now.
 The exact paired schedules, statistical gates, generated sizes, RSS ceiling,
 and shared-host validity rules are frozen in the
-[Milestone 6 validation protocol](milestone-6-protocol.md). Do not infer an
-acceptance result from a single shared-host run.
+[Milestone 6 validation protocol](milestone-6-protocol.md). The
+[accepted results](milestone-6-benchmark-results.md) come from two complete
+campaigns and an independent audit. Do not infer a new acceptance result from
+a single shared-host run.
 
 ## Run the formal Milestone 6 campaign
 

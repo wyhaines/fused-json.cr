@@ -173,7 +173,18 @@ For a current-checkout Ruby/Oj comparison, build Oj and run `OJ_ROOT=/path/to/oj
 
 ## Performance Snapshot
 
-CPU-pinned `--release --no-debug` measurements on a Ryzen 9 7940HS with Crystal 1.22.0-dev `[2e13e6a73]` provide directional evidence, not release guarantees. The cited commits belong to the former development repository, are not part of this repository's history, and predate the rename to FusedJSON. At `07d7c9e`, three-run medians put the default fused `load` path between 1.54x and 2.16x Crystal `JSON.parse` on all five canonical corpora, with a 1.77x geometric mean. At `6dbba52`, seven independent samples per backend and corpus, with backend order alternated, showed the word-at-a-time string scanner 6.5% faster geometrically than its forced scalar fallback; CITM was flat within 0.2%, while ActivityPub and Twitter improved by about 12%. Each sample used one second of warmup and two seconds of timed work.
+Early CPU-pinned `--release --no-debug` measurements on a Ryzen 9 7940HS with
+Crystal 1.22.0-dev `[2e13e6a73]` provide directional evidence, not release
+guarantees. The commits in this paragraph and the next belong to the former
+development repository, are not part of this repository's history, and
+predate the rename to FusedJSON. At `07d7c9e`, three-run medians put the
+default fused `load` path between 1.54x and 2.16x Crystal `JSON.parse` on all
+five canonical corpora, with a 1.77x geometric mean. At `6dbba52`, seven
+independent samples per backend and corpus, with backend order alternated,
+showed the word-at-a-time string scanner 6.5% faster geometrically than its
+forced scalar fallback; CITM was flat within 0.2%, while ActivityPub and
+Twitter improved by about 12%. Each sample used one second of warmup and two
+seconds of timed work.
 
 At `9f614df`, five-process medians on the same host put direct typed decoding at 1.129x Crystal's typed decoder on the Twitter corpus, or 1.209x with local key caching. Cached typed decoding used 0.468x its managed allocation. Pull-to-tree ran at 0.532x to 0.871x the fused `load` path, while validating root skips used only 380 to 852 managed B/op. Three-process streaming medians put event drain at 0.602x to 0.748x the in-memory pull reader. These API-specific tradeoffs, RSD values, corpus sizes, and reproduction commands are recorded in the [reference results](docs/benchmark-results.md).
 
@@ -183,22 +194,36 @@ throughput, paired-bootstrap, and managed-allocation gate passed; the
 [complete results and unsuccessful attempts](docs/milestone-5-benchmark-results.md)
 are retained for review.
 
+At current-repository commit `b7a54566`, Crystal 1.22.0-dev `[6c6a5e988]`
+built the programs for Milestone 6's two complete typed-streaming campaigns.
+Both passed. FusedJSON's geometric-mean throughput was 2.568x-2.592x Crystal
+on the many-small profile and 2.127x-2.130x on the wide-item profile. Process
+RSS stayed below 8.9 MiB in all six 4.0625 GiB no-retention runs, well under
+the frozen 24.7-24.8 MiB ceilings. The dynamic-parser, exact post-4-GiB offset,
+and Sunlight compatibility gates passed as well. See the
+[complete Milestone 6 results](docs/milestone-6-benchmark-results.md),
+including the hot shared-host caveat and every invalid attempt.
+
 `bench/parse.cr` verifies complete result equality before timing and reports MiB/s, relative standard deviation, and managed bytes per operation. Repeat the executable in independent processes before drawing conclusions on another machine.
 
 ## Roadmap
 
 Version 0.1.0 contains the core dynamic, pull, typed, and streaming parsers.
-Large-document Milestones 1 through 5 add raw-number access, typed cursor and
+Large-document Milestones 1 through 6 add raw-number access, typed cursor and
 array reads, TiC workflows, and one resource policy across all parsing APIs.
-Milestone 5's disabled-policy overhead gates passed on every parser path.
+Milestones 5 and 6 passed their controlled overhead, throughput, scale-memory,
+dynamic-parser, and compatibility gates. The
+[Milestone 6 evidence](docs/milestone-6-benchmark-results.md) includes two
+complete campaigns and all invalid attempts.
 Current priorities are:
 
-- Run two controlled TiC throughput campaigns and validate bounded process RSS
-  at 256 MiB, 1 GiB, and greater than 4 GiB. The
-  [large-document specification](docs/large-document-processing.md),
-  [implementation plan](docs/large-document-plan.md), and TiC benchmarks define
-  the workloads and gates. Source-byte limits are not Crystal heap limits;
-  returned values and caller-owned buffers retain their own memory costs.
+- Complete the Milestone 7 documentation and release review. This includes a
+  contract audit across the API, typed, streaming, limits, and migration
+  guides; compile-checked small TiC cases in CI; and reproducible release
+  measurements on stable Crystal. The
+  [large-document specification](docs/large-document-processing.md) and
+  [implementation plan](docs/large-document-plan.md) define the remaining
+  review work.
 - Add a separate reader for NDJSON or repeated JSON documents, with buffer
   reuse between records. `load` and `parse` will remain eager, strict,
   single-document operations.

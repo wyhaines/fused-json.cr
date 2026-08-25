@@ -1,0 +1,686 @@
+{
+  "artifact": "fused-json-m6-cross-campaign-audit",
+  "version": 2,
+  "status": "passed",
+  "valid": true,
+  "audited_at": "2026-08-25T03:04:46.197Z",
+  "identities": {
+    "campaign_1": {
+      "path": "/tmp/fused-json-m6-formal-v2-b7a5456/receipts/campaign-1-run-3.json",
+      "realpath": "/tmp/fused-json-m6-formal-v2-b7a5456/receipts/campaign-1-run-3.json",
+      "bytes": "3671058",
+      "sha256": "9e6d5bf2738d10b46db883a4c0a3b652516cd3c0286e9e2d6cc055b2cc5e5fa6"
+    },
+    "campaign_2": {
+      "path": "/tmp/fused-json-m6-formal-v2-b7a5456/receipts/campaign-2-run-2.json",
+      "realpath": "/tmp/fused-json-m6-formal-v2-b7a5456/receipts/campaign-2-run-2.json",
+      "bytes": "3390626",
+      "sha256": "206c2566ab595f9d33306b131b4ea0ae4f492f10f000bed67987791a05a22eff"
+    },
+    "build_attestation": {
+      "path": "/tmp/fused-json-m6-formal-v2-b7a5456/receipts/build-attestation.json",
+      "realpath": "/tmp/fused-json-m6-formal-v2-b7a5456/receipts/build-attestation.json",
+      "bytes": "5135",
+      "sha256": "18beb97fb61288e856c9f508cc397b83fbfff88bce8d26c9d870ab7082d8ba7b"
+    },
+    "auditor": {
+      "path": "/media/wyhaines/home/wyhaines/ghq/github.com/wyhaines/fused-json.cr/scripts/tic_campaign_audit.mjs",
+      "realpath": "/media/wyhaines/home/wyhaines/ghq/github.com/wyhaines/fused-json.cr/scripts/tic_campaign_audit.mjs",
+      "bytes": "70268",
+      "sha256": "8b8c4cd029c02d4c8b641f11c76aca1ddb7f79a22bb0b6686a38ce712a56998f"
+    },
+    "node": {
+      "path": "/media/wyhaines/home/wyhaines/.nvm/versions/node/v24.13.0/bin/node",
+      "realpath": "/media/wyhaines/home/wyhaines/.nvm/versions/node/v24.13.0/bin/node",
+      "bytes": "121158216",
+      "sha256": "53fb205ae78805130177e24bcb459a69a1518c8d98f8965f31d85aae7ea840fc"
+    }
+  },
+  "binding": {
+    "commit": "b7a54566de0faabc492cae37df92ea0028cdc151",
+    "build_attestation_sha256": "18beb97fb61288e856c9f508cc397b83fbfff88bce8d26c9d870ab7082d8ba7b",
+    "campaign_sha256": {
+      "1": "9e6d5bf2738d10b46db883a4c0a3b652516cd3c0286e9e2d6cc055b2cc5e5fa6",
+      "2": "206c2566ab595f9d33306b131b4ea0ae4f492f10f000bed67987791a05a22eff"
+    },
+    "tic_bench_sha256": "803b144f025abe744c9355fdfdb19dfe8f829ce32c055262ddcefc0586f745fe",
+    "runner_sha256": "31ad22b09d4218731c437e4a1791f75f4c1ab67080ec4287ae69b77183464150",
+    "node_sha256": "53fb205ae78805130177e24bcb459a69a1518c8d98f8965f31d85aae7ea840fc",
+    "preflight_sha256": "7a5ee589185db58b635b2e7f600210c6d048b998bfb394bf9eb8e5605bbb54a8",
+    "gnu_time_sha256": "7310b9b4c51a8f4d26c1af0da250f03a49ec8a8141033123e79196ad18f6c81b",
+    "taskset_sha256": "63e52c4b99a688ccd7bab6edbc6df2af1acad124eb852adcb4d20043d28eb2d3",
+    "toolchain": {
+      "crystal_version": "1.22.0-dev",
+      "crystal_build_commit": "6c6a5e988",
+      "llvm_version": "21.1.8",
+      "target": "x86_64-pc-linux-gnu",
+      "version_output": "Crystal 1.22.0-dev [6c6a5e988] (2026-08-22)\n\nLLVM: 21.1.8\nDefault target: x86_64-pc-linux-gnu"
+    },
+    "host": {
+      "platform": "linux",
+      "architecture": "x64",
+      "kernel": "Linux version 7.0.11-76070011-generic (jenkins@warp.pop-os.org) (x86_64-linux-gnu-gcc-11 (Ubuntu 11.4.0-1ubuntu1~22.04.3) 11.4.0, GNU ld (GNU Binutils for Ubuntu) 2.38) #202606011647~1780583630~22.04~70ad774 SMP PREEMPT_DYNAMIC Thu J",
+      "cpu_model": "AMD Ryzen 9 7940HS w/ Radeon 780M Graphics",
+      "logical_cpu_count": 16,
+      "runner_cpu": "0",
+      "runner_affinity": "0",
+      "benchmark_cpu": "3",
+      "benchmark_sibling_cpu": "2",
+      "benchmark_thread_siblings_list": "2-3"
+    }
+  },
+  "checks": {
+    "campaign_ids_exactly_1_and_2": true,
+    "both_complete_valid_and_passed": true,
+    "exact_frozen_schedules": true,
+    "no_missing_duplicate_invalid_or_retried_observations": true,
+    "shared_artifacts_fixtures_host_and_runtime": true,
+    "build_attestation_matches_every_measurement": true,
+    "environment_rules_and_block_admissions_rechecked": true,
+    "exact_block_gate_deadlines_rechecked": true,
+    "admitted_gate_evaluation_deadlines_rechecked": true,
+    "fresh_block_and_child_chronology_rechecked": true,
+    "observation_environment_indices_and_boundaries_rechecked": true,
+    "monitor_cpu_sample_types_and_ranges_rechecked": true,
+    "identical_busy_pinned_v2_policy": true,
+    "child_cpu2_raw_counters_deltas_and_boundary_tctl_rechecked": true,
+    "performance_order_contrast_is_diagnostic_only": true,
+    "task_cpu_gate_rechecked": true,
+    "performance_statistics_and_gates_recomputed": true,
+    "rss_ceiling_and_strict_large_gate_recomputed": true
+  },
+  "diagnostics": {
+    "performance_order": {
+      "many-small": {
+        "ab_order": "FusedJSON then Crystal",
+        "ab_pair_count": 20,
+        "ab_geometric_mean_ratio": 2.5785424422507086,
+        "ba_order": "Crystal then FusedJSON",
+        "ba_pair_count": 20,
+        "ba_geometric_mean_ratio": 2.580785651057095,
+        "order_contrast_ratio": 0.9991308039063734,
+        "order_contrast_formula": "AB geometric mean / BA geometric mean",
+        "interpretation": "diagnostic-only; never gates or excludes a campaign"
+      },
+      "wide-item": {
+        "ab_order": "FusedJSON then Crystal",
+        "ab_pair_count": 20,
+        "ab_geometric_mean_ratio": 2.116372871181932,
+        "ba_order": "Crystal then FusedJSON",
+        "ba_pair_count": 20,
+        "ba_geometric_mean_ratio": 2.1404321281628738,
+        "order_contrast_ratio": 0.9887596263089212,
+        "order_contrast_formula": "AB geometric mean / BA geometric mean",
+        "interpretation": "diagnostic-only; never gates or excludes a campaign"
+      }
+    }
+  },
+  "campaigns": {
+    "1": {
+      "started_at": "2026-08-25T01:20:47.282Z",
+      "completed_at": "2026-08-25T02:16:14.103Z",
+      "observation_count": 173,
+      "performance": {
+        "many-small": {
+          "pair_count": 20,
+          "geometric_mean_ratio": 2.5915888269429903,
+          "bootstrap_one_sided_95_lower": 2.560881889479581,
+          "passed": true,
+          "order_diagnostics": {
+            "ab_order": "FusedJSON then Crystal",
+            "ab_pair_count": 10,
+            "ab_geometric_mean_ratio": 2.581651141491606,
+            "ba_order": "Crystal then FusedJSON",
+            "ba_pair_count": 10,
+            "ba_geometric_mean_ratio": 2.6015647660493855,
+            "order_contrast_ratio": 0.9923455203508081,
+            "order_contrast_formula": "AB geometric mean / BA geometric mean",
+            "interpretation": "diagnostic-only; never gates or excludes a campaign"
+          },
+          "pairs": [
+            {
+              "id": "performance-00",
+              "ratio": 2.558303958837884,
+              "log_ratio": 0.9393445228517618
+            },
+            {
+              "id": "performance-03",
+              "ratio": 2.538672826672177,
+              "log_ratio": 0.9316414352907694
+            },
+            {
+              "id": "performance-04",
+              "ratio": 2.6598318254672613,
+              "log_ratio": 0.9782628972863691
+            },
+            {
+              "id": "performance-07",
+              "ratio": 2.3752305556995816,
+              "log_ratio": 0.8650945088590608
+            },
+            {
+              "id": "performance-08",
+              "ratio": 2.720456078111862,
+              "log_ratio": 1.000799542028314
+            },
+            {
+              "id": "performance-11",
+              "ratio": 2.528542723991262,
+              "log_ratio": 0.9276431383661834
+            },
+            {
+              "id": "performance-12",
+              "ratio": 2.619255998908354,
+              "log_ratio": 0.9628903075636163
+            },
+            {
+              "id": "performance-15",
+              "ratio": 2.576511700107933,
+              "log_ratio": 0.9464364298617745
+            },
+            {
+              "id": "performance-16",
+              "ratio": 2.512167878436536,
+              "log_ratio": 0.9211460769606811
+            },
+            {
+              "id": "performance-19",
+              "ratio": 2.553943857257302,
+              "log_ratio": 0.9376387750888988
+            },
+            {
+              "id": "performance-20",
+              "ratio": 2.6734979956646314,
+              "log_ratio": 0.9833877257017232
+            },
+            {
+              "id": "performance-23",
+              "ratio": 2.58555692968669,
+              "log_ratio": 0.9499409314423953
+            },
+            {
+              "id": "performance-24",
+              "ratio": 2.6237602192883216,
+              "log_ratio": 0.9646084870620606
+            },
+            {
+              "id": "performance-27",
+              "ratio": 2.6190326986912065,
+              "log_ratio": 0.9628050506294632
+            },
+            {
+              "id": "performance-28",
+              "ratio": 2.6021349063270383,
+              "log_ratio": 0.9563322259127208
+            },
+            {
+              "id": "performance-31",
+              "ratio": 2.7587136602780142,
+              "log_ratio": 1.0147645059702932
+            },
+            {
+              "id": "performance-32",
+              "ratio": 2.5445931476841155,
+              "log_ratio": 0.9339707738375568
+            },
+            {
+              "id": "performance-35",
+              "ratio": 2.6791404403728265,
+              "log_ratio": 0.9854960118733431
+            },
+            {
+              "id": "performance-36",
+              "ratio": 2.5472985443205554,
+              "log_ratio": 0.9350334032313679
+            },
+            {
+              "id": "performance-39",
+              "ratio": 2.581023270314701,
+              "log_ratio": 0.9481859367030785
+            }
+          ]
+        },
+        "wide-item": {
+          "pair_count": 20,
+          "geometric_mean_ratio": 2.126585275293515,
+          "bootstrap_one_sided_95_lower": 2.1094153269227958,
+          "passed": true,
+          "order_diagnostics": {
+            "ab_order": "FusedJSON then Crystal",
+            "ab_pair_count": 10,
+            "ab_geometric_mean_ratio": 2.117168549632987,
+            "ba_order": "Crystal then FusedJSON",
+            "ba_pair_count": 10,
+            "ba_geometric_mean_ratio": 2.1360438845925382,
+            "order_contrast_ratio": 0.9911634142464485,
+            "order_contrast_formula": "AB geometric mean / BA geometric mean",
+            "interpretation": "diagnostic-only; never gates or excludes a campaign"
+          },
+          "pairs": [
+            {
+              "id": "performance-01",
+              "ratio": 2.152697538359387,
+              "log_ratio": 0.7667217247045277
+            },
+            {
+              "id": "performance-02",
+              "ratio": 2.134470426866496,
+              "log_ratio": 0.7582185722904304
+            },
+            {
+              "id": "performance-05",
+              "ratio": 2.186231211114685,
+              "log_ratio": 0.7821791531981066
+            },
+            {
+              "id": "performance-06",
+              "ratio": 2.1289365127761197,
+              "log_ratio": 0.7556225652582188
+            },
+            {
+              "id": "performance-09",
+              "ratio": 2.048567640640359,
+              "log_ratio": 0.7171408370546545
+            },
+            {
+              "id": "performance-10",
+              "ratio": 2.1179656133490656,
+              "log_ratio": 0.7504560116126054
+            },
+            {
+              "id": "performance-13",
+              "ratio": 2.1624476372657337,
+              "log_ratio": 0.7712407455495706
+            },
+            {
+              "id": "performance-14",
+              "ratio": 2.096549253986347,
+              "log_ratio": 0.7402927807876517
+            },
+            {
+              "id": "performance-17",
+              "ratio": 2.1421141626608207,
+              "log_ratio": 0.7617932678325842
+            },
+            {
+              "id": "performance-18",
+              "ratio": 2.0634249851962294,
+              "log_ratio": 0.7243672163615451
+            },
+            {
+              "id": "performance-21",
+              "ratio": 2.1793614340596745,
+              "log_ratio": 0.7790319137353965
+            },
+            {
+              "id": "performance-22",
+              "ratio": 2.1420118382076727,
+              "log_ratio": 0.7617454987178818
+            },
+            {
+              "id": "performance-25",
+              "ratio": 2.215246009931067,
+              "log_ratio": 0.7953634627614236
+            },
+            {
+              "id": "performance-26",
+              "ratio": 2.0780552403146446,
+              "log_ratio": 0.7314324757282482
+            },
+            {
+              "id": "performance-29",
+              "ratio": 2.1005231973406073,
+              "log_ratio": 0.7421864552895305
+            },
+            {
+              "id": "performance-30",
+              "ratio": 2.160464383230575,
+              "log_ratio": 0.770323190824932
+            },
+            {
+              "id": "performance-33",
+              "ratio": 2.144230768211372,
+              "log_ratio": 0.7627808718433322
+            },
+            {
+              "id": "performance-34",
+              "ratio": 2.0348218433982024,
+              "log_ratio": 0.7104082688204928
+            },
+            {
+              "id": "performance-37",
+              "ratio": 2.119701441628018,
+              "log_ratio": 0.7512752493457809
+            },
+            {
+              "id": "performance-38",
+              "ratio": 2.1335141614735216,
+              "log_ratio": 0.7577704612960334
+            }
+          ]
+        }
+      },
+      "bounded_rss": {
+        "baseline_peak_rss_kibibytes": [
+          8900,
+          8872,
+          8924,
+          8816,
+          8820,
+          8848,
+          8764,
+          8820,
+          8792,
+          8900
+        ],
+        "maximum_baseline_kibibytes": 8924,
+        "headroom_kibibytes": 16384,
+        "ceiling_kibibytes": 25308,
+        "maximum_baseline_bytes": 9138176,
+        "headroom_bytes": 16777216,
+        "ceiling_bytes": 25915392,
+        "large": [
+          {
+            "id": "rss-large-0",
+            "peak_rss_kibibytes": 8860,
+            "strictly_below_ceiling": true
+          },
+          {
+            "id": "rss-large-1",
+            "peak_rss_kibibytes": 8824,
+            "strictly_below_ceiling": true
+          },
+          {
+            "id": "rss-large-2",
+            "peak_rss_kibibytes": 8820,
+            "strictly_below_ceiling": true
+          }
+        ],
+        "passed": true
+      }
+    },
+    "2": {
+      "started_at": "2026-08-25T02:28:42.614Z",
+      "completed_at": "2026-08-25T03:04:20.418Z",
+      "observation_count": 173,
+      "performance": {
+        "many-small": {
+          "pair_count": 20,
+          "geometric_mean_ratio": 2.567793650913413,
+          "bootstrap_one_sided_95_lower": 2.525789507413806,
+          "passed": true,
+          "order_diagnostics": {
+            "ab_order": "FusedJSON then Crystal",
+            "ab_pair_count": 10,
+            "ab_geometric_mean_ratio": 2.5754374863548413,
+            "ba_order": "Crystal then FusedJSON",
+            "ba_pair_count": 10,
+            "ba_geometric_mean_ratio": 2.560172502188537,
+            "order_contrast_ratio": 1.0059624826660138,
+            "order_contrast_formula": "AB geometric mean / BA geometric mean",
+            "interpretation": "diagnostic-only; never gates or excludes a campaign"
+          },
+          "pairs": [
+            {
+              "id": "performance-00",
+              "ratio": 2.41786866071329,
+              "log_ratio": 0.8828864333944876
+            },
+            {
+              "id": "performance-03",
+              "ratio": 2.555062021506882,
+              "log_ratio": 0.9380764979234257
+            },
+            {
+              "id": "performance-04",
+              "ratio": 2.6802652577299035,
+              "log_ratio": 0.9859157663897778
+            },
+            {
+              "id": "performance-07",
+              "ratio": 2.5843241183340186,
+              "log_ratio": 0.9494640108461234
+            },
+            {
+              "id": "performance-08",
+              "ratio": 2.678661881040888,
+              "log_ratio": 0.9853173717128809
+            },
+            {
+              "id": "performance-11",
+              "ratio": 2.491617989157021,
+              "log_ratio": 0.9129322942935354
+            },
+            {
+              "id": "performance-12",
+              "ratio": 2.603440227931262,
+              "log_ratio": 0.9568337350055363
+            },
+            {
+              "id": "performance-15",
+              "ratio": 2.596139027494752,
+              "log_ratio": 0.9540253519127644
+            },
+            {
+              "id": "performance-16",
+              "ratio": 2.558536217399708,
+              "log_ratio": 0.9394353048789441
+            },
+            {
+              "id": "performance-19",
+              "ratio": 2.628146821814362,
+              "log_ratio": 0.9662789673320955
+            },
+            {
+              "id": "performance-20",
+              "ratio": 2.572598653079607,
+              "log_ratio": 0.9449165370984783
+            },
+            {
+              "id": "performance-23",
+              "ratio": 2.7037929157068112,
+              "log_ratio": 0.9946555708200262
+            },
+            {
+              "id": "performance-24",
+              "ratio": 2.327823218892701,
+              "log_ratio": 0.8449335900840781
+            },
+            {
+              "id": "performance-27",
+              "ratio": 2.6307979899239315,
+              "log_ratio": 0.9672872183897007
+            },
+            {
+              "id": "performance-28",
+              "ratio": 2.6123315561769993,
+              "log_ratio": 0.9602431391077582
+            },
+            {
+              "id": "performance-31",
+              "ratio": 2.636815339377208,
+              "log_ratio": 0.969571878137669
+            },
+            {
+              "id": "performance-32",
+              "ratio": 2.627991371396479,
+              "log_ratio": 0.9662198172823009
+            },
+            {
+              "id": "performance-35",
+              "ratio": 2.5286379795107,
+              "log_ratio": 0.9276808097586189
+            },
+            {
+              "id": "performance-36",
+              "ratio": 2.317714181960706,
+              "log_ratio": 0.840581433587984
+            },
+            {
+              "id": "performance-39",
+              "ratio": 2.647682804060144,
+              "log_ratio": 0.9736848439133772
+            }
+          ]
+        },
+        "wide-item": {
+          "pair_count": 20,
+          "geometric_mean_ratio": 2.1301532279371598,
+          "bootstrap_one_sided_95_lower": 2.1148075088960026,
+          "passed": true,
+          "order_diagnostics": {
+            "ab_order": "FusedJSON then Crystal",
+            "ab_pair_count": 10,
+            "ab_geometric_mean_ratio": 2.1155774917643186,
+            "ba_order": "Crystal then FusedJSON",
+            "ba_pair_count": 10,
+            "ba_geometric_mean_ratio": 2.1448293868483823,
+            "order_contrast_ratio": 0.9863616680825851,
+            "order_contrast_formula": "AB geometric mean / BA geometric mean",
+            "interpretation": "diagnostic-only; never gates or excludes a campaign"
+          },
+          "pairs": [
+            {
+              "id": "performance-01",
+              "ratio": 2.117461323116639,
+              "log_ratio": 0.7502178820250222
+            },
+            {
+              "id": "performance-02",
+              "ratio": 2.2017872457986662,
+              "log_ratio": 0.7892694150125661
+            },
+            {
+              "id": "performance-05",
+              "ratio": 2.1157645809373715,
+              "log_ratio": 0.7494162511607185
+            },
+            {
+              "id": "performance-06",
+              "ratio": 2.174091595450849,
+              "log_ratio": 0.7766109200335821
+            },
+            {
+              "id": "performance-09",
+              "ratio": 2.1064416427763377,
+              "log_ratio": 0.7450000986476989
+            },
+            {
+              "id": "performance-10",
+              "ratio": 2.1570698722205144,
+              "log_ratio": 0.7687507601232201
+            },
+            {
+              "id": "performance-13",
+              "ratio": 2.1496193826548002,
+              "log_ratio": 0.7652907951443283
+            },
+            {
+              "id": "performance-14",
+              "ratio": 2.1181236202787286,
+              "log_ratio": 0.7505306119909364
+            },
+            {
+              "id": "performance-17",
+              "ratio": 2.171192177297953,
+              "log_ratio": 0.7752764071525672
+            },
+            {
+              "id": "performance-18",
+              "ratio": 2.082401607408902,
+              "log_ratio": 0.7335218466000056
+            },
+            {
+              "id": "performance-21",
+              "ratio": 2.116859788843886,
+              "log_ratio": 0.7499337588983654
+            },
+            {
+              "id": "performance-22",
+              "ratio": 2.1984207706823917,
+              "log_ratio": 0.7877392710918678
+            },
+            {
+              "id": "performance-25",
+              "ratio": 2.0857063948019823,
+              "log_ratio": 0.7351075963377026
+            },
+            {
+              "id": "performance-26",
+              "ratio": 2.111608366350177,
+              "log_ratio": 0.7474499160499168
+            },
+            {
+              "id": "performance-29",
+              "ratio": 2.074103236639449,
+              "log_ratio": 0.7295288851545634
+            },
+            {
+              "id": "performance-30",
+              "ratio": 2.143584540498086,
+              "log_ratio": 0.7624794466784627
+            },
+            {
+              "id": "performance-33",
+              "ratio": 2.213339007224437,
+              "log_ratio": 0.7945022383219638
+            },
+            {
+              "id": "performance-34",
+              "ratio": 2.080385750965008,
+              "log_ratio": 0.7325533337128824
+            },
+            {
+              "id": "performance-37",
+              "ratio": 2.0700303063901364,
+              "log_ratio": 0.7275632479382845
+            },
+            {
+              "id": "performance-38",
+              "ratio": 2.1236485436080423,
+              "log_ratio": 0.7531356205770775
+            }
+          ]
+        }
+      },
+      "bounded_rss": {
+        "baseline_peak_rss_kibibytes": [
+          8796,
+          8884,
+          8780,
+          8868,
+          8900,
+          8900,
+          8788,
+          8900,
+          8872,
+          8960
+        ],
+        "maximum_baseline_kibibytes": 8960,
+        "headroom_kibibytes": 16384,
+        "ceiling_kibibytes": 25344,
+        "maximum_baseline_bytes": 9175040,
+        "headroom_bytes": 16777216,
+        "ceiling_bytes": 25952256,
+        "large": [
+          {
+            "id": "rss-large-0",
+            "peak_rss_kibibytes": 8872,
+            "strictly_below_ceiling": true
+          },
+          {
+            "id": "rss-large-1",
+            "peak_rss_kibibytes": 8900,
+            "strictly_below_ceiling": true
+          },
+          {
+            "id": "rss-large-2",
+            "peak_rss_kibibytes": 8796,
+            "strictly_below_ceiling": true
+          }
+        ],
+        "passed": true
+      }
+    }
+  }
+}

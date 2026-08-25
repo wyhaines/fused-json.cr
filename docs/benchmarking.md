@@ -173,3 +173,7 @@ parser receipts, and external peak-RSS measurements.
 The [Milestone 6 validation protocol](milestone-6-protocol.md) freezes its
 formal paired schedules, generated sizes, environmental rules, statistical
 gates, and scale-RSS ceiling before observations begin.
+The [accepted Milestone 6 results](milestone-6-benchmark-results.md) preserve
+both complete campaigns, the independent audit, additional gates, and every
+invalid attempt. They are comparative measurements from a hot shared host,
+not quiet-host or peak-throughput estimates.

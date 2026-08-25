@@ -1,8 +1,9 @@
 # Large-document typed streaming specification
 
-Status: accepted. Milestones 1 through 5 are implemented. The
-[Milestone 5 acceptance evidence](milestone-5-benchmark-results.md) is
-recorded; Milestone 6 performance and scale validation is in progress.
+Status: accepted. Milestones 1 through 6 are implemented. The
+[Milestone 5 resource-limit evidence](milestone-5-benchmark-results.md) and
+[Milestone 6 performance and scale evidence](milestone-6-benchmark-results.md)
+are recorded; Milestone 7 documentation and release review is in progress.
 
 ## Purpose
 
@@ -240,10 +241,11 @@ capacity, and callback retention remain separate.
   remain stable as generated input grows from 256 MiB to more than 4 GiB.
   Wide-element tests must show separately that memory follows the largest
   current value.
-- On a controlled release host, typed streaming must have a geometric-mean
-  throughput ratio of at least 1.05 against an equivalent Crystal
-  standard-library pull implementation. Its one-sided 95% paired-bootstrap
-  lower bound must exceed 1.0 on both many-small and wide-item profiles.
+- Under a predeclared, CPU-pinned host policy, typed streaming must have a
+  geometric-mean throughput ratio of at least 1.05 against an equivalent
+  Crystal standard-library pull implementation. Its one-sided 95%
+  paired-bootstrap lower bound must exceed 1.0 on both many-small and wide-item
+  profiles.
   Existing dynamic-parser gates remain unchanged. Ruby/Oj is useful context,
   not a release gate.
 
