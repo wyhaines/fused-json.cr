@@ -25,4 +25,16 @@ abort "shard.yml repository is #{manifest_repository}, expected #{expected_url}"
 abort "shard.yml homepage is #{manifest_homepage}, expected #{expected_url}" unless manifest_homepage == expected_url
 abort "FusedJSON::VERSION is #{FusedJSON::VERSION}, expected #{version}" unless FusedJSON::VERSION == version
 
+readme = File.read(File.expand_path("../README.md", __DIR__))
+readme_version = "version: ~> #{version}"
+unless readme.each_line.any? { |line| line.strip == readme_version }
+  abort "README installation must contain #{readme_version.inspect}"
+end
+
+changelog = File.read(File.expand_path("../CHANGELOG.md", __DIR__))
+release_heading = /^## #{Regex.escape(version)} - \d{4}-\d{2}-\d{2}$/
+unless changelog.each_line.any? { |line| release_heading.matches?(line) }
+  abort "CHANGELOG is missing a dated #{version} release heading"
+end
+
 puts "Release version #{version} is synchronized"

@@ -118,6 +118,26 @@ a float first performs the checked `Int64` conversion. Skipping or advancing
 past a number does not convert it. The dynamic `load` and `parse` APIs retain
 their existing `JSON::Any` numeric limits.
 
+## Pull Completion and Abandonment
+
+A normal root traversal advances through trailing JSON whitespace to EOF. Call
+`finish` afterward to assert that state. `finish` is not a drain operation: it
+does not consume unread values, complete an abandoned block, or validate a
+remaining document tail.
+
+A normally completed nested `read_array` or `read_object` leaves the cursor on
+the following sibling or enclosing end event, so continue the enclosing
+traversal before calling `finish`. An exception, `break`, non-local return, or
+typed-constructor failure can leave unread JSON. Discard the reader in that
+case; its caller-owned `IO` may also have been read ahead. For gzip input, the
+unread portion includes an unchecked trailer. Stage side effects and commit
+them only after every required pass and `finish` succeed.
+
+FusedJSON never closes an input. It does not detect compression or rewind for a
+second pass. The caller must open a fresh source and, for compressed data, a
+fresh decompressor for each pass. See the
+[streaming guide](streaming.md#compressed-and-multi-pass-input).
+
 ## Error Contract
 
 Invalid option ranges raise `ArgumentError` before an `IO` is read. Native JSON

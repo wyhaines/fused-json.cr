@@ -11,8 +11,12 @@ Include the smallest reproducer, Crystal version, target platform, input source
 type, parser options, and observed memory or crash behavior. No response-time
 SLA is promised.
 
-For untrusted input, remember that `max_token_bytes` covers individual strings
-and numbers on `IO` paths only. It does not cap document bytes, container
-entries, key-cache growth, result trees, caller buffers, or CPU time. See the
-[streaming resource limits](docs/streaming.md#memory-bounds) and apply
-application-level limits as needed.
+For untrusted input, pass a `FusedJSON::Limits` policy. It can bound decoded
+document bytes, individual string and number tokens on both `String` and `IO`,
+selected typed-value spans, value counts, container entries, and key-cache
+growth; it can also reject duplicate keys. These counters describe input
+visible to the parser, not exact heap use. They do not bound compressed ingress,
+decompressor or caller buffers, returned trees and typed values, callback
+retention, or CPU and wall time. See the
+[streaming resource limits](docs/streaming.md#memory-bounds) and apply external
+compressed-size, time, and output limits as needed.

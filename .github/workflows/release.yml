@@ -127,9 +127,16 @@ jobs:
           crystal build --release --no-debug bench/stream.cr -o /tmp/fused-json-stream-bench
           crystal build --release --no-debug bench/tic_fixture.cr -o /tmp/fused-json-tic-fixture
           crystal build --release --no-debug bench/tic.cr -o /tmp/fused-json-tic-bench
+          crystal build --release --no-debug bench/sunlight_compat_scan.cr -o /tmp/fused-json-sunlight-compat-scan
           crystal build --release --no-debug bench/typed_cursor_cost.cr -o /tmp/fused-json-typed-cursor-cost
           crystal build --release --no-debug -Dfused_json_limits_api bench/limits_overhead.cr -o /tmp/fused-json-limits-overhead
           crystal build --release --no-debug -Dfused_json_force_scalar_string_scan bench/parse.cr -o /tmp/fused-json-scalar-bench
+
+      - name: Verify generated large-document paths
+        run: |
+          /tmp/fused-json-tic-fixture --profile many-small --bytes 65537 --seed 7 --output /tmp/fused-json-release-tic.json --gzip-output /tmp/fused-json-release-tic.json.gz --manifest /tmp/fused-json-release-tic.meta.json
+          /tmp/fused-json-tic-bench verify --input /tmp/fused-json-release-tic.json --gzip-input /tmp/fused-json-release-tic.json.gz --manifest /tmp/fused-json-release-tic.meta.json > /tmp/fused-json-release-tic-verify.json
+          jq -e '.status == "verified" and .typed_verified == true and .gzip_verified == true and .raw_number_verified == true' /tmp/fused-json-release-tic-verify.json > /dev/null
 
   publish:
     name: Publish GitHub release

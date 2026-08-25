@@ -124,6 +124,8 @@ FusedJSON::PullParser.new(source : IO, *, buffer_size : Int = 32 * 1024,
                           limits : Limits = Limits::DEFAULT)
 pull.read(type : T.class) : T
 pull.read_array(type : T.class, & : T ->) : Nil
+pull.raw_number_value : String
+pull.read_raw_number : String
 ```
 
 Construction primes the reader on the first semantic event. `kind` is one of
@@ -173,6 +175,12 @@ current position through `IO#read_utf8`, accept positive short reads, and treat
 the first zero-byte read as permanent EOF. Parsing consumes one complete
 document and requires EOF, so reads may run ahead and an open source can block
 after delivering a complete root value. IO errors propagate unchanged.
+
+Compression and replay remain caller concerns. A compressed pass wraps a newly
+opened source in a decompressor, and every additional pass recreates both. The
+parser sees decoded UTF-8 bytes and cannot impose compressed-ingress or
+decompression-time limits. Complete traversal validates through the wrapper's
+EOF; abandoned traversal does not validate the unread tail or trailer.
 
 Typed object policies follow the requested Crystal type. `Hash` and
 `JSON::Serializable` use the last duplicate field unless the limits policy

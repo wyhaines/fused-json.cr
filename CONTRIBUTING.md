@@ -1,7 +1,8 @@
 # Contributing
 
 FusedJSON accepts focused fixes, tests, documentation, portability work, and
-measured parser improvements. Crystal 1.21 through 1.x is supported.
+measured parser improvements. Crystal 1.21 through the current stable 1.x
+release is supported.
 
 Before opening a pull request, run:
 

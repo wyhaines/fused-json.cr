@@ -4,6 +4,8 @@ All notable changes to FusedJSON are recorded here. The project follows semantic
 
 ## Unreleased
 
+## 0.2.0 - 2026-08-24
+
 ### Added
 
 - Exact `PullParser#raw_number_value` and `#read_raw_number` access for integer and float tokens.
@@ -18,12 +20,16 @@ All notable changes to FusedJSON are recorded here. The project follows semantic
 - Compile-checked TiC-style plain, caller-wrapped gzip, nested-array, and two-pass workflows, plus typed TiC benchmark modes and cursor-cost diagnostics.
 - A release-mode generated-IO check for exact resource-limit offsets after
   byte `2^32` without constructing a 4 GiB `String`.
+- Scheduled, report-only large-document measurements on Linux x86-64, Linux
+  ARM64, and macOS ARM64.
 
 ### Changed
 
 - Pull traversal and skipping no longer narrow valid numbers until a numeric value is requested. Dynamic `load` and `parse` behavior is unchanged.
 - Existing limit keywords remain supported; when they overlap a
   `FusedJSON::Limits` policy, the smaller limit wins.
+- Public completion, abandoned-traversal, gzip composition, multi-pass input,
+  and large-document memory contracts are now explicit.
 
 ## 0.1.0 - 2026-08-22
 

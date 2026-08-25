@@ -163,9 +163,9 @@ processes on CPU 3 and owns admission from CPU 0; its exact command is in the
 cross-runtime context, not a release gate. Do not copy a local number into
 release notes unless the commit and procedure are reproducible.
 
-The controlled [reference results](benchmark-results.md) record the commit,
-host, commands, medians, variability, and managed allocation data used for the
-Milestone 7 release review.
+The controlled [reference results](benchmark-results.md) preserve early
+development measurements. They are useful historical context, not current
+release evidence.
 
 The [TiC large-document benchmark guide](tic-benchmarking.md) covers generated
 streaming fixtures, semantic verification, decompression baselines, one-shot
@@ -177,3 +177,46 @@ The [accepted Milestone 6 results](milestone-6-benchmark-results.md) preserve
 both complete campaigns, the independent audit, additional gates, and every
 invalid attempt. They are comparative measurements from a hot shared host,
 not quiet-host or peak-throughput estimates.
+
+## Reproduce a Large-document Release Review
+
+Use three distinct levels of evidence:
+
+1. Normal CI generates and verifies a 65,537-byte fixture across plain, gzip,
+   raw-number, typed, retained, and two-pass paths. This is a correctness smoke,
+   not a performance result.
+2. The scheduled `Large-document reports` workflow runs a 256 MiB typed fixture
+   on Linux x86-64, Linux ARM64, and macOS ARM64 and retains its manifest and
+   JSON receipts. These moving shared runners are report-only: never gate a
+   release or compare runs from different hosts as if they were paired samples.
+3. Publishable x86-64 measurements use the complete attested builds, fixture
+   sizes, CPU pinning, paired schedules, RSS rules, and commands in the
+   [Milestone 6 protocol](milestone-6-protocol.md). The dedicated release host
+   must use the stable supported Crystal compiler and run 256 MiB, 1 GiB, and
+   greater-than-4-GiB no-retention profiles.
+
+For a quick local check, build the two tools, verify semantics, then run each
+backend in a fresh process. One pair is diagnostic, not an acceptance result:
+
+```console
+$ FUSED_JSON_COMMIT=$(git rev-parse HEAD)
+$ crystal version
+$ crystal build --release --no-debug bench/tic_fixture.cr -o bin/tic-fixture
+$ crystal build --release --no-debug bench/tic.cr -o bin/tic-bench
+$ bin/tic-fixture --profile many-small --bytes 268435456 --seed 7 \
+    --field-order providers-first --output /tmp/tic-256m.json \
+    --manifest /tmp/tic-256m.meta.json
+$ bin/tic-bench verify --input /tmp/tic-256m.json \
+    --manifest /tmp/tic-256m.meta.json >verify.json
+$ GC_NPROCS=1 GC_MARKERS=1 bin/tic-bench run \
+    --input /tmp/tic-256m.json --manifest /tmp/tic-256m.meta.json \
+    --mode fused-typed --commit "$FUSED_JSON_COMMIT" >fused.json
+$ GC_NPROCS=1 GC_MARKERS=1 bin/tic-bench run \
+    --input /tmp/tic-256m.json --manifest /tmp/tic-256m.meta.json \
+    --mode crystal-typed --commit "$FUSED_JSON_COMMIT" >crystal.json
+```
+
+Record the clean commit, exact compiler/LLVM and target, fixture manifest,
+commands, environment, process order, every receipt, and GNU-time RSS output.
+Alternate backend order across fresh pairs. Do not discard a slow sample after
+seeing its result or infer a new gate result from this quick recipe.

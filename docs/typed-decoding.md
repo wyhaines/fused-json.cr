@@ -150,6 +150,32 @@ unmaterialized. Duplicate rejection is a separate per-object check, applies to
 unknown and skipped data, and must decode those keys. If caching is also on,
 the decoded keys enter the pool.
 
+Native cursor code can preserve a number with `read_raw_number`. A converter
+inside `JSON::Serializable` instead receives Crystal's nominal
+`JSON::PullParser`; use its raw-value contract and advance exactly once:
+
+```crystal
+require "fused_json"
+
+module RawNumberConverter
+  def self.from_json(pull : JSON::PullParser) : String
+    pull.raw_value.tap { pull.read_next }
+  end
+end
+
+struct Price
+  include JSON::Serializable
+
+  @[JSON::Field(converter: RawNumberConverter)]
+  getter amount : String
+end
+```
+
+This preserves spelling for an application decimal or database layer. It does
+not change `load` or `parse`, which still reject dynamic integers outside
+`Int64`. Typed `BigInt` or `BigDecimal` and raw-token storage are separate,
+explicit migration choices.
+
 Native syntax, type, and structural failures raise `FusedJSON::ParseError`;
 generated serializers may wrap them in `JSON::SerializableError` and retain
 the native error as the cause. Standard target constructors and custom
@@ -187,6 +213,22 @@ streaming string or number error may copy that token into location scratch.
 Set both limits when each allocation path must be bounded. These source-byte
 limits do not cap the heap used by the constructed `T`. See
 [Streaming Input](streaming.md) for ownership, memory, and encoding details.
+
+## Working-memory Model
+
+When callbacks, constructors, and converters retain no values or parser
+references, live streaming memory follows the input and decompressor buffers,
+nesting and key state, the largest current or lookahead token, and one current
+decoded target. `read_array(T)` constructs the complete `T` before yielding it;
+a `struct` target can still contain heap-backed strings and arrays. Raw replay,
+ambiguous unions, discriminators, and custom converters may materialize the
+complete selected subtree.
+
+`max_typed_value_bytes` bounds the selected source span, not the target's heap
+footprint. If one outer element can be document-sized, walk it structurally and
+apply typed reads to a smaller nested array. See the
+[TiC streaming example](../examples/tic_streaming.cr) for that pattern and for
+fresh gzip/two-pass input ownership.
 
 ## Deferred
 

@@ -5,7 +5,11 @@
 
 FusedJSON is an experimental, strict JSON parser for Crystal. It provides a fast in-memory `String` path and incremental `IO` parsing without first copying the complete input. Both paths avoid the standard parser's intermediate lexer.
 
-Version 0.1 includes dynamic tree parsing, direct typed decoding, pull parsing, and streaming `IO`. All paths enforce strict JSON, validated UTF-8, Unicode escapes, and nesting limits. Optional key caching can reduce allocation when object keys repeat. Crystal 1.21 through 1.x is supported.
+Version 0.2 adds typed reads at a pull cursor, non-accumulating typed arrays,
+exact raw-number access, and one resource-limit policy across dynamic, typed,
+pull, and streaming entry points. All paths enforce strict JSON, validated
+UTF-8, Unicode escapes, and nesting limits. Crystal 1.21 through the current
+stable 1.x release is supported.
 
 ## Installation
 
@@ -15,7 +19,7 @@ Add the shard to your application's `shard.yml`:
 dependencies:
   fused_json:
     github: wyhaines/fused-json.cr
-    version: ~> 0.1.0
+    version: ~> 0.2.0
 ```
 
 Run `shards install`, then `require "fused_json"` in application code.
@@ -141,6 +145,25 @@ readers. The compile-checked [TiC streaming example](examples/tic_streaming.cr)
 shows typed root arrays, nested typed arrays, caller-wrapped gzip input, staged
 output, and two-pass input recreation.
 
+### Large documents
+
+FusedJSON borrows an `IO` and never closes it. It does not detect compression;
+the caller opens the file and supplies a `Compress::Gzip::Reader` when needed.
+Every pass must use a freshly opened source and a fresh decompressor. A normal
+root traversal reaches EOF, after which `finish` asserts complete-document
+validation. `finish` does not drain unread input: an exception or early block
+exit leaves the remaining JSON and any gzip trailer unchecked, so discard that
+reader and do not commit staged output.
+
+When callbacks and constructors do not retain values, streaming retention is
+driven by the input and decompressor buffers, nesting and key state, the largest
+current or lookahead token, and one current decoded value—not total document
+length. `read_array(T)` still constructs each complete `T` before yielding it;
+navigate structurally to a smaller nested array when an outer item can itself be
+very large. See [Streaming Input](docs/streaming.md) for the full ownership and
+memory contract and the [migration guide](docs/migration.md#pull-number-migration)
+for numeric choices.
+
 ## Development
 
 ```console
@@ -173,20 +196,10 @@ For a current-checkout Ruby/Oj comparison, build Oj and run `OJ_ROOT=/path/to/oj
 
 ## Performance Snapshot
 
-Early CPU-pinned `--release --no-debug` measurements on a Ryzen 9 7940HS with
-Crystal 1.22.0-dev `[2e13e6a73]` provide directional evidence, not release
-guarantees. The commits in this paragraph and the next belong to the former
-development repository, are not part of this repository's history, and
-predate the rename to FusedJSON. At `07d7c9e`, three-run medians put the
-default fused `load` path between 1.54x and 2.16x Crystal `JSON.parse` on all
-five canonical corpora, with a 1.77x geometric mean. At `6dbba52`, seven
-independent samples per backend and corpus, with backend order alternated,
-showed the word-at-a-time string scanner 6.5% faster geometrically than its
-forced scalar fallback; CITM was flat within 0.2%, while ActivityPub and
-Twitter improved by about 12%. Each sample used one second of warmup and two
-seconds of timed work.
-
-At `9f614df`, five-process medians on the same host put direct typed decoding at 1.129x Crystal's typed decoder on the Twitter corpus, or 1.209x with local key caching. Cached typed decoding used 0.468x its managed allocation. Pull-to-tree ran at 0.532x to 0.871x the fused `load` path, while validating root skips used only 380 to 852 managed B/op. Three-process streaming medians put event drain at 0.602x to 0.748x the in-memory pull reader. These API-specific tradeoffs, RSD values, corpus sizes, and reproduction commands are recorded in the [reference results](docs/benchmark-results.md).
+Historical parser, scanner, typed-decoding, and pull measurements are retained
+in the [reference results](docs/benchmark-results.md). They are directional
+development evidence; the current-repository large-document campaign below is
+the relevant end-to-end result.
 
 Milestone 5's accepted controlled campaigns found no material cost from disabled
 resource limits or from passing an explicit empty `Limits` value. Every
@@ -202,7 +215,11 @@ RSS stayed below 8.9 MiB in all six 4.0625 GiB no-retention runs, well under
 the frozen 24.7-24.8 MiB ceilings. The dynamic-parser, exact post-4-GiB offset,
 and Sunlight compatibility gates passed as well. See the
 [complete Milestone 6 results](docs/milestone-6-benchmark-results.md),
-including the hot shared-host caveat and every invalid attempt.
+including the hot shared-host caveat and every invalid attempt. Bounded live
+RSS did not mean lower cumulative allocation: typed FusedJSON allocated about
+5.0x-5.2x Crystal in those profiles, and retaining all selected values used
+about 84-85 MiB versus Crystal's 57-59 MiB. Reducing that typed-adapter churn is
+post-release optimization work.
 
 `bench/parse.cr` verifies complete result equality before timing and reports MiB/s, relative standard deviation, and managed bytes per operation. Repeat the executable in independent processes before drawing conclusions on another machine.
 

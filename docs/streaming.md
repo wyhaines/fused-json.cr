@@ -139,6 +139,39 @@ the resulting UTF-8 stream, not bytes in the underlying encoded source.
 Lines and columns are one-based; columns count decoded Unicode code points for
 valid non-ASCII input.
 
+## Compressed and Multi-pass Input
+
+FusedJSON is transport agnostic and does not detect compression. The caller
+opens and owns both the source and its wrapper:
+
+```crystal
+require "compress/gzip"
+require "fused_json"
+
+def with_gzip_input(path : String, & : IO -> T) : T forall T
+  File.open(path) do |file|
+    Compress::Gzip::Reader.open(file) { |gzip| yield gzip }
+  end
+end
+
+with_gzip_input("document.json.gz") do |input|
+  pull = FusedJSON::PullParser.new(input)
+  pull.skip
+  pull.finish
+end
+```
+
+The surrounding blocks close their resources; FusedJSON closes neither. A
+normal complete traversal reads the decompressor through EOF and therefore
+checks its trailer. An early exit does not. For two-pass processing, invoke the
+opening helper twice so each pass gets a fresh file and gzip reader. Do not seek
+or reuse a buffered parser/decompressor after an abandoned pass. A non-replayable
+source must be handled in one pass or spooled to caller-managed storage.
+
+Offsets and `max_document_bytes` count decoded UTF-8 bytes. They do not bound
+compressed ingress, decompressor buffering, expansion work, CPU time, or wall
+time; apply those limits outside FusedJSON.
+
 ## Memory Bounds
 
 FusedJSON's reusable decoded input buffer is bounded by `buffer_size`, but
