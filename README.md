@@ -220,13 +220,13 @@ and Sunlight compatibility gates passed as well. See the
 [complete Milestone 6 results](docs/milestone-6-benchmark-results.md),
 including the hot shared-host caveat and every invalid attempt.
 
-Candidate `4ca865c4` repeated that frozen protocol after adding native scalar
-reads, prototype-copy typed adapters, and a cache-only fast path. Across two
-complete campaigns, the geometric-mean ratios rose to 3.230x-3.286x on
-many-small and 2.685x-2.707x on wide-item. FusedJSON managed allocation fell
-56.85% and 55.22% respectively; median retained-output peak RSS fell about 24%
-to 64.6-64.9 MiB. Bounded no-retention RSS, dynamic parsing, exact offsets, and
-Sunlight compatibility all passed again. See the
+The accepted optimization at `4ca865c4` repeated that frozen protocol after
+adding native scalar reads, prototype-copy typed adapters, and a cache-only
+fast path. Across two complete campaigns, the geometric-mean ratios rose to
+3.230x-3.286x on many-small and 2.685x-2.707x on wide-item. FusedJSON managed
+allocation fell 56.85% and 55.22% respectively; median retained-output peak RSS
+fell about 24% to 64.6-64.9 MiB. Bounded no-retention RSS, dynamic parsing,
+exact offsets, and Sunlight compatibility all passed again. See the
 [typed-decoding optimization results](docs/typed-optimization-results.md) and
 their checksummed receipts.
 
@@ -244,7 +244,7 @@ formal throughput evidence.
 
 ## Roadmap
 
-Large-document Milestones 1 through 7 are complete for the 0.2.0 candidate.
+Large-document Milestones 1 through 7 are complete for version 0.2.0.
 They add raw-number access, typed cursor and array reads, TiC workflows, one
 resource policy across all parsing APIs, and stable-compiler release evidence.
 See the [Milestone 5 resource results](docs/milestone-5-benchmark-results.md),

@@ -4,21 +4,7 @@ All notable changes to FusedJSON are recorded here. The project follows semantic
 
 ## Unreleased
 
-### Changed
-
-- Compatible built-in scalar `PullParser#read(T)` calls now avoid allocating a
-  per-value `JSON::PullParser` adapter on both String and IO cursors.
-- Adapter-backed typed reads now copy valid initialized prototypes, preserving
-  fresh adapter identity without repeatedly allocating unused stdlib parser
-  internals.
-- A standalone `max_cached_keys` bound now stays on the fast traversal path and
-  checks capacity only when materializing a key; the bound remains inert when
-  key caching is disabled.
-- Per-parse key caching now preserves every decoded key across table growth, so
-  repeated keys retain identity and exact `max_cached_keys` bounds remain
-  reliable beyond the initial cache capacity.
-
-## 0.2.0 - 2026-08-24
+## 0.2.0 - 2026-08-25
 
 ### Added
 
@@ -39,11 +25,25 @@ All notable changes to FusedJSON are recorded here. The project follows semantic
 
 ### Changed
 
+- Compatible built-in scalar `PullParser#read(T)` calls now avoid allocating a
+  per-value `JSON::PullParser` adapter on both String and IO cursors.
+- Adapter-backed typed reads now copy valid initialized prototypes, preserving
+  fresh adapter identity without repeatedly allocating unused stdlib parser
+  internals.
+- A standalone `max_cached_keys` bound now stays on the fast traversal path and
+  checks capacity only when materializing a key; the bound remains inert when
+  key caching is disabled.
 - Pull traversal and skipping no longer narrow valid numbers until a numeric value is requested. Dynamic `load` and `parse` behavior is unchanged.
 - Existing limit keywords remain supported; when they overlap a
   `FusedJSON::Limits` policy, the smaller limit wins.
 - Public completion, abandoned-traversal, gzip composition, multi-pass input,
   and large-document memory contracts are now explicit.
+
+### Fixed
+
+- Per-parse key caching now preserves every decoded key across table growth, so
+  repeated keys retain identity and exact `max_cached_keys` bounds remain
+  reliable beyond the initial cache capacity.
 
 ## 0.1.0 - 2026-08-22
 
