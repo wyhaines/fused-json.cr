@@ -1,9 +1,9 @@
 require "json"
-require "string_pool"
 
 require "./fused_json/limits"
 require "./fused_json/float64_decoder"
 require "./fused_json/ascii_string_scanner"
+require "./fused_json/key_cache"
 require "./fused_json/byte_scanner"
 require "./fused_json/parser"
 require "./fused_json/pull_parser"

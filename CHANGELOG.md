@@ -14,6 +14,9 @@ All notable changes to FusedJSON are recorded here. The project follows semantic
 - A standalone `max_cached_keys` bound now stays on the fast traversal path and
   checks capacity only when materializing a key; the bound remains inert when
   key caching is disabled.
+- Per-parse key caching now preserves every decoded key across table growth, so
+  repeated keys retain identity and exact `max_cached_keys` bounds remain
+  reliable beyond the initial cache capacity.
 
 ## 0.2.0 - 2026-08-24
 

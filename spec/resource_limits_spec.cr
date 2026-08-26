@@ -59,6 +59,26 @@ private def resource_limit_stream(source : String) : StreamSpecSupport::ChunkedI
   StreamSpecSupport::ChunkedIO.new(source, max_chunk: 1)
 end
 
+private def key_cache_growth_source(unique_keys : Int32, *, repeat : Bool) : String
+  String.build do |io|
+    io << '['
+    passes = repeat ? 2 : 1
+    passes.times do |pass|
+      unique_keys.times do |index|
+        io << ',' unless pass == 0 && index == 0
+        io << '{'
+        if pass == 1 && index == 0
+          io << %q("key_\u0030")
+        else
+          "key_#{index}".to_json(io)
+        end
+        io << ':' << index << '}'
+      end
+    end
+    io << ']'
+  end
+end
+
 private def expect_resource_limit_on_string_and_io(source : String, limits : FusedJSON::Limits,
                                                    offset : Int, message : String) : Nil
   error = expect_resource_limit_error_at(offset) do
@@ -842,6 +862,51 @@ describe "FusedJSON duplicate and key-cache limits" do
     limits = FusedJSON::Limits.new(max_cached_keys: 1)
 
     FusedJSON.load(source, cache_keys: true, limits: limits).should eq(JSON.parse(source))
+  end
+
+  it "preserves every key across cache growth and exact capacity" do
+    unique_keys = 64
+    source = key_cache_growth_source(unique_keys, repeat: true)
+    limits = FusedJSON::Limits.new(max_cached_keys: unique_keys)
+
+    results = [
+      FusedJSON.load(source, cache_keys: true, limits: limits),
+      FusedJSON.load(
+        resource_limit_stream(source),
+        buffer_size: 1,
+        cache_keys: true,
+        limits: limits
+      ),
+    ]
+
+    results.each do |result|
+      entries = result.as_a
+      unique_keys.times do |index|
+        first = entries[index].as_h.keys.first
+        repeated = entries[unique_keys + index].as_h.keys.first
+        first.same?(repeated).should be_true
+      end
+    end
+  end
+
+  it "rejects the first key beyond capacity after multiple cache growths" do
+    unique_keys = 65
+    source = key_cache_growth_source(unique_keys, repeat: false)
+    forbidden = resource_limit_offset(source, %q("key_64"))
+    limits = FusedJSON::Limits.new(max_cached_keys: unique_keys - 1)
+
+    expect_resource_limit_error_at(forbidden) do
+      FusedJSON.load(source, cache_keys: true, limits: limits)
+    end
+
+    expect_resource_limit_error_at(forbidden) do
+      FusedJSON.load(
+        resource_limit_stream(source),
+        buffer_size: 1,
+        cache_keys: true,
+        limits: limits
+      )
+    end
   end
 
   it "allows keyless objects but rejects the first cached key at zero" do

@@ -35,7 +35,7 @@ module FusedJSON
     # Selects traversal with per-event limit hooks. A cache-only limit keeps
     # its state without moving otherwise unlimited parsing onto that path.
     @limits_active : Bool
-    @key_pool : StringPool?
+    @key_pool : KeyCache?
     # Retains the source directly when no extended state is needed. Otherwise,
     # the state occupies the same slot and retains the source through its anchor.
     @source_or_limits : String | ResourceLimitState
@@ -54,7 +54,7 @@ module FusedJSON
       @size = @bytes.size
       @pos = 0
       @max_nesting = Math.min(max_nesting.to_i64, limits.max_nesting.to_i64).to_i32
-      @key_pool = StringPool.new if cache_keys
+      @key_pool = KeyCache.new if cache_keys
       effective_token_limit = if token_limit = max_token_bytes
                                 configured = limits.max_token_bytes
                                 configured ? Math.min(token_limit.to_i64, configured.to_i64).to_i32 : token_limit.to_i32

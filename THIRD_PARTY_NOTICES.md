@@ -4,6 +4,10 @@
 
 The raw-value replay methods in `src/fused_json/json_pull_adapter.cr` are adapted from Crystal's `JSON::PullParser` at Crystal 1.21.0, commit `57cf7da5094db6c5d3c058c6d054a757b5ced19e`. They were modified to consume FusedJSON's native events, preserve exact numeric spellings, and synchronize the adapter cursor.
 
+The private key-cache table in `src/fused_json/key_cache.cr` is adapted from
+Crystal's `StringPool` at the same release and commit. It keeps the table
+layout and probing sequence while correcting insertion across table growth.
+
 Crystal Programming Language
 
 Copyright 2012-2026 Manas Technology Solutions.
