@@ -38,7 +38,7 @@ module StreamingTreeCost
   class ChunkedMemoryIO < IO
     getter bytes_read : Int64
     getter read_calls : Int64
-    getter closed_called : Bool
+    getter? closed_called : Bool
 
     @memory : IO::Memory
     @chunk_index : Int32
@@ -237,7 +237,7 @@ module StreamingTreeCost
     unless io.bytes_read == source.bytesize
       raise "streaming parser read #{io.bytes_read} of #{source.bytesize} bytes"
     end
-    raise "streaming parser closed caller-owned IO" if io.closed_called
+    raise "streaming parser closed caller-owned IO" if io.closed_called?
   end
 
   def positive_i32(value : String, name : String, maximum : Int32 = Int32::MAX) : Int32
