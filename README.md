@@ -197,82 +197,66 @@ $ crystal run --release --no-debug scripts/check_large_offset.cr
 
 For a current-checkout Ruby/Oj comparison, build Oj and run `OJ_ROOT=/path/to/oj ruby bench/parse_oj.rb document.json`.
 
-## Performance Snapshot
+## Performance
 
-Historical parser, scanner, typed-decoding, and pull measurements are retained
-in the [reference results](docs/benchmark-results.md). They are directional
-development evidence; the current-repository large-document campaign below is
-the relevant end-to-end result.
+On the benchmark machine, FusedJSON is about 1.9 times as fast as
+`JSON.parse` when both build a `JSON::Any` tree from a `String`. Its advantage is
+larger when decoding a large `IO` directly into typed records, where it delivers
+about 2.7 to 3.3 times Crystal's throughput.
 
-Milestone 5's accepted controlled campaigns found no material cost from disabled
-resource limits or from passing an explicit empty `Limits` value. Every
-throughput, paired-bootstrap, and managed-allocation gate passed; the
-[complete results and unsuccessful attempts](docs/milestone-5-benchmark-results.md)
-are retained for review.
+| Operation | Throughput compared with Crystal | Memory |
+| --- | --- | --- |
+| Dynamic `JSON::Any` from String | 1.70x to 2.10x across five corpora; 1.91x geometric mean | Managed allocation ranged from 0.67x to 1.37x Crystal, depending on the document |
+| Streaming typed decode, many small records | 3.23x to 3.29x | 2.17x Crystal's cumulative managed allocation |
+| Streaming typed decode, wide records | 2.69x to 2.71x | 2.31x Crystal's cumulative managed allocation |
+| Typed decode with all selected output retained | 2.69x to 2.70x | Median peak RSS was 64.6 to 64.9 MiB, versus 58.5 to 58.7 MiB for Crystal |
 
-At Milestone 6 baseline commit `b7a54566`, Crystal 1.22.0-dev
-`[6c6a5e988]` built the programs for two complete typed-streaming campaigns.
-Both passed. FusedJSON's geometric-mean throughput was 2.568x-2.592x Crystal
-on the many-small profile and 2.127x-2.130x on the wide-item profile. Process
-RSS stayed below 8.9 MiB in all six 4.0625 GiB no-retention runs, well under
-the frozen 24.7-24.8 MiB ceilings. The dynamic-parser, exact post-4-GiB offset,
-and Sunlight compatibility gates passed as well. See the
-[complete Milestone 6 results](docs/milestone-6-benchmark-results.md),
-including the hot shared-host caveat and every invalid attempt.
+Cumulative managed allocation counts every managed byte allocated during a
+parse; it is not retained memory. The typed fast paths cut that allocation by
+55 to 57 percent, but Crystal still does less allocation work. When parsed
+values are discarded, FusedJSON's memory stays bounded: three runs over a
+4.06 GiB input peaked below 9.5 MiB of process RSS.
 
-The accepted optimization at `4ca865c4` repeated that frozen protocol after
-adding native scalar reads, prototype-copy typed adapters, and a cache-only
-fast path. Across two complete campaigns, the geometric-mean ratios rose to
-3.230x-3.286x on many-small and 2.685x-2.707x on wide-item. FusedJSON managed
-allocation fell 56.85% and 55.22% respectively; median retained-output peak RSS
-fell about 24% to 64.6-64.9 MiB. Bounded no-retention RSS, dynamic parsing,
-exact offsets, and Sunlight compatibility all passed again. See the
-[typed-decoding optimization results](docs/typed-optimization-results.md) and
-their checksummed receipts.
+Key caching can reduce FusedJSON's allocation by 28 to 33 percent when a
+document repeats a small schema. It is not a general speed switch. On unique
+keys it increased allocation by 9 to 10 percent and parsing time by 22 to 29
+percent, so it remains disabled by default. Disabled resource limits and an
+explicit empty `Limits` value had no material effect in controlled tests.
 
-Milestone 7 rechecked candidate `fbe44913` with Crystal 1.21.0
-`[57cf7da50]`, LLVM 20.1.8, and `x86_64-unknown-linux-gnu`. Its abbreviated
-three-pair review found diagnostic geometric-mean ratios of 2.921x on
-many-small and 2.180x on wide-item. The stable no-retention baseline peaked at
-9,736 KiB, setting a 26,120 KiB ceiling; all three 4,362,076,160-byte runs
-stayed at or below 9,720 KiB, and the exact post-`2^32` offset check passed.
-See the [stable release review](docs/milestone-7-release-review.md) and its
-checksummed receipts. Milestone 6, not this abbreviated review, remains the
-formal throughput evidence.
-
-`bench/parse.cr` verifies complete result equality before timing and reports MiB/s, relative standard deviation, and managed bytes per operation. Repeat the executable in independent processes before drawing conclusions on another machine.
+These figures came from repeated, CPU-pinned release builds on an AMD Ryzen 9
+7940HS. Ratios are more useful than absolute MiB/s, and real applications
+should benchmark their own documents. See the
+[benchmarking guide](docs/benchmarking.md), the
+[typed-decoding results](docs/typed-optimization-results.md), and the
+[latest optimization report](docs/post-0.2-performance-results.md) for the
+commands, compiler versions, raw receipts, and measurement caveats.
 
 ## Roadmap
 
-Large-document Milestones 1 through 7 are complete for version 0.2.0.
-They add raw-number access, typed cursor and array reads, TiC workflows, one
-resource policy across all parsing APIs, and stable-compiler release evidence.
-See the [Milestone 5 resource results](docs/milestone-5-benchmark-results.md),
-[Milestone 6 performance results](docs/milestone-6-benchmark-results.md), and
-[Milestone 7 stable review](docs/milestone-7-release-review.md). The later
-[typed-decoding optimization](docs/typed-optimization-results.md) removes the
-largest measured typed-adapter churn while preserving those gates.
-Current priorities are:
+The next planned work is:
 
 - Add a separate reader for NDJSON or repeated JSON documents, with buffer
   reuse between records. `load` and `parse` will remain eager, strict,
   single-document operations.
-- An opt-in dynamic value type that can hold integers beyond `Int64`, exact decimals, or the original number spelling. The existing `JSON::Any` API will keep its Crystal-compatible numeric behavior. Explicit typed decoding already supports `BigInt`, `BigFloat`, and `BigDecimal` after loading `big/json`.
-- Treat fresh typed-adapter allocation as the current compatibility floor, and
-  use key caching only for known repeated schemas. The measured cache tradeoffs
-  and exact-capacity guidance are in the
-  [post-0.2 results](docs/post-0.2-performance-results.md).
-- Focus future streaming performance experiments on shared refill, token
-  scanning, and escaped-string materialization. A direct eventless `IO` tree
-  builder passed semantic checks but failed the frozen mixed-workload gate, so
-  the pull-backed implementation remains preferable without new evidence.
-  Future work must be rechecked on stable x86-64 and consult the report-only
-  ARM64 and macOS workflow results.
-- Expanded fuzz testing and broader platform coverage, beginning with ARM64 and macOS. The word scanner will be tested on real 32-bit and big-endian hardware when practical CI runners are available. The compiler-private float hook will either be replaced or moved behind a stable upstream API, while the tested public fallback remains available.
+- Add an opt-in dynamic value type for integers beyond `Int64`, exact decimals,
+  and original number spellings. `JSON::Any` will keep Crystal-compatible
+  numeric behavior. Typed decoding already supports `BigInt`, `BigFloat`, and
+  `BigDecimal` after loading `big/json`.
+- Improve streaming performance by profiling buffer refills, token scanning,
+  and escaped-string decoding. An eventless `IO` tree builder was tested, but
+  its gains were inconsistent and it made escaped-string workloads slower.
+- Expand fuzzing and platform coverage on ARM64 and macOS. The word scanner
+  also needs testing on real 32-bit and big-endian hardware. The public float
+  fallback will remain available until the compiler-specific fast path can use
+  a stable upstream API.
+- Refine the experimental typed and pull APIs using feedback from real
+  applications. Version 1.0 will define stable contracts for limits, numbers,
+  errors, and compiler compatibility.
 
-Application feedback will shape the typed and pull interfaces before 1.0. The 1.0 release will define stable contracts for limits, numbers, errors, and compiler compatibility.
+FusedJSON will stay focused on strict JSON parsing. JSON generation, JSON5,
+Ruby-specific Oj modes, and a rewrite in C are not planned.
 
-FusedJSON will remain a fast, strict, Crystal-native JSON parser. JSON generation, JSON5 extensions, Ruby-specific Oj modes, and a rewrite in C are not currently planned.
+## Documentation
 
 The [design specification](docs/design.md), [implementation history](docs/plan.md), and [public API contract](docs/api.md) contain the technical details. Benchmark methodology and results are documented in the [benchmarking guide](docs/benchmarking.md) and [reference results](docs/benchmark-results.md). See the [migration guide](docs/migration.md) when replacing Crystal's parser and the [release guide](docs/releasing.md) when publishing a new version.
 
