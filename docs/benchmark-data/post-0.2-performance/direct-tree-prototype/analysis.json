@@ -1,0 +1,218 @@
+{
+  "schema": "fused-json-direct-tree-prototype-analysis-v1",
+  "root": "docs/benchmark-data/post-0.2-performance/direct-tree-prototype/rejected-directional",
+  "profile_count": 12,
+  "paired_ratio_count": 60,
+  "matrix_geometric_mean_ratio": 1.0644223628890703,
+  "gates": {
+    "matrix_at_least_1_10": false,
+    "every_profile_median_at_least_0_98": false,
+    "every_managed_allocation_delta_within_4096_bytes": true
+  },
+  "profiles": [
+    {
+      "shape": "escaped-strings",
+      "mode": "chunked-memory",
+      "cache_keys": false,
+      "geometric_mean_ratio": 0.9538146919974344,
+      "median_ratio": 0.960514664426731,
+      "minimum_ratio": 0.923410086533713,
+      "maximum_ratio": 0.9709309751098836,
+      "maximum_managed_allocation_delta": -1088,
+      "ratios": [
+        0.9705648699393697,
+        0.9445142201650223,
+        0.9709309751098836,
+        0.960514664426731,
+        0.923410086533713
+      ]
+    },
+    {
+      "shape": "escaped-strings",
+      "mode": "chunked-memory",
+      "cache_keys": true,
+      "geometric_mean_ratio": 0.9470310541058208,
+      "median_ratio": 0.9459606000649472,
+      "minimum_ratio": 0.9279444997893144,
+      "maximum_ratio": 0.9802266862942478,
+      "maximum_managed_allocation_delta": -848,
+      "ratios": [
+        0.9344056146524741,
+        0.9279444997893144,
+        0.9459606000649472,
+        0.9802266862942478,
+        0.9474669938703161
+      ]
+    },
+    {
+      "shape": "escaped-strings",
+      "mode": "io-memory",
+      "cache_keys": false,
+      "geometric_mean_ratio": 0.960134768020477,
+      "median_ratio": 0.9643822146945285,
+      "minimum_ratio": 0.9335588138177268,
+      "maximum_ratio": 0.9891389888071881,
+      "maximum_managed_allocation_delta": -394,
+      "ratios": [
+        0.9710123521287896,
+        0.9335588138177268,
+        0.9643822146945285,
+        0.9436002149001936,
+        0.9891389888071881
+      ]
+    },
+    {
+      "shape": "escaped-strings",
+      "mode": "io-memory",
+      "cache_keys": true,
+      "geometric_mean_ratio": 0.9355655594196761,
+      "median_ratio": 0.9432921364984658,
+      "minimum_ratio": 0.9178853735231788,
+      "maximum_ratio": 0.9532768966622455,
+      "maximum_managed_allocation_delta": 1456,
+      "ratios": [
+        0.9432921364984658,
+        0.9181146732626918,
+        0.9458460839807883,
+        0.9532768966622455,
+        0.9178853735231788
+      ]
+    },
+    {
+      "shape": "nested",
+      "mode": "chunked-memory",
+      "cache_keys": false,
+      "geometric_mean_ratio": 1.156243138502786,
+      "median_ratio": 1.1556270375339996,
+      "minimum_ratio": 1.1212811360370067,
+      "maximum_ratio": 1.1961398926476423,
+      "maximum_managed_allocation_delta": 885,
+      "ratios": [
+        1.1266327234763076,
+        1.1556270375339996,
+        1.1212811360370067,
+        1.1961398926476423,
+        1.1834483169838808
+      ]
+    },
+    {
+      "shape": "nested",
+      "mode": "chunked-memory",
+      "cache_keys": true,
+      "geometric_mean_ratio": 1.2020616915157278,
+      "median_ratio": 1.1982846026939185,
+      "minimum_ratio": 1.1464127132402604,
+      "maximum_ratio": 1.2757910137841333,
+      "maximum_managed_allocation_delta": 3098,
+      "ratios": [
+        1.1888494954086524,
+        1.1982846026939185,
+        1.1464127132402604,
+        1.2045543357284998,
+        1.2757910137841333
+      ]
+    },
+    {
+      "shape": "nested",
+      "mode": "io-memory",
+      "cache_keys": false,
+      "geometric_mean_ratio": 1.1502985334592986,
+      "median_ratio": 1.1357222048410336,
+      "minimum_ratio": 1.1157181606591309,
+      "maximum_ratio": 1.2093817078063736,
+      "maximum_managed_allocation_delta": 1365,
+      "ratios": [
+        1.1607955823243699,
+        1.1357222048410336,
+        1.1321580771395856,
+        1.1157181606591309,
+        1.2093817078063736
+      ]
+    },
+    {
+      "shape": "nested",
+      "mode": "io-memory",
+      "cache_keys": true,
+      "geometric_mean_ratio": 1.1910442855358971,
+      "median_ratio": 1.1784834365057366,
+      "minimum_ratio": 1.1435587209161162,
+      "maximum_ratio": 1.258603652809691,
+      "maximum_managed_allocation_delta": 1669,
+      "ratios": [
+        1.1435587209161162,
+        1.1475294176487176,
+        1.1784834365057366,
+        1.258603652809691,
+        1.2314159657067398
+      ]
+    },
+    {
+      "shape": "small-objects",
+      "mode": "chunked-memory",
+      "cache_keys": false,
+      "geometric_mean_ratio": 1.0791177478639695,
+      "median_ratio": 1.0732787184470363,
+      "minimum_ratio": 1.0365426947589456,
+      "maximum_ratio": 1.1116016081461504,
+      "maximum_managed_allocation_delta": 1280,
+      "ratios": [
+        1.1116016081461504,
+        1.0732787184470363,
+        1.0705185571764488,
+        1.0365426947589456,
+        1.1053532606920407
+      ]
+    },
+    {
+      "shape": "small-objects",
+      "mode": "chunked-memory",
+      "cache_keys": true,
+      "geometric_mean_ratio": 1.0974988769316631,
+      "median_ratio": 1.0994447931091067,
+      "minimum_ratio": 1.0792410234628727,
+      "maximum_ratio": 1.1093675487056247,
+      "maximum_managed_allocation_delta": 2144,
+      "ratios": [
+        1.1093675487056247,
+        1.1017922680076697,
+        1.0792410234628727,
+        1.0994447931091067,
+        1.0978762052284627
+      ]
+    },
+    {
+      "shape": "small-objects",
+      "mode": "io-memory",
+      "cache_keys": false,
+      "geometric_mean_ratio": 1.072117638894461,
+      "median_ratio": 1.0729691845104332,
+      "minimum_ratio": 1.0446655202748372,
+      "maximum_ratio": 1.1074290553645068,
+      "maximum_managed_allocation_delta": 1307,
+      "ratios": [
+        1.0855993132829345,
+        1.0729691845104332,
+        1.0511440163116699,
+        1.0446655202748372,
+        1.1074290553645068
+      ]
+    },
+    {
+      "shape": "small-objects",
+      "mode": "io-memory",
+      "cache_keys": true,
+      "geometric_mean_ratio": 1.0782102852535635,
+      "median_ratio": 1.0925220742287385,
+      "minimum_ratio": 0.9231516318251641,
+      "maximum_ratio": 1.1683102191816814,
+      "maximum_managed_allocation_delta": 2203,
+      "ratios": [
+        0.9231516318251641,
+        1.1683102191816814,
+        1.0805405747459802,
+        1.0925220742287385,
+        1.1444974632788103
+      ]
+    }
+  ]
+}

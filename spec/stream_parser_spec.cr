@@ -1,5 +1,6 @@
 require "./spec_helper"
 require "./support/chunked_io"
+require "./support/pull_helpers"
 require "../src/fused_json/streaming_parser"
 
 private def parse_stream(
@@ -24,6 +25,64 @@ private def parse_stream(
     max_token_bytes: max_token_bytes
   ).parse
   {value, io}
+end
+
+private def split_stream(source : String, cut : Int32) : StreamSpecSupport::ChunkedIO
+  StreamSpecSupport::ChunkedIO.new(
+    source,
+    chunks: [cut],
+    read_budget: source.bytesize + 4
+  )
+end
+
+private def dynamic_split_value(source : String, cut : Int32, *, cache_keys : Bool) : JSON::Any
+  io = split_stream(source, cut)
+  value = FusedJSON.load(
+    io,
+    buffer_size: Math.max(source.bytesize, 1),
+    cache_keys: cache_keys
+  )
+  raise "dynamic parser closed caller-owned IO" if io.closed_called
+  value
+end
+
+private def pull_split_value(source : String, cut : Int32, *, cache_keys : Bool) : JSON::Any
+  io = split_stream(source, cut)
+  pull = FusedJSON::PullParser.new(
+    io,
+    buffer_size: Math.max(source.bytesize, 1),
+    cache_keys: cache_keys
+  )
+  value = PullSpecHelpers.read_any(pull)
+  pull.finish
+  raise "pull parser closed caller-owned IO" if io.closed_called
+  value
+end
+
+private def string_error_location(source : String) : Tuple(Int64, Int64, Int64)
+  FusedJSON.load(source)
+  raise "malformed String input was accepted"
+rescue error : FusedJSON::ParseError
+  {error.byte_offset, error.line_number.to_i64, error.column_number.to_i64}
+end
+
+private def dynamic_error_location(source : String, cut : Int32) : Tuple(Int64, Int64, Int64)
+  FusedJSON.load(split_stream(source, cut), buffer_size: Math.max(source.bytesize, 1))
+  raise "malformed direct input was accepted"
+rescue error : FusedJSON::ParseError
+  {error.byte_offset, error.line_number.to_i64, error.column_number.to_i64}
+end
+
+private def pull_error_location(source : String, cut : Int32) : Tuple(Int64, Int64, Int64)
+  pull = FusedJSON::PullParser.new(
+    split_stream(source, cut),
+    buffer_size: Math.max(source.bytesize, 1)
+  )
+  PullSpecHelpers.read_any(pull)
+  pull.finish
+  raise "malformed pull input was accepted"
+rescue error : FusedJSON::ParseError
+  {error.byte_offset, error.line_number.to_i64, error.column_number.to_i64}
 end
 
 describe FusedJSON::StreamingParser do
@@ -56,6 +115,49 @@ describe FusedJSON::StreamingParser do
       actual.should eq(FusedJSON.load(source)), source.inspect
       io.bytes_read.should eq(source.bytesize)
       io.closed_called.should be_false
+    end
+  end
+
+  it "matches String and pull tree construction at every byte split" do
+    documents = [
+      " -9223372036854775808 ",
+      %q("line\nλ\uD834\uDD1E"),
+      %q([null,false,true,-0,1.5e+2,"λ",[],{}]),
+      %q({"array":[1,{"nested":"value"}],"escaped\u002dkey":"𝄞"}),
+      %q([{"cache-key":1},{"cache-key":2},{"\u0063ache-key":3}]),
+    ]
+
+    documents.each do |source|
+      expected = FusedJSON.load(source)
+      [false, true].each do |cache_keys|
+        1.upto(source.bytesize - 1) do |cut|
+          dynamic_split_value(source, cut, cache_keys: cache_keys).should eq(expected),
+            "dynamic split #{cut} for #{source.inspect}"
+          pull_split_value(source, cut, cache_keys: cache_keys).should eq(expected),
+            "pull split #{cut} for #{source.inspect}"
+        end
+      end
+    end
+  end
+
+  it "matches String and pull error locations at every byte split" do
+    malformed = [
+      "true false",
+      "[1,]",
+      %q({"a":1 "b":2}),
+      %q({"λ":"\uD800"}),
+      "[-,0]",
+      String.new(Bytes[0x5b_u8, 0x22_u8, 0xe2_u8, 0x82_u8, 0x22_u8, 0x5d_u8]),
+    ]
+
+    malformed.each do |source|
+      expected = string_error_location(source)
+      1.upto(source.bytesize - 1) do |cut|
+        dynamic_error_location(source, cut).should eq(expected),
+          "dynamic split #{cut} for malformed #{source.inspect}"
+        pull_error_location(source, cut).should eq(expected),
+          "pull split #{cut} for malformed #{source.inspect}"
+      end
     end
   end
 

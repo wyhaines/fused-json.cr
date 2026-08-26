@@ -1,0 +1,58 @@
+{
+  "schema": "fused-json-direct-tree-prototype-artifact-manifest-v1",
+  "status": "rejected-at-directional-gate",
+  "baseline_commit": "8cd68bf8f20f5703166c96894739df91d4b79364",
+  "prototype_base_commit": "2f8ceb4793938e7a9e4a560e54160d4edb87faec",
+  "protocol": "docs/post-0.2-performance-protocol.md",
+  "design_and_result": "docs/post-0.2-streaming-tree-design.md",
+  "recorded_at_utc": "2026-08-26",
+  "compiler": {
+    "crystal_version": "1.21.0",
+    "crystal_build_commit": "57cf7da50",
+    "llvm_version": "20.1.8",
+    "target": "x86_64-unknown-linux-gnu"
+  },
+  "source": {
+    "prototype_runtime_patch": "prototype-runtime.patch",
+    "prototype_runtime_patch_sha256": "e31f6952237ee6bdb01507fe2862cc71b5c23e3f9e29f160580d29bb02427485",
+    "streaming_parser_sha256": "d8c480c326860c51e2cb92af46ce4ad20158475de526889102512c05ef8543e0",
+    "streaming_pull_parser_sha256": "818a551c68f0458a356123479b5fa0abe3e9395c9864ed0ef8a08bfdccb5c5bc",
+    "benchmark_sha256": "5a804422151a9827cf9e05f4ddad3ff2a4a75d45866e19db385adc335502ee03"
+  },
+  "binaries": {
+    "baseline_sha256": "b18292e2629f56244ea8102c876636b4261dd99e051b23d9c0771095d6e61a0f",
+    "prototype_sha256": "94a69920f893abba10d13c3bba30208e8733e3731d5507d51c22072244017c7b",
+    "preserved": false
+  },
+  "directional_screen": {
+    "root": "rejected-directional",
+    "pairs": 5,
+    "files": 120,
+    "profiles": 12,
+    "matrix_geometric_mean_ratio": 1.0644,
+    "matrix_gate": 1.10,
+    "per_profile_median_gate": 0.98,
+    "matrix_gate_passed": false,
+    "per_profile_gate_passed": false,
+    "settings": {
+      "records": 50000,
+      "buffer_size": 32768,
+      "chunk_size": 4096,
+      "warmup_seconds": 0.5,
+      "calculation_seconds": 1.0,
+      "allocation_iterations": 3,
+      "cpu": 4,
+      "gc_nprocs": 1,
+      "gc_markers": 1
+    }
+  },
+  "identity_disclosure": "The rejected candidate was an uncommitted prototype. Its receipts use ffffffffffffffffffffffffffffffffffffffff as an explicit non-commit marker. The exact runtime patch and binary hash identify it; these receipts are not admissible for a positive performance claim.",
+  "invalid_initial_screen": {
+    "root": "invalid-initial",
+    "files": 24,
+    "reason": "The cache environment used true/false instead of the benchmark's required 1/0 values, so both nominal cache profiles ran with caching disabled. It also used shortened exploratory timings and did not alternate process order."
+  },
+  "analysis": "analysis.json",
+  "analysis_source": "analyze.mjs",
+  "checksums": "SHA256SUMS"
+}

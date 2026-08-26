@@ -7,13 +7,15 @@ records those results has the same runtime source. Work starts by measuring
 the remaining costs, then proceeds through two independent production tracks:
 residual typed/key allocation and direct streaming `JSON::Any` construction.
 
-Execution status: Stages 0 and 1 are complete. The
+Execution status: Stages 0 through 2 are complete. The
 [baseline and attribution decisions](post-0.2-performance-baseline.md) freeze
 the adapter floor, key-cache findings, and streaming target matrix used by the
 remaining stages. The [Stage 1 results](post-0.2-key-cache-results.md) record the
 cache-growth correction, validation, and caller guidance; the correction makes
 no performance claim because its unaffected-path controls missed the frozen
-screening gate.
+screening gate. The [Stage 2 design and result](post-0.2-streaming-tree-design.md)
+record the eventless-tree prototype and its rejection at the directional gate.
+Stage 3 closeout is in progress.
 
 The goal is not to remove every allocation. It is to remove parser overhead
 that is material in complete workloads while preserving FusedJSON's strict
