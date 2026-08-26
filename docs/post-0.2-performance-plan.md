@@ -7,6 +7,11 @@ records those results has the same runtime source. Work starts by measuring
 the remaining costs, then proceeds through two independent production tracks:
 residual typed/key allocation and direct streaming `JSON::Any` construction.
 
+Execution status: Stage 0 is complete. Its
+[baseline and attribution decisions](post-0.2-performance-baseline.md) freeze
+the adapter floor, key-cache findings, and streaming target matrix used by the
+remaining stages.
+
 The goal is not to remove every allocation. It is to remove parser overhead
 that is material in complete workloads while preserving FusedJSON's strict
 semantics, bounded-memory properties, and private implementation surface.

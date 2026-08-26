@@ -1,0 +1,441 @@
+{"receipt":"fused-json-typed-cursor-cost","version":4,"recorded_at":"2026-08-26T00:34:02Z","fused_json_version":"0.2.0","fused_json_commit":"8cd68bf8f20f5703166c96894739df91d4b79364","crystal_version":"1.21.0","crystal_build_commit":"57cf7da50","llvm_version":"20.1.8","target":"x86_64-unknown-linux-gnu","release_build":true,"transports":["String through PullParser","IO::Memory through StreamingPullParser"],"cache_keys_profiles":[false,true],"bounded_cache_policy":"exact decoded unique-key count","selected_cache_profiles":["uncached","cached"],"selected_shapes":["scalar","empty","integer","string","nested","price","partial-keys","unique-keys","equivalent-keys"],"partial_key_cardinality":16,"buffer_size":16384,"scalar_elements":20000,"scalar_source_bytes":180001,"scalar_source_sha256":"6aec42480e0df7132901bb11bf8ddbb3f5af9c27e8385351658de19db761e50b","record_elements":5000,"record_shapes":[{"name":"empty","source_bytes":15001,"source_sha256":"5365255e0548c722d6fc74a6b31a4069b147edf8392a4ec8297d022dfc38db29","unique_decoded_keys":0},{"name":"integer","source_bytes":73891,"source_sha256":"5d7c9b0445968cac64610a8a56985e13b8d1322c981648fd52a87e47c8cb6e91","unique_decoded_keys":1},{"name":"string","source_bytes":132501,"source_sha256":"7ff9f49e3fd802cde0a669c1849cccef979e602aa67db31be96bf4a2166b80ff","unique_decoded_keys":1},{"name":"nested","source_bytes":310570,"source_sha256":"377159de7c416c84997b588c4316375275dc1dca253da7a481f721fa24058492","unique_decoded_keys":4},{"name":"price","source_bytes":716601,"source_sha256":"f6e7564cdf5a235bcd3b5e92e196965f4e8814086480df0549660b6d4b424ad8","unique_decoded_keys":5},{"name":"partial-keys","source_bytes":149653,"source_sha256":"b7475d02b45a41db96ad2e48fa742ea00131e8488e630a82d15347c5b5098567","unique_decoded_keys":17},{"name":"unique-keys","source_bytes":161671,"source_sha256":"c84be1cb1517d09396b445ed87b0409032030c3e86980ef1efabc65e202efdab","unique_decoded_keys":5001},{"name":"equivalent-keys","source_bytes":146391,"source_sha256":"1c6c4667e0b17b0e6021749b55a2a7c9b71bc9e022e3dc61474ef8cf0d8f65b5","unique_decoded_keys":2}],"warmup_seconds":0.25,"calculation_seconds":0.75,"allocation_iterations":5,"reverse_order":true}
+
+scalar array / String: 20000 elements, 180001 source bytes
+  Time per element
+    read_array(T)         37.39 ns/element  (RSD  0.63%)
+    read(T) loop          42.86 ns/element  (RSD  6.48%)
+    native cursor         28.21 ns/element  (RSD  1.49%)
+  Managed allocation per element
+    native cursor          0.00 B/element
+    read(T) loop           0.00 B/element
+    read_array(T)          0.00 B/element
+    read(T) loop delta      +0.00 B/element vs native
+    read_array(T) delta      +0.00 B/element vs native
+
+scalar array / streaming IO::Memory: 20000 elements, 180001 source bytes
+  Time per element
+    read_array(T)         53.42 ns/element  (RSD  1.31%)
+    read(T) loop          53.52 ns/element  (RSD  1.21%)
+    native cursor         51.22 ns/element  (RSD  1.96%)
+  Managed allocation per element
+    native cursor          0.82 B/element
+    read(T) loop           0.93 B/element
+    read_array(T)          0.82 B/element
+    read(T) loop delta      +0.11 B/element vs native
+    read_array(T) delta      +0.00 B/element vs native
+
+empty records / String / uncached keys: 5000 elements, 15001 source bytes
+  Unique decoded keys: 0
+  Time per element
+    read_array(T)         61.58 ns/element  (RSD  0.82%)
+    read(T) loop          61.29 ns/element  (RSD  1.90%)
+    native cursor         15.95 ns/element  (RSD  1.12%)
+  Managed allocation per element
+    native cursor          0.00 B/element
+    read(T) loop         160.12 B/element
+    read_array(T)        160.10 B/element
+    read(T) loop delta    +160.12 B/element vs native
+    read_array(T) delta    +160.10 B/element vs native
+
+empty records / streaming IO::Memory / uncached keys: 5000 elements, 15001 source bytes
+  Unique decoded keys: 0
+  Time per element
+    read_array(T)         63.37 ns/element  (RSD  4.00%)
+    read(T) loop          63.30 ns/element  (RSD  3.11%)
+    native cursor         37.89 ns/element  (RSD  0.40%)
+  Managed allocation per element
+    native cursor          3.41 B/element
+    read(T) loop         147.64 B/element
+    read_array(T)        147.54 B/element
+    read(T) loop delta    +144.23 B/element vs native
+    read_array(T) delta    +144.13 B/element vs native
+
+empty records / String / cached keys: 5000 elements, 15001 source bytes
+  Unique decoded keys: 0
+  Time per element
+    read_array(T)         53.38 ns/element  (RSD  0.71%)
+    read(T) loop          57.15 ns/element  (RSD 13.54%)
+    native cursor         13.70 ns/element  (RSD  0.19%)
+  Managed allocation per element
+    native cursor          0.00 B/element
+    read(T) loop         160.20 B/element
+    read_array(T)        160.13 B/element
+    read(T) loop delta    +160.20 B/element vs native
+    read_array(T) delta    +160.13 B/element vs native
+
+empty records / streaming IO::Memory / cached keys: 5000 elements, 15001 source bytes
+  Unique decoded keys: 0
+  Time per element
+    read_array(T)         57.18 ns/element  (RSD  0.83%)
+    read(T) loop          57.30 ns/element  (RSD  1.60%)
+    native cursor         34.45 ns/element  (RSD  1.26%)
+  Managed allocation per element
+    native cursor          3.41 B/element
+    read(T) loop         147.64 B/element
+    read_array(T)        147.33 B/element
+    read(T) loop delta    +144.24 B/element vs native
+    read_array(T) delta    +143.92 B/element vs native
+
+one-integer records / String / uncached keys: 5000 elements, 73891 source bytes
+  Unique decoded keys: 1
+  Time per element
+    read_array(T)        121.32 ns/element  (RSD  0.53%)
+    read(T) loop         120.97 ns/element  (RSD  0.88%)
+    native cursor         74.57 ns/element  (RSD  6.69%)
+  Managed allocation per element
+    native cursor         32.07 B/element
+    read(T) loop         192.13 B/element
+    read_array(T)        192.08 B/element
+    read(T) loop delta    +160.05 B/element vs native
+    read_array(T) delta    +160.01 B/element vs native
+
+one-integer records / streaming IO::Memory / uncached keys: 5000 elements, 73891 source bytes
+  Unique decoded keys: 1
+  Time per element
+    read_array(T)        144.10 ns/element  (RSD  0.45%)
+    read(T) loop         145.45 ns/element  (RSD  0.76%)
+    native cursor        109.64 ns/element  (RSD  5.82%)
+  Managed allocation per element
+    native cursor         35.68 B/element
+    read(T) loop         179.25 B/element
+    read_array(T)        179.48 B/element
+    read(T) loop delta    +143.57 B/element vs native
+    read_array(T) delta    +143.81 B/element vs native
+
+one-integer records / String / cached keys: 5000 elements, 73891 source bytes
+  Unique decoded keys: 1
+  Time per element
+    read_array(T)        118.30 ns/element  (RSD  0.66%)
+    read(T) loop         120.38 ns/element  (RSD  0.76%)
+    native cursor         69.39 ns/element  (RSD  0.71%)
+  Managed allocation per element
+    native cursor          0.10 B/element
+    read(T) loop         160.00 B/element
+    read_array(T)        160.23 B/element
+    read(T) loop delta    +159.90 B/element vs native
+    read_array(T) delta    +160.13 B/element vs native
+
+one-integer records / streaming IO::Memory / cached keys: 5000 elements, 73891 source bytes
+  Unique decoded keys: 1
+  Time per element
+    read_array(T)        123.00 ns/element  (RSD  1.44%)
+    read(T) loop         122.84 ns/element  (RSD  0.83%)
+    native cursor         94.88 ns/element  (RSD  0.31%)
+  Managed allocation per element
+    native cursor          3.55 B/element
+    read(T) loop         147.25 B/element
+    read_array(T)        147.83 B/element
+    read(T) loop delta    +143.70 B/element vs native
+    read_array(T) delta    +144.28 B/element vs native
+
+one-string records / String / uncached keys: 5000 elements, 132501 source bytes
+  Unique decoded keys: 1
+  Time per element
+    read_array(T)        146.29 ns/element  (RSD  1.39%)
+    read(T) loop         145.09 ns/element  (RSD  1.06%)
+    native cursor         91.52 ns/element  (RSD  0.36%)
+  Managed allocation per element
+    native cursor         64.11 B/element
+    read(T) loop         224.06 B/element
+    read_array(T)        223.96 B/element
+    read(T) loop delta    +159.95 B/element vs native
+    read_array(T) delta    +159.84 B/element vs native
+
+one-string records / streaming IO::Memory / uncached keys: 5000 elements, 132501 source bytes
+  Unique decoded keys: 1
+  Time per element
+    read_array(T)        130.42 ns/element  (RSD  0.80%)
+    read(T) loop         130.41 ns/element  (RSD  0.50%)
+    native cursor        102.30 ns/element  (RSD  1.18%)
+  Managed allocation per element
+    native cursor         67.51 B/element
+    read(T) loop         211.26 B/element
+    read_array(T)        211.76 B/element
+    read(T) loop delta    +143.76 B/element vs native
+    read_array(T) delta    +144.26 B/element vs native
+
+one-string records / String / cached keys: 5000 elements, 132501 source bytes
+  Unique decoded keys: 1
+  Time per element
+    read_array(T)        142.57 ns/element  (RSD  0.85%)
+    read(T) loop         141.10 ns/element  (RSD  0.89%)
+    native cursor         90.11 ns/element  (RSD  0.88%)
+  Managed allocation per element
+    native cursor         31.93 B/element
+    read(T) loop         192.12 B/element
+    read_array(T)        192.09 B/element
+    read(T) loop delta    +160.19 B/element vs native
+    read_array(T) delta    +160.15 B/element vs native
+
+one-string records / streaming IO::Memory / cached keys: 5000 elements, 132501 source bytes
+  Unique decoded keys: 1
+  Time per element
+    read_array(T)        128.15 ns/element  (RSD  0.28%)
+    read(T) loop         127.81 ns/element  (RSD  0.54%)
+    native cursor         97.57 ns/element  (RSD  0.57%)
+  Managed allocation per element
+    native cursor         35.76 B/element
+    read(T) loop         179.46 B/element
+    read_array(T)        179.59 B/element
+    read(T) loop delta    +143.70 B/element vs native
+    read_array(T) delta    +143.83 B/element vs native
+
+nested records / String / uncached keys: 5000 elements, 310570 source bytes
+  Unique decoded keys: 4
+  Time per element
+    read_array(T)        465.65 ns/element  (RSD  0.52%)
+    read(T) loop         460.47 ns/element  (RSD  0.29%)
+    native cursor        353.17 ns/element  (RSD  1.97%)
+  Managed allocation per element
+    native cursor        208.08 B/element
+    read(T) loop         368.13 B/element
+    read_array(T)        368.02 B/element
+    read(T) loop delta    +160.06 B/element vs native
+    read_array(T) delta    +159.94 B/element vs native
+
+nested records / streaming IO::Memory / uncached keys: 5000 elements, 310570 source bytes
+  Unique decoded keys: 4
+  Time per element
+    read_array(T)        517.67 ns/element  (RSD  1.19%)
+    read(T) loop         497.90 ns/element  (RSD  1.45%)
+    native cursor        474.63 ns/element  (RSD  1.82%)
+  Managed allocation per element
+    native cursor        211.30 B/element
+    read(T) loop         355.68 B/element
+    read_array(T)        355.29 B/element
+    read(T) loop delta    +144.38 B/element vs native
+    read_array(T) delta    +143.99 B/element vs native
+
+nested records / String / cached keys: 5000 elements, 310570 source bytes
+  Unique decoded keys: 4
+  Time per element
+    read_array(T)        456.04 ns/element  (RSD  0.60%)
+    read(T) loop         456.13 ns/element  (RSD  1.12%)
+    native cursor        334.98 ns/element  (RSD  0.63%)
+  Managed allocation per element
+    native cursor         96.16 B/element
+    read(T) loop         256.15 B/element
+    read_array(T)        256.29 B/element
+    read(T) loop delta    +159.99 B/element vs native
+    read_array(T) delta    +160.14 B/element vs native
+
+nested records / streaming IO::Memory / cached keys: 5000 elements, 310570 source bytes
+  Unique decoded keys: 4
+  Time per element
+    read_array(T)        494.19 ns/element  (RSD  1.49%)
+    read(T) loop         482.88 ns/element  (RSD  0.82%)
+    native cursor        456.34 ns/element  (RSD  0.55%)
+  Managed allocation per element
+    native cursor         99.56 B/element
+    read(T) loop         243.71 B/element
+    read_array(T)        243.18 B/element
+    read(T) loop delta    +144.15 B/element vs native
+    read_array(T) delta    +143.62 B/element vs native
+
+negotiated-price records / String / uncached keys: 5000 elements, 716601 source bytes
+  Unique decoded keys: 5
+  Time per element
+    read_array(T)        633.99 ns/element  (RSD  1.79%)
+    read(T) loop         629.63 ns/element  (RSD  0.64%)
+    native cursor        489.65 ns/element  (RSD  0.55%)
+  Managed allocation per element
+    native cursor        336.25 B/element
+    read(T) loop         495.88 B/element
+    read_array(T)        496.14 B/element
+    read(T) loop delta    +159.63 B/element vs native
+    read_array(T) delta    +159.89 B/element vs native
+
+negotiated-price records / streaming IO::Memory / uncached keys: 5000 elements, 716601 source bytes
+  Unique decoded keys: 5
+  Time per element
+    read_array(T)        540.71 ns/element  (RSD  0.60%)
+    read(T) loop         562.65 ns/element  (RSD  4.41%)
+    native cursor        579.74 ns/element  (RSD 20.82%)
+  Managed allocation per element
+    native cursor        339.38 B/element
+    read(T) loop         483.75 B/element
+    read_array(T)        483.30 B/element
+    read(T) loop delta    +144.37 B/element vs native
+    read_array(T) delta    +143.92 B/element vs native
+
+negotiated-price records / String / cached keys: 5000 elements, 716601 source bytes
+  Unique decoded keys: 5
+  Time per element
+    read_array(T)        645.23 ns/element  (RSD  2.76%)
+    read(T) loop         628.09 ns/element  (RSD  0.45%)
+    native cursor        517.28 ns/element  (RSD  4.39%)
+  Managed allocation per element
+    native cursor        176.00 B/element
+    read(T) loop         336.06 B/element
+    read_array(T)        336.26 B/element
+    read(T) loop delta    +160.06 B/element vs native
+    read_array(T) delta    +160.26 B/element vs native
+
+negotiated-price records / streaming IO::Memory / cached keys: 5000 elements, 716601 source bytes
+  Unique decoded keys: 5
+  Time per element
+    read_array(T)        537.43 ns/element  (RSD  2.51%)
+    read(T) loop         523.97 ns/element  (RSD  1.08%)
+    native cursor        476.34 ns/element  (RSD  0.84%)
+  Managed allocation per element
+    native cursor        179.56 B/element
+    read(T) loop         323.56 B/element
+    read_array(T)        323.73 B/element
+    read(T) loop delta    +143.99 B/element vs native
+    read_array(T) delta    +144.17 B/element vs native
+
+partially repeated keys / String / uncached keys: 5000 elements, 149653 source bytes
+  Unique decoded keys: 17
+  Time per element
+    read_array(T)        193.28 ns/element  (RSD  2.05%)
+    read(T) loop         200.62 ns/element  (RSD 14.04%)
+    native cursor        120.29 ns/element  (RSD  7.35%)
+  Managed allocation per element
+    native cursor         64.02 B/element
+    read(T) loop         223.88 B/element
+    read_array(T)        224.09 B/element
+    read(T) loop delta    +159.86 B/element vs native
+    read_array(T) delta    +160.07 B/element vs native
+
+partially repeated keys / streaming IO::Memory / uncached keys: 5000 elements, 149653 source bytes
+  Unique decoded keys: 17
+  Time per element
+    read_array(T)        198.42 ns/element  (RSD  4.30%)
+    read(T) loop         193.87 ns/element  (RSD  2.09%)
+    native cursor        165.16 ns/element  (RSD  0.33%)
+  Managed allocation per element
+    native cursor         67.76 B/element
+    read(T) loop         211.50 B/element
+    read_array(T)        211.41 B/element
+    read(T) loop delta    +143.74 B/element vs native
+    read_array(T) delta    +143.65 B/element vs native
+
+partially repeated keys / String / cached keys: 5000 elements, 149653 source bytes
+  Unique decoded keys: 17
+  Time per element
+    read_array(T)        187.96 ns/element  (RSD  1.43%)
+    read(T) loop         188.18 ns/element  (RSD  0.78%)
+    native cursor        115.04 ns/element  (RSD  0.39%)
+  Managed allocation per element
+    native cursor          0.00 B/element
+    read(T) loop         160.51 B/element
+    read_array(T)        160.14 B/element
+    read(T) loop delta    +160.51 B/element vs native
+    read_array(T) delta    +160.14 B/element vs native
+
+partially repeated keys / streaming IO::Memory / cached keys: 5000 elements, 149653 source bytes
+  Unique decoded keys: 17
+  Time per element
+    read_array(T)        191.98 ns/element  (RSD  1.47%)
+    read(T) loop         191.38 ns/element  (RSD  0.42%)
+    native cursor        159.39 ns/element  (RSD  0.58%)
+  Managed allocation per element
+    native cursor          3.93 B/element
+    read(T) loop         148.10 B/element
+    read_array(T)        147.71 B/element
+    read(T) loop delta    +144.17 B/element vs native
+    read_array(T) delta    +143.78 B/element vs native
+
+unique high-cardinality keys / String / uncached keys: 5000 elements, 161671 source bytes
+  Unique decoded keys: 5001
+  Time per element
+    read_array(T)        192.20 ns/element  (RSD  0.26%)
+    read(T) loop         194.45 ns/element  (RSD  0.83%)
+    native cursor        118.65 ns/element  (RSD  1.69%)
+  Managed allocation per element
+    native cursor         64.07 B/element
+    read(T) loop         224.03 B/element
+    read_array(T)        223.99 B/element
+    read(T) loop delta    +159.96 B/element vs native
+    read_array(T) delta    +159.92 B/element vs native
+
+unique high-cardinality keys / streaming IO::Memory / uncached keys: 5000 elements, 161671 source bytes
+  Unique decoded keys: 5001
+  Time per element
+    read_array(T)        193.86 ns/element  (RSD  0.86%)
+    read(T) loop         192.85 ns/element  (RSD  1.27%)
+    native cursor        163.37 ns/element  (RSD  0.23%)
+  Managed allocation per element
+    native cursor         67.53 B/element
+    read(T) loop         211.35 B/element
+    read_array(T)        211.62 B/element
+    read(T) loop delta    +143.82 B/element vs native
+    read_array(T) delta    +144.09 B/element vs native
+
+unique high-cardinality keys / String / cached keys: 5000 elements, 161671 source bytes
+  Unique decoded keys: 5001
+  Time per element
+    read_array(T)        249.84 ns/element  (RSD  0.74%)
+    read(T) loop         249.80 ns/element  (RSD  0.78%)
+    native cursor        156.44 ns/element  (RSD  0.95%)
+  Managed allocation per element
+    native cursor         84.60 B/element
+    read(T) loop         244.59 B/element
+    read_array(T)        244.64 B/element
+    read(T) loop delta    +160.00 B/element vs native
+    read_array(T) delta    +160.04 B/element vs native
+
+unique high-cardinality keys / streaming IO::Memory / cached keys: 5000 elements, 161671 source bytes
+  Unique decoded keys: 5001
+  Time per element
+    read_array(T)        239.70 ns/element  (RSD  1.10%)
+    read(T) loop         236.92 ns/element  (RSD  1.03%)
+    native cursor        199.06 ns/element  (RSD  1.18%)
+  Managed allocation per element
+    native cursor         88.57 B/element
+    read(T) loop         231.69 B/element
+    read_array(T)        231.99 B/element
+    read(T) loop delta    +143.11 B/element vs native
+    read_array(T) delta    +143.42 B/element vs native
+
+decoded-equivalent keys / String / uncached keys: 5000 elements, 146391 source bytes
+  Unique decoded keys: 2
+  Time per element
+    read_array(T)        236.43 ns/element  (RSD  1.87%)
+    read(T) loop         236.41 ns/element  (RSD  0.63%)
+    native cursor        160.78 ns/element  (RSD  1.76%)
+  Managed allocation per element
+    native cursor        160.31 B/element
+    read(T) loop         320.16 B/element
+    read_array(T)        319.84 B/element
+    read(T) loop delta    +159.85 B/element vs native
+    read_array(T) delta    +159.53 B/element vs native
+
+decoded-equivalent keys / streaming IO::Memory / uncached keys: 5000 elements, 146391 source bytes
+  Unique decoded keys: 2
+  Time per element
+    read_array(T)        239.64 ns/element  (RSD  1.09%)
+    read(T) loop         240.61 ns/element  (RSD  1.94%)
+    native cursor        205.34 ns/element  (RSD  1.33%)
+  Managed allocation per element
+    native cursor        163.30 B/element
+    read(T) loop         307.51 B/element
+    read_array(T)        307.70 B/element
+    read(T) loop delta    +144.22 B/element vs native
+    read_array(T) delta    +144.40 B/element vs native
+
+decoded-equivalent keys / String / cached keys: 5000 elements, 146391 source bytes
+  Unique decoded keys: 2
+  Time per element
+    read_array(T)        240.42 ns/element  (RSD  1.61%)
+    read(T) loop         241.01 ns/element  (RSD  0.51%)
+    native cursor        168.54 ns/element  (RSD  1.78%)
+  Managed allocation per element
+    native cursor        136.08 B/element
+    read(T) loop         296.09 B/element
+    read_array(T)        296.13 B/element
+    read(T) loop delta    +160.01 B/element vs native
+    read_array(T) delta    +160.06 B/element vs native
+
+decoded-equivalent keys / streaming IO::Memory / cached keys: 5000 elements, 146391 source bytes
+  Unique decoded keys: 2
+  Time per element
+    read_array(T)        242.80 ns/element  (RSD  2.32%)
+    read(T) loop         241.36 ns/element  (RSD  1.10%)
+    native cursor        212.88 ns/element  (RSD  1.11%)
+  Managed allocation per element
+    native cursor        139.51 B/element
+    read(T) loop         283.29 B/element
+    read_array(T)        283.68 B/element
+    read(T) loop delta    +143.78 B/element vs native
+    read_array(T) delta    +144.17 B/element vs native

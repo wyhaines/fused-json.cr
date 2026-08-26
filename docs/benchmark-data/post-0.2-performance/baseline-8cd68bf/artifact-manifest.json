@@ -1,0 +1,59 @@
+{
+  "schema": "fused-json-post-0.2-baseline-artifact-manifest-v1",
+  "status": "accepted-with-invalid-bounded-attempt",
+  "baseline_commit": "8cd68bf8f20f5703166c96894739df91d4b79364",
+  "runtime_source_baseline": "4ca865c4e8ad8716041df4069181a5523493de08",
+  "protocol": "docs/post-0.2-performance-protocol.md",
+  "results": "docs/post-0.2-performance-baseline.md",
+  "recorded_at_utc": "2026-08-26",
+  "compiler": {
+    "crystal_version": "1.21.0",
+    "crystal_build_commit": "57cf7da50",
+    "llvm_version": "20.1.8",
+    "target": "x86_64-unknown-linux-gnu"
+  },
+  "host": {
+    "cpu": "AMD Ryzen 9 7940HS",
+    "benchmark_cpu": 4,
+    "benchmark_sibling_cpu": 5,
+    "gc_nprocs": 1,
+    "gc_markers": 1
+  },
+  "sources": {
+    "bench/typed_cursor_cost.cr": "8f98b758896be710f8a73a3cb27a3bcd36607f4f95c803cbae7fe28eb7481ab5",
+    "bench/streaming_tree_cost.cr": "5a804422151a9827cf9e05f4ddad3ff2a4a75d45866e19db385adc335502ee03"
+  },
+  "binaries": {
+    "typed_cursor_cost": "c47b099d784e7424b522835d6a9802f39242b3331d0e54ed3010cb91a1520412",
+    "streaming_tree_cost": "b18292e2629f56244ea8102c876636b4261dd99e051b23d9c0771095d6e61a0f"
+  },
+  "accepted_evidence": {
+    "typed_forward": "typed/typed-accepted-forward.txt",
+    "typed_reverse": "typed/typed-accepted-reverse.txt",
+    "streaming_receipts": 39,
+    "streaming_samples_per_timed_profile": 3,
+    "streaming_boundary_preflights": 3
+  },
+  "invalid_attempts": [
+    {
+      "files": [
+        "typed/invalid-bounded-forward.txt",
+        "typed/invalid-bounded-reverse-partial.txt"
+      ],
+      "reason": "The paired bounded-cache diagnostic was invalidated when the reverse process exposed an unreachable StringPool entry after rehash. No result from either process contributes to the accepted attribution medians."
+    }
+  ],
+  "preservation": {
+    "included": [
+      "two complete accepted typed attribution logs",
+      "both files from the invalid bounded-cache attempt",
+      "36 timed streaming-tree receipts",
+      "three streaming refill-boundary preflight receipts"
+    ],
+    "omitted": [
+      "compiled benchmark binaries",
+      "generated JSON payloads, which are deterministically reproduced by the checksummed benchmark sources"
+    ],
+    "checksums": "SHA256SUMS"
+  }
+}
