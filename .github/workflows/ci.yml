@@ -11,8 +11,8 @@ permissions:
   contents: read
 
 jobs:
-  milestone-6-harnesses:
-    name: Milestone 6 harnesses
+  benchmark-tools:
+    name: Benchmark tool checks
     runs-on: ubuntu-latest
     timeout-minutes: 5
 
