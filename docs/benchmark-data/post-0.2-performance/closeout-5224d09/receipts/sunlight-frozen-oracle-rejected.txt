@@ -1,0 +1,3 @@
+scripts/sunlight_compat.rb:538:in 'FusedJSONSunlightCompat.receipt': runtime or provenance changed after the Oj receipt was frozen (RuntimeError)
+	from scripts/sunlight_compat.rb:784:in '<main>'
+exit_status=1

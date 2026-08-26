@@ -1,0 +1,12 @@
+I: Dependencies are satisfied
+Inspecting 57 files
+
+[32m.[39m[32m.[39m[32m.[39m[32m.[39m[32m.[39m[31mF[39m[32m.[39m[32m.[39m[32m.[39m[32m.[39m[32m.[39m[32m.[39m[32m.[39m[32m.[39m[32m.[39m[32m.[39m[32m.[39m[32m.[39m[32m.[39m[32m.[39m[32m.[39m[32m.[39m[32m.[39m[32m.[39m[32m.[39m[32m.[39m[32m.[39m[32m.[39m[32m.[39m[32m.[39m[32m.[39m[32m.[39m[32m.[39m[32m.[39m[32m.[39m[32m.[39m[32m.[39m[32m.[39m[32m.[39m[32m.[39m[32m.[39m[32m.[39m[32m.[39m[32m.[39m[32m.[39m[32m.[39m[32m.[39m[32m.[39m[32m.[39m[32m.[39m[32m.[39m[32m.[39m[32m.[39m[32m.[39m[32m.[39m[32m.[39m[32m.[39m
+
+[36mbench/streaming_tree_cost.cr:41:12[39m
+[34m[C] Naming/QueryBoolMethods: Consider using `getter?` for `closed_called`[39m
+> [97mgetter closed_called : Bool[39m
+         [33m^[39m[90m-----------[39m[33m^[39m
+
+Finished in 1.34 seconds
+[31m57 inspected, 1 failure[39m

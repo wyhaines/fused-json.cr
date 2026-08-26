@@ -1,0 +1,69 @@
+{
+  "schema": "fused-json-post-0.2-closeout-build-attestation-v1",
+  "validated_commit": "5224d095cd1d58fb5ae27a5a3433de21be9c6efa",
+  "validated_tree": "949be8aa3b3ef5dd2520a4b95170ce16d7b12329",
+  "tracked_dirty": false,
+  "recorded_at_utc": "2026-08-26",
+  "host": {
+    "cpu": "AMD Ryzen 9 7940HS",
+    "performance_cpu": 4,
+    "gc_nprocs": 1,
+    "gc_markers": 1
+  },
+  "compilers": {
+    "stable": {
+      "crystal_version": "1.21.0",
+      "crystal_build_commit": "57cf7da50",
+      "llvm_version": "20.1.8",
+      "target": "x86_64-unknown-linux-gnu"
+    },
+    "development": {
+      "crystal_version": "1.22.0-dev",
+      "crystal_build_commit": "6c6a5e988",
+      "llvm_version": "21.1.8",
+      "target": "x86_64-pc-linux-gnu"
+    }
+  },
+  "build_flags": [
+    "--release",
+    "--no-debug"
+  ],
+  "sources_sha256": {
+    "bench/typed_cursor_cost.cr": "8f98b758896be710f8a73a3cb27a3bcd36607f4f95c803cbae7fe28eb7481ab5",
+    "bench/streaming_tree_cost.cr": "487746f0fd1896e2cd8549caef40d0cddc0dad09209536baffc2958b53baeef6",
+    "bench/tic.cr": "a1b1dc187ea3a1f051a79deb6047dbe0f89a56a073d7df538d6eb54f66d0ec82",
+    "bench/sunlight_compat_scan.cr": "d6bdb6ba8413b90743834bc9701e2d4eb4e23fa29cc44d6707adf25dd9dc8d2c",
+    "src/fused_json/key_cache.cr": "5809f8ce64fa5e148ec278977ba664f80e9ad3ee6115fe9533e9e7a4a3f42346"
+  },
+  "binaries": {
+    "stable": {
+      "typed_cursor_cost": {
+        "bytes": 1623304,
+        "sha256": "01c039cc1cda02ea199ad52c8810adce26af39739ab2be96cd965d1c9978ff33"
+      },
+      "streaming_tree_cost": {
+        "bytes": 1346224,
+        "sha256": "a01c4e87ab7ae1f727bcc75424edb1de4ebc6d841b87655b674fc3e1b09e7612"
+      },
+      "tic": {
+        "bytes": 1586192,
+        "sha256": "24966286a9502365794b6710c7ccc6710877188dcdcdd39e9236f9d6c4367932"
+      },
+      "sunlight_compat_scan": {
+        "bytes": 1021064,
+        "sha256": "5d133524e55fec0855f4db5be014b25f5a42a4ab7430029d0eaff01c1140a06a"
+      }
+    },
+    "development": {
+      "typed_cursor_cost": {
+        "bytes": 1425136,
+        "sha256": "05f8a780e55141f28522f13f4ce7cb42f7989705ff2881348dda671910aee649"
+      },
+      "streaming_tree_cost": {
+        "bytes": 1147784,
+        "sha256": "a4f2d257a9f6a05ad1d72e5012529f4345525df079746f30502ad05ef2a64866"
+      }
+    }
+  },
+  "preserved_binaries": false
+}

@@ -258,13 +258,16 @@ Current priorities are:
   reuse between records. `load` and `parse` will remain eager, strict,
   single-document operations.
 - An opt-in dynamic value type that can hold integers beyond `Int64`, exact decimals, or the original number spelling. The existing `JSON::Any` API will keep its Crystal-compatible numeric behavior. Explicit typed decoding already supports `BigInt`, `BigFloat`, and `BigDecimal` after loading `big/json`.
-- Further allocation reduction in dynamic tree construction and the remaining
-  typed value and key paths. Streaming tree construction will build values
-  directly from `IO` instead of routing them through pull events. Future work
-  must be rechecked on stable x86-64 and consult the report-only ARM64 and
-  macOS workflow results. The staged experiments, merge thresholds, and
-  regression gates are defined in the
-  [post-0.2 performance plan](docs/post-0.2-performance-plan.md).
+- Treat fresh typed-adapter allocation as the current compatibility floor, and
+  use key caching only for known repeated schemas. The measured cache tradeoffs
+  and exact-capacity guidance are in the
+  [post-0.2 results](docs/post-0.2-performance-results.md).
+- Focus future streaming performance experiments on shared refill, token
+  scanning, and escaped-string materialization. A direct eventless `IO` tree
+  builder passed semantic checks but failed the frozen mixed-workload gate, so
+  the pull-backed implementation remains preferable without new evidence.
+  Future work must be rechecked on stable x86-64 and consult the report-only
+  ARM64 and macOS workflow results.
 - Expanded fuzz testing and broader platform coverage, beginning with ARM64 and macOS. The word scanner will be tested on real 32-bit and big-endian hardware when practical CI runners are available. The compiler-private float hook will either be replaced or moved behind a stable upstream API, while the tested public fallback remains available.
 
 Application feedback will shape the typed and pull interfaces before 1.0. The 1.0 release will define stable contracts for limits, numbers, errors, and compiler compatibility.

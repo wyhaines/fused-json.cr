@@ -1,0 +1,91 @@
+{
+  "schema": "fused-json-post-0.2-closeout-artifact-manifest-v1",
+  "status": "complete-with-no-new-performance-candidate",
+  "runtime_baseline": "4ca865c4e8ad8716041df4069181a5523493de08",
+  "validated_commit": "5224d095cd1d58fb5ae27a5a3433de21be9c6efa",
+  "protocol": "docs/post-0.2-performance-protocol.md",
+  "plan": "docs/post-0.2-performance-plan.md",
+  "results": "docs/post-0.2-performance-results.md",
+  "recorded_at_utc": "2026-08-26",
+  "stages": {
+    "stage_0": {
+      "status": "complete",
+      "result": "docs/post-0.2-performance-baseline.md",
+      "evidence": "docs/benchmark-data/post-0.2-performance/baseline-8cd68bf/"
+    },
+    "stage_1": {
+      "status": "correctness-fix-retained-without-performance-claim",
+      "result": "docs/post-0.2-key-cache-results.md",
+      "evidence": "docs/benchmark-data/post-0.2-performance/key-cache-5a706fd/"
+    },
+    "stage_2": {
+      "status": "prototype-rejected-at-directional-gate",
+      "result": "docs/post-0.2-streaming-tree-design.md",
+      "evidence": "docs/benchmark-data/post-0.2-performance/direct-tree-prototype/"
+    },
+    "stage_3": {
+      "status": "complete",
+      "build_attestation": "build-attestation.json",
+      "validation": "validation.json",
+      "receipts": "receipts/"
+    }
+  },
+  "closeout_receipts": {
+    "files": 22,
+    "common_validation": [
+      "receipts/common-validation-initial-failed.txt",
+      "receipts/common-validation-final.txt"
+    ],
+    "compiler_validation": [
+      "receipts/stable-validation.txt",
+      "receipts/stable-specs.txt",
+      "receipts/dev-validation.txt",
+      "receipts/dev-specs.txt"
+    ],
+    "build_and_consumer_validation": [
+      "receipts/stable-benchmark-rebuild.txt",
+      "receipts/dev-benchmark-rebuild.txt",
+      "receipts/consumer-validation.txt"
+    ],
+    "large_streaming": {
+      "offset": "receipts/large-offset.txt",
+      "measurement_json_files": 3,
+      "gnu_time_files": 3
+    },
+    "sunlight": {
+      "self_test": "receipts/sunlight-self-test.txt",
+      "oj_oracle": "receipts/sunlight-oj-current.json",
+      "fused_result": "receipts/sunlight-fused-current.json",
+      "comparison": "receipts/sunlight-compare-current.json"
+    }
+  },
+  "invalid_attempts": [
+    {
+      "file": "receipts/common-validation-initial-failed.txt",
+      "reason": "Ameba found a Boolean getter naming defect in the attribution benchmark. Commit 5224d09 corrected it before final validation."
+    },
+    {
+      "file": "receipts/sunlight-self-test-invalid-ruby3.txt",
+      "reason": "The system command resolved Ruby 3.3.0 while the Sunlight Gemfile requires Ruby 4.0. The accepted run explicitly used Ruby 4.0.5."
+    },
+    {
+      "file": "receipts/sunlight-frozen-oracle-rejected.txt",
+      "reason": "The local Sunlight checkout changed after the older Oj oracle was frozen. The driver rejected reuse, and a fresh current-checkout oracle was generated."
+    }
+  ],
+  "preservation": {
+    "included": [
+      "final stable and development correctness receipts",
+      "release build identities",
+      "large-offset and three large no-retention receipts",
+      "current-corpus Sunlight oracle, FusedJSON receipt, and comparison",
+      "all material invalid closeout attempts"
+    ],
+    "omitted": [
+      "compiled binaries, identified by build-attestation.json",
+      "the generated 4 GiB fixture, identified by its manifest and document hashes",
+      "trivial empty logs and a discarded command containing an incorrect guessed identity"
+    ],
+    "checksums": "SHA256SUMS"
+  }
+}

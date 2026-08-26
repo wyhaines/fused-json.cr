@@ -1,0 +1,68 @@
+Ignoring bcrypt-3.1.20 because its extensions are not built. Try: gem pristine bcrypt --version 3.1.20
+Ignoring bcrypt_pbkdf-1.1.1 because its extensions are not built. Try: gem pristine bcrypt_pbkdf --version 1.1.1
+Ignoring bigdecimal-4.0.1 because its extensions are not built. Try: gem pristine bigdecimal --version 4.0.1
+Ignoring bigdecimal-3.2.3 because its extensions are not built. Try: gem pristine bigdecimal --version 3.2.3
+Ignoring bigdecimal-3.2.2 because its extensions are not built. Try: gem pristine bigdecimal --version 3.2.2
+Ignoring bigdecimal-3.2.1 because its extensions are not built. Try: gem pristine bigdecimal --version 3.2.1
+Ignoring bigdecimal-3.1.9 because its extensions are not built. Try: gem pristine bigdecimal --version 3.1.9
+Ignoring bigdecimal-3.1.8 because its extensions are not built. Try: gem pristine bigdecimal --version 3.1.8
+Ignoring bindex-0.8.1 because its extensions are not built. Try: gem pristine bindex --version 0.8.1
+Ignoring bootsnap-1.18.6 because its extensions are not built. Try: gem pristine bootsnap --version 1.18.6
+Ignoring bootsnap-1.18.4 because its extensions are not built. Try: gem pristine bootsnap --version 1.18.4
+Ignoring cgi-0.4.2 because its extensions are not built. Try: gem pristine cgi --version 0.4.2
+Ignoring date-3.5.1 because its extensions are not built. Try: gem pristine date --version 3.5.1
+Ignoring date-3.4.1 because its extensions are not built. Try: gem pristine date --version 3.4.1
+Ignoring debug-1.11.0 because its extensions are not built. Try: gem pristine debug --version 1.11.0
+Ignoring debug-1.10.0 because its extensions are not built. Try: gem pristine debug --version 1.10.0
+Ignoring ed25519-1.4.0 because its extensions are not built. Try: gem pristine ed25519 --version 1.4.0
+Ignoring ed25519-1.3.0 because its extensions are not built. Try: gem pristine ed25519 --version 1.3.0
+Ignoring erb-5.0.2 because its extensions are not built. Try: gem pristine erb --version 5.0.2
+Ignoring erb-5.0.1 because its extensions are not built. Try: gem pristine erb --version 5.0.1
+Ignoring executable-hooks-1.7.1 because its extensions are not built. Try: gem pristine executable-hooks --version 1.7.1
+Ignoring fiddle-1.1.8 because its extensions are not built. Try: gem pristine fiddle --version 1.1.8
+Ignoring gem-wrappers-1.4.0 because its extensions are not built. Try: gem pristine gem-wrappers --version 1.4.0
+Ignoring io-console-0.8.1 because its extensions are not built. Try: gem pristine io-console --version 0.8.1
+Ignoring io-console-0.8.0 because its extensions are not built. Try: gem pristine io-console --version 0.8.0
+Ignoring json-2.18.1 because its extensions are not built. Try: gem pristine json --version 2.18.1
+Ignoring json-2.13.2 because its extensions are not built. Try: gem pristine json --version 2.13.2
+Ignoring json-2.12.2 because its extensions are not built. Try: gem pristine json --version 2.12.2
+Ignoring json-2.12.0 because its extensions are not built. Try: gem pristine json --version 2.12.0
+Ignoring json-2.11.3 because its extensions are not built. Try: gem pristine json --version 2.11.3
+Ignoring msgpack-1.8.0 because its extensions are not built. Try: gem pristine msgpack --version 1.8.0
+Ignoring nio4r-2.7.5 because its extensions are not built. Try: gem pristine nio4r --version 2.7.5
+Ignoring nio4r-2.7.4 because its extensions are not built. Try: gem pristine nio4r --version 2.7.4
+Ignoring nkf-0.2.0 because its extensions are not built. Try: gem pristine nkf --version 0.2.0
+Ignoring pg-1.5.9 because its extensions are not built. Try: gem pristine pg --version 1.5.9
+Ignoring pg_query-6.1.0 because its extensions are not built. Try: gem pristine pg_query --version 6.1.0
+Ignoring prism-1.9.0 because its extensions are not built. Try: gem pristine prism --version 1.9.0
+Ignoring prism-1.4.0 because its extensions are not built. Try: gem pristine prism --version 1.4.0
+Ignoring psych-5.2.6 because its extensions are not built. Try: gem pristine psych --version 5.2.6
+Ignoring psych-5.2.4 because its extensions are not built. Try: gem pristine psych --version 5.2.4
+Ignoring psych-5.2.3 because its extensions are not built. Try: gem pristine psych --version 5.2.3
+Ignoring puma-7.2.0 because its extensions are not built. Try: gem pristine puma --version 7.2.0
+Ignoring puma-7.0.2 because its extensions are not built. Try: gem pristine puma --version 7.0.2
+Ignoring puma-6.6.1 because its extensions are not built. Try: gem pristine puma --version 6.6.1
+Ignoring puma-6.6.0 because its extensions are not built. Try: gem pristine puma --version 6.6.0
+Ignoring racc-1.8.1 because its extensions are not built. Try: gem pristine racc --version 1.8.1
+Ignoring rbs-3.9.4 because its extensions are not built. Try: gem pristine rbs --version 3.9.4
+Ignoring rbs-3.8.0 because its extensions are not built. Try: gem pristine rbs --version 3.8.0
+Ignoring rmagick-6.1.4 because its extensions are not built. Try: gem pristine rmagick --version 6.1.4
+Ignoring rmagick-6.1.1 because its extensions are not built. Try: gem pristine rmagick --version 6.1.1
+Ignoring stringio-3.1.7 because its extensions are not built. Try: gem pristine stringio --version 3.1.7
+Ignoring strscan-3.1.5 because its extensions are not built. Try: gem pristine strscan --version 3.1.5
+Ignoring syslog-0.3.0 because its extensions are not built. Try: gem pristine syslog --version 0.3.0
+Ignoring syslog-0.2.0 because its extensions are not built. Try: gem pristine syslog --version 0.2.0
+Ignoring websocket-driver-0.8.0 because its extensions are not built. Try: gem pristine websocket-driver --version 0.8.0
+Ignoring websocket-driver-0.7.7 because its extensions are not built. Try: gem pristine websocket-driver --version 0.7.7
+/usr/share/rvm/gems/ruby-3.4.5/gems/bundler-2.7.2/lib/bundler/definition.rb:491:in `validate_ruby!': Your Ruby version is 3.3.0, but your Gemfile specified ~> 4.0 (Bundler::RubyVersionMismatch)
+	from /usr/share/rvm/gems/ruby-3.4.5/gems/bundler-2.7.2/lib/bundler/definition.rb:466:in `validate_runtime!'
+	from /usr/share/rvm/gems/ruby-3.4.5/gems/bundler-2.7.2/lib/bundler.rb:160:in `setup'
+	from /usr/share/rvm/gems/ruby-3.4.5/gems/bundler-2.7.2/lib/bundler/setup.rb:32:in `block in <top (required)>'
+	from /usr/share/rvm/gems/ruby-3.4.5/gems/bundler-2.7.2/lib/bundler/ui/shell.rb:173:in `with_level'
+	from /usr/share/rvm/gems/ruby-3.4.5/gems/bundler-2.7.2/lib/bundler/ui/shell.rb:119:in `silence'
+	from /usr/share/rvm/gems/ruby-3.4.5/gems/bundler-2.7.2/lib/bundler/setup.rb:32:in `<top (required)>'
+	from <internal:/usr/share/rvm/rubies/ruby-3.3.0/lib/ruby/3.3.0/rubygems/core_ext/kernel_require.rb>:127:in `require'
+	from <internal:/usr/share/rvm/rubies/ruby-3.3.0/lib/ruby/3.3.0/rubygems/core_ext/kernel_require.rb>:127:in `require'
+	from /usr/share/rvm/rubies/ruby-3.3.0/lib/ruby/3.3.0/rubygems.rb:1375:in `<top (required)>'
+	from <internal:gem_prelude>:2:in `require'
+	from <internal:gem_prelude>:2:in `<internal:gem_prelude>'

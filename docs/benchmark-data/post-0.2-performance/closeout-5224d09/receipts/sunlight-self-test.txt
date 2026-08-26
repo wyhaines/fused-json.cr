@@ -1,0 +1,61 @@
+{
+  "ok": true,
+  "corpus": "/tmp/fused-json-m6-self-test20260825-4-gqrws6",
+  "corpus_sha256": "12906e6057b18be803a9fb13575daee71c23c94598dc41992a954e6d0ea1514d",
+  "cap_status": {
+    "310": "accepted",
+    "309": "item_too_large"
+  },
+  "files": [
+    {
+      "name": "a-in-network.json.gz",
+      "compressed_bytes": 321,
+      "compressed_sha256": "6ec6e645a6458978319b547a66bb9326d310640fdddc2570f5ae9d436c7d56c3",
+      "classification": "accepted_in_network",
+      "classification_evidence": "top-level:in_network",
+      "status": "accepted",
+      "counts": {
+        "references": 4,
+        "prices": 3
+      },
+      "digests": {
+        "reference_sha256": "b21f934fa9d8125982d8e1f3caa1eaa74cfe4c4b9dbffd79c15fb17568092ad4",
+        "price_sha256": "ea3a1b358909585bd02a5f15ac22c2932c36e5b0f6e113c1f567ae22e9f92b0a",
+        "semantic_sha256": "7b9d3c75e3c74914e87cf8aa1ef0719f1aa847593da783cc92d489de71fcbcb2"
+      },
+      "projection_path": "/tmp/fused-json-m6-self-test20260825-4-gqrws6/projections/a-in-network.json.gz.oj.jsonl"
+    },
+    {
+      "name": "b-allowed-amounts.json.gz",
+      "compressed_bytes": 41,
+      "compressed_sha256": "2a4639803b4c4199bd81c5652e317c28912139d8a187a2766db3607d7f09d7f5",
+      "classification": "unsupported_allowed_amount",
+      "classification_evidence": "top-level:out_of_network",
+      "status": "not_scanned"
+    },
+    {
+      "name": "c-opaque.json.gz",
+      "compressed_bytes": 41,
+      "compressed_sha256": "2a4639803b4c4199bd81c5652e317c28912139d8a187a2766db3607d7f09d7f5",
+      "classification": "unsupported_allowed_amount",
+      "classification_evidence": "top-level:out_of_network",
+      "status": "not_scanned"
+    },
+    {
+      "name": "wy-index-2026-08-01.json.gz",
+      "compressed_bytes": 46,
+      "compressed_sha256": "a2a3bb022d4c11d496842ca2d55b0ccde67cbe1da239252264568fc063c21fe2",
+      "classification": "excluded_index",
+      "classification_evidence": "top-level:reporting_structure",
+      "status": "not_scanned"
+    },
+    {
+      "name": "z-malformed.json.gz",
+      "compressed_bytes": 15,
+      "compressed_sha256": "029cb1f84827719ec2f38600a713f6b7c966c2ee6460f4c21555e4de38c4b68f",
+      "classification": "accepted_in_network",
+      "classification_evidence": "source-unparseable:deferred",
+      "status": "unparseable"
+    }
+  ]
+}

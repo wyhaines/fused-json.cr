@@ -1,0 +1,4 @@
+I: Resolving dependencies
+I: Installing fused_json (0.2.0 at /media/wyhaines/home/wyhaines/ghq/github.com/wyhaines/fused-json.cr)
+I: Writing shard.lock
+path consumer passed on stable and development compilers

@@ -1,0 +1,89 @@
+{
+  "schema": "fused-json-post-0.2-closeout-validation-v1",
+  "status": "passed-with-preserved-invalid-attempts",
+  "validated_commit": "5224d095cd1d58fb5ae27a5a3433de21be9c6efa",
+  "common": {
+    "shards_check": "passed",
+    "format_check": "passed",
+    "ameba": {
+      "files": 57,
+      "failures": 0
+    },
+    "ruby_syntax": "passed",
+    "git_diff_check": "passed"
+  },
+  "compiler_lanes": {
+    "stable_1_21_0": {
+      "release_metadata": "passed",
+      "documentation_examples": 14,
+      "api_docs": "passed-with-public-surface-check",
+      "large_offset_compile": "passed",
+      "specs": [
+        {"defines": [], "seed": 62058, "examples": 242, "failures": 0},
+        {"defines": ["fused_json_force_portable_float"], "seed": 1708, "examples": 243, "failures": 0},
+        {"defines": ["fused_json_force_scalar_string_scan"], "seed": 54869, "examples": 242, "failures": 0},
+        {"defines": ["fused_json_force_portable_float", "fused_json_force_scalar_string_scan"], "seed": 68867, "examples": 243, "failures": 0}
+      ]
+    },
+    "development_1_22_0_dev": {
+      "release_metadata": "passed",
+      "documentation_examples": 14,
+      "api_docs": "passed-with-public-surface-check",
+      "large_offset_compile": "passed",
+      "specs": [
+        {"defines": [], "seed": 12924, "examples": 242, "failures": 0},
+        {"defines": ["fused_json_force_portable_float"], "seed": 95941, "examples": 243, "failures": 0},
+        {"defines": ["fused_json_force_scalar_string_scan"], "seed": 91180, "examples": 242, "failures": 0},
+        {"defines": ["fused_json_force_portable_float", "fused_json_force_scalar_string_scan"], "seed": 37145, "examples": 243, "failures": 0}
+      ]
+    }
+  },
+  "benchmark_harnesses": {
+    "milestone_6_attestation": "self-audit-passed",
+    "tic_campaign": "self-audit-passed",
+    "tic_audit": "self-audit-passed",
+    "dynamic_gate": "self-audit-passed",
+    "direct_tree_analysis": "syntax-passed"
+  },
+  "path_dependency_consumer": {
+    "stable": "passed",
+    "development": "passed"
+  },
+  "large_offset": {
+    "status": "passed",
+    "offset": 4294967333,
+    "bytes_read": 4294967337,
+    "read_calls": 257
+  },
+  "large_no_retention": {
+    "status": "passed",
+    "fixture_manifest_sha256": "2583c0a2430107718c0251d9c0af186a8e61f69168adf6461656c759eec2bede",
+    "logical_document_bytes": 4362076160,
+    "processed_bytes_per_run": 4362076160,
+    "typed_values_per_run": 20527422,
+    "projection_checksum": "0xcfe6c16e87f462a5",
+    "managed_allocated_bytes_per_run": 10345861184,
+    "heap_after_parse_bytes_per_run": 1052672,
+    "frozen_peak_rss_ceiling_kib": 26120,
+    "runs": [
+      {"wall_seconds": 15.312904133, "peak_rss_kib": 9652},
+      {"wall_seconds": 14.719956905, "peak_rss_kib": 9628},
+      {"wall_seconds": 14.439764383, "peak_rss_kib": 9504}
+    ]
+  },
+  "sunlight_compatibility": {
+    "status": "passed",
+    "sunlight_commit": "1614be55506d41998167cb051c1d9603c692889a",
+    "ruby_version": "4.0.5",
+    "oj_version": "3.17.1",
+    "json_version": "2.18.0",
+    "corpus_files": 66,
+    "item_limit_bytes": 67108864,
+    "oj_corpus_sha256": "81267911499a62264cc39a425899f356c0f7f79f9d605f3263454080a020f8c2",
+    "fused_corpus_sha256": "81267911499a62264cc39a425899f356c0f7f79f9d605f3263454080a020f8c2"
+  },
+  "formal_performance_campaigns": {
+    "stage_1": "not-run-after-unaffected-control-gate-failure",
+    "stage_2": "not-run-after-directional-gate-failure"
+  }
+}

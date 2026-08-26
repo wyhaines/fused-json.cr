@@ -7,15 +7,16 @@ records those results has the same runtime source. Work starts by measuring
 the remaining costs, then proceeds through two independent production tracks:
 residual typed/key allocation and direct streaming `JSON::Any` construction.
 
-Execution status: Stages 0 through 2 are complete. The
+Execution status: Stages 0 through 3 are complete. The
 [baseline and attribution decisions](post-0.2-performance-baseline.md) freeze
-the adapter floor, key-cache findings, and streaming target matrix used by the
-remaining stages. The [Stage 1 results](post-0.2-key-cache-results.md) record the
+the adapter floor, key-cache findings, and streaming target matrix. The
+[Stage 1 results](post-0.2-key-cache-results.md) record the
 cache-growth correction, validation, and caller guidance; the correction makes
 no performance claim because its unaffected-path controls missed the frozen
 screening gate. The [Stage 2 design and result](post-0.2-streaming-tree-design.md)
 record the eventless-tree prototype and its rejection at the directional gate.
-Stage 3 closeout is in progress.
+The [final results](post-0.2-performance-results.md) record the Stage 3
+validation, negative-result decisions, and evidence archive.
 
 The goal is not to remove every allocation. It is to remove parser overhead
 that is material in complete workloads while preserving FusedJSON's strict
@@ -275,6 +276,13 @@ gates. Otherwise keep the present implementation and record why the
 architectural complexity was not justified.
 
 ## Stage 3: Formal validation and closeout
+
+Status: complete. No performance candidate reached formal measurement: the
+Stage 1 correctness fix missed an unaffected-path screening gate and the Stage
+2 prototype failed its directional gate. The closeout therefore preserves
+those screening results and runs correctness, portability, large-streaming,
+and compatibility validation without manufacturing a candidate-versus-
+baseline claim. See the [final results](post-0.2-performance-results.md).
 
 Run formal validation only after directional screening selects the final
 candidate. Use a fresh worktree for the runtime baseline and separately built

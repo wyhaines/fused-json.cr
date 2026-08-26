@@ -1,0 +1,8 @@
+Crystal 1.22.0-dev [6c6a5e988] (2026-08-22)
+
+LLVM: 21.1.8
+Default target: x86_64-pc-linux-gnu
+Release version 0.2.0 is synchronized
+Compiled 14 documentation examples
+Crystal built without LibXML2 support, HTML sanitization will be skipped
+development validation passed
