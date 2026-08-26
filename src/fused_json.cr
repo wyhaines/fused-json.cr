@@ -13,7 +13,7 @@ require "./fused_json/json_pull_adapter"
 
 # A fast, strict JSON parser for Crystal.
 module FusedJSON
-  VERSION = "0.2.0"
+  VERSION = "0.3.0"
 
   # Parses *source* into Crystal's standard `JSON::Any` representation.
   def self.load(source : String, *, max_nesting : Int = 512,
