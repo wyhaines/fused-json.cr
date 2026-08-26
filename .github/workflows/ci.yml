@@ -156,6 +156,7 @@ jobs:
           crystal build --release --no-debug bench/tic.cr -o /tmp/fused-json-tic-bench
           crystal build --release --no-debug bench/sunlight_compat_scan.cr -o /tmp/fused-json-sunlight-compat-scan
           crystal build --release --no-debug bench/typed_cursor_cost.cr -o /tmp/fused-json-typed-cursor-cost
+          crystal build --release --no-debug bench/streaming_tree_cost.cr -o /tmp/fused-json-streaming-tree-cost
           crystal build --release --no-debug -Dfused_json_limits_api bench/limits_overhead.cr -o /tmp/fused-json-limits-overhead
           crystal build --release --no-debug -Dfused_json_force_scalar_string_scan bench/parse.cr -o /tmp/fused-json-scalar-bench
 

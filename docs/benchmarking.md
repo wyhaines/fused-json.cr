@@ -14,6 +14,8 @@ $ crystal build --release --no-debug bench/pull.cr -o bin/pull-bench
 $ crystal build --release --no-debug bench/typed.cr -o bin/typed-bench
 $ crystal build --release --no-debug bench/stream.cr -o bin/stream-bench
 $ crystal build --release --no-debug bench/typed_cursor_cost.cr -o bin/typed-cursor-cost
+$ crystal build --release --no-debug bench/streaming_tree_cost.cr \
+    -o bin/streaming-tree-cost
 $ crystal build --release --no-debug bench/limits_overhead.cr \
     -o bin/limits-overhead-default
 $ crystal build --release --no-debug -Dfused_json_limits_api \
@@ -33,13 +35,15 @@ intentionally have no internal warmup and rely on a separately warmed page
 cache.
 
 `typed-cursor-cost` compares native structural reads, repeated `read(T)`, and
-`read_array(T)` for scalar and representative record arrays. It measures both
-an owned `String` reader and `IO::Memory` through the streaming reader; record
-profiles run with key caching disabled, enabled, and enabled with an exact
-`max_cached_keys` bound. It verifies equal counts and checksums, then reports
-time and managed bytes per element. The scalar profile exposes scalar fast-path
-overhead; the record profiles expose the remaining fresh adapter-object cost
-and its interaction with key caching:
+`read_array(T)` for scalar arrays and a record ladder covering empty, integer,
+string, nested, negotiated-price, partially repeated key, unique key, and
+decoded-equivalent key shapes. It measures both an owned `String` reader and
+`IO::Memory` through the streaming reader. Record profiles run with key caching
+disabled, enabled, and enabled with an exact `max_cached_keys` bound. It
+verifies equal counts and checksums, checks failing cache-capacity boundaries,
+then reports time and managed bytes per element. The scalar profile exposes
+scalar fast-path overhead; the record ladder separates the fresh adapter-object
+cost from requested values, nesting, transport, and key caching:
 
 ```console
 $ FUSED_JSON_BENCH_COMMIT=$(git rev-parse HEAD) \
@@ -48,12 +52,39 @@ $ FUSED_JSON_BENCH_COMMIT=$(git rev-parse HEAD) \
 
 Control its fixture sizes with `FUSED_JSON_CURSOR_SCALARS` and
 `FUSED_JSON_CURSOR_RECORDS`, its streaming parser buffer with
-`FUSED_JSON_CURSOR_BUFFER`, and sampling with the standard
-`FUSED_JSON_BENCH_*` variables. Each transport and cache policy is reported as
-a separate shape so adapter allocation can be distinguished from input-buffer
-and key-allocation costs. This is an adapter-cost diagnostic, not the
-large-document release gate; use the end-to-end TiC modes for Crystal
-comparisons.
+`FUSED_JSON_CURSOR_BUFFER`, partial key cardinality with
+`FUSED_JSON_CURSOR_PARTIAL_KEYS`, and sampling with the standard
+`FUSED_JSON_BENCH_*` variables. `FUSED_JSON_CURSOR_SHAPES` accepts `all` or a
+comma-separated subset of the shape names recorded in the receipt. Each
+transport and cache policy is reported separately. This is an attribution
+diagnostic, not the large-document release gate; use the end-to-end TiC modes
+for Crystal comparisons.
+
+`streaming-tree-cost` measures one operation per process so baseline and
+candidate binaries can be paired without sharing GC state. It supports direct
+String parsing, ordinary and chunked `IO::Memory`, public pull-to-tree
+construction, and file-backed IO. Generated scalar, object, nested, plain
+string, and escaped string shapes have deterministic source and result hashes.
+Every process performs semantic preflight and reports a JSON receipt after the
+human-readable IPS line:
+
+```console
+$ GC_NPROCS=1 GC_MARKERS=1 \
+    FUSED_JSON_BENCH_COMMIT=$(git rev-parse HEAD) \
+    FUSED_JSON_TREE_MODE=io-memory \
+    FUSED_JSON_TREE_SHAPE=small-objects \
+    taskset -c 4 bin/streaming-tree-cost
+```
+
+Select the operation and fixture with `FUSED_JSON_TREE_MODE` and
+`FUSED_JSON_TREE_SHAPE`. Control generated item count, parser buffer, and
+short-read size with `FUSED_JSON_TREE_RECORDS`, `FUSED_JSON_TREE_BUFFER`, and
+`FUSED_JSON_TREE_CHUNK`. Set `FUSED_JSON_TREE_CACHE_KEYS=1` for the per-parse
+key-cache path. `FUSED_JSON_TREE_BOUNDARY_PREFLIGHT=1` additionally checks a
+small equivalent fixture through one-byte, irregular, and buffer-adjacent read
+patterns. File mode accepts one path argument. Pairing scripts may bind
+`FUSED_JSON_BENCH_PAIR_ID` and `FUSED_JSON_BENCH_ORDER_POSITION` into the
+receipt.
 
 `limits-overhead` measures the cost of carrying a disabled limits policy. Both
 configurations avoid allocating counter and duplicate-key state. The tool
