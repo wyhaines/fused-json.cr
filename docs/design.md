@@ -87,8 +87,11 @@ rejection off, an untyped pull `skip` does not materialize or cache keys inside
 the skipped value. Duplicate rejection must decode skipped keys; if caching is
 also on, those keys enter the pool. The cache must never be global: unbounded
 process-wide interning would turn untrusted keys into retained memory. Callers
-should opt in for repeated-schema documents; no repetition heuristic scans the
-input or changes policy during a parse.
+should opt in for repeated-schema documents. Measured typed workloads with
+repeated schemas reduced managed allocation by 28-33%, while unique-key input
+increased allocation by 9-10% and time by 22-29%; see the
+[key-cache results](post-0.2-key-cache-results.md). No repetition heuristic scans
+the input or changes policy during a parse.
 
 The experimental typed entry point is:
 

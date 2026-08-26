@@ -1,0 +1,42 @@
+{
+  "schema": "fused-json-post-0.2-key-cache-artifact-manifest-v1",
+  "status": "correctness-accepted-no-performance-claim",
+  "candidate_commit": "5a706fd339bc58a0c29b67084dc5abfd23768244",
+  "baseline_commit": "8cd68bf8f20f5703166c96894739df91d4b79364",
+  "protocol": "docs/post-0.2-performance-protocol.md",
+  "results": "docs/post-0.2-key-cache-results.md",
+  "recorded_at_utc": "2026-08-26",
+  "compiler": {
+    "crystal_version": "1.21.0",
+    "crystal_build_commit": "57cf7da50",
+    "llvm_version": "20.1.8",
+    "target": "x86_64-unknown-linux-gnu"
+  },
+  "benchmark_source_sha256": "8f98b758896be710f8a73a3cb27a3bcd36607f4f95c803cbae7fe28eb7481ab5",
+  "binaries": {
+    "baseline": "c47b099d784e7424b522835d6a9802f39242b3331d0e54ed3010cb91a1520412",
+    "candidate": "01c039cc1cda02ea199ad52c8810adce26af39739ab2be96cd965d1c9978ff33"
+  },
+  "accepted_evidence": {
+    "directional_pairs": 5,
+    "paired_files": 10,
+    "fresh_bounded_candidate_processes": 10,
+    "performance_disposition": "No claim: String native controls missed the frozen unaffected-path gate."
+  },
+  "invalid_attempts": [
+    {
+      "files": 5,
+      "root": "invalid",
+      "reason": "The zsh loop treated a two-side scalar as one word and ran only candidate children, leaving no baseline pairs."
+    }
+  ],
+  "preservation": {
+    "accepted_root": "accepted",
+    "invalid_root": "invalid",
+    "checksums": "SHA256SUMS",
+    "omitted": [
+      "compiled binaries",
+      "deterministically generated fixture payloads"
+    ]
+  }
+}

@@ -69,8 +69,11 @@ off, an untyped pull `skip` leaves keys inside the skipped value
 unmaterialized, so they do not consume `max_cached_keys`. Duplicate rejection
 must decode those keys; when key caching is also on, they enter both the
 per-object duplicate set and the parser-wide pool. The pool retains its entries
-for the parser's lifetime, so measure both throughput and allocation before
-enabling it on a workload.
+for the parser's lifetime. Measurements found that caching repeated schemas
+reduced typed managed allocation by 28-33%, while caching unique keys increased
+allocation by 9-10% and time by 22-29%. Leave it off for unknown or
+high-cardinality input, and set `max_cached_keys` for untrusted input. See the
+[key-cache results](docs/post-0.2-key-cache-results.md) for the workload details.
 
 ### Typed decoding
 

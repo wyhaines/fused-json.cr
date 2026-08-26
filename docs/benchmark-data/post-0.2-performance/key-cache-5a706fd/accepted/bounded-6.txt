@@ -1,0 +1,79 @@
+{"receipt":"fused-json-typed-cursor-cost","version":4,"recorded_at":"2026-08-26T00:53:09Z","fused_json_version":"0.2.0","fused_json_commit":"5a706fd339bc58a0c29b67084dc5abfd23768244","crystal_version":"1.21.0","crystal_build_commit":"57cf7da50","llvm_version":"20.1.8","target":"x86_64-unknown-linux-gnu","release_build":true,"transports":["String through PullParser","IO::Memory through StreamingPullParser"],"cache_keys_profiles":[false,true],"bounded_cache_policy":"exact decoded unique-key count","selected_cache_profiles":["bounded"],"selected_shapes":["partial-keys","unique-keys","equivalent-keys"],"partial_key_cardinality":16,"buffer_size":16384,"scalar_elements":10000,"scalar_source_bytes":90001,"scalar_source_sha256":"201dc189c2ebabe60ab252b70b8fee4ac774e333923ef1d42b345e349406e3ef","record_elements":5000,"record_shapes":[{"name":"empty","source_bytes":15001,"source_sha256":"5365255e0548c722d6fc74a6b31a4069b147edf8392a4ec8297d022dfc38db29","unique_decoded_keys":0},{"name":"integer","source_bytes":73891,"source_sha256":"5d7c9b0445968cac64610a8a56985e13b8d1322c981648fd52a87e47c8cb6e91","unique_decoded_keys":1},{"name":"string","source_bytes":132501,"source_sha256":"7ff9f49e3fd802cde0a669c1849cccef979e602aa67db31be96bf4a2166b80ff","unique_decoded_keys":1},{"name":"nested","source_bytes":310570,"source_sha256":"377159de7c416c84997b588c4316375275dc1dca253da7a481f721fa24058492","unique_decoded_keys":4},{"name":"price","source_bytes":716601,"source_sha256":"f6e7564cdf5a235bcd3b5e92e196965f4e8814086480df0549660b6d4b424ad8","unique_decoded_keys":5},{"name":"partial-keys","source_bytes":149653,"source_sha256":"b7475d02b45a41db96ad2e48fa742ea00131e8488e630a82d15347c5b5098567","unique_decoded_keys":17},{"name":"unique-keys","source_bytes":161671,"source_sha256":"c84be1cb1517d09396b445ed87b0409032030c3e86980ef1efabc65e202efdab","unique_decoded_keys":5001},{"name":"equivalent-keys","source_bytes":146391,"source_sha256":"1c6c4667e0b17b0e6021749b55a2a7c9b71bc9e022e3dc61474ef8cf0d8f65b5","unique_decoded_keys":2}],"warmup_seconds":0.0,"calculation_seconds":0.01,"allocation_iterations":1,"reverse_order":false}
+
+partially repeated keys / String / cached keys / max_cached_keys=17: 5000 elements, 149653 source bytes
+  Unique decoded keys: 17
+  Time per element
+    native cursor        118.73 ns/element  (RSD  2.47%)
+    read(T) loop         175.36 ns/element  (RSD  5.07%)
+    read_array(T)        170.00 ns/element  (RSD  4.09%)
+  Managed allocation per element
+    native cursor          0.77 B/element
+    read(T) loop         162.20 B/element
+    read_array(T)        160.79 B/element
+    read(T) loop delta    +161.42 B/element vs native
+    read_array(T) delta    +160.02 B/element vs native
+
+partially repeated keys / streaming IO::Memory / cached keys / max_cached_keys=17: 5000 elements, 149653 source bytes
+  Unique decoded keys: 17
+  Time per element
+    native cursor        143.53 ns/element  (RSD  0.62%)
+    read(T) loop         182.00 ns/element  (RSD  3.91%)
+    read_array(T)        182.33 ns/element  (RSD  3.92%)
+  Managed allocation per element
+    native cursor          3.28 B/element
+    read(T) loop         148.48 B/element
+    read_array(T)        148.07 B/element
+    read(T) loop delta    +145.20 B/element vs native
+    read_array(T) delta    +144.79 B/element vs native
+
+unique high-cardinality keys / String / cached keys / max_cached_keys=5001: 5000 elements, 161671 source bytes
+  Unique decoded keys: 5001
+  Time per element
+    native cursor        145.28 ns/element  (RSD  3.93%)
+    read(T) loop         213.30 ns/element  (RSD  4.35%)
+    read_array(T)        212.04 ns/element  (RSD  3.98%)
+  Managed allocation per element
+    native cursor         84.42 B/element
+    read(T) loop         244.33 B/element
+    read_array(T)        245.26 B/element
+    read(T) loop delta    +159.90 B/element vs native
+    read_array(T) delta    +160.84 B/element vs native
+
+unique high-cardinality keys / streaming IO::Memory / cached keys / max_cached_keys=5001: 5000 elements, 161671 source bytes
+  Unique decoded keys: 5001
+  Time per element
+    native cursor        172.06 ns/element  (RSD  6.82%)
+    read(T) loop         231.30 ns/element  (RSD  6.36%)
+    read_array(T)        229.18 ns/element  (RSD  5.04%)
+  Managed allocation per element
+    native cursor         88.32 B/element
+    read(T) loop         232.38 B/element
+    read_array(T)        231.73 B/element
+    read(T) loop delta    +144.06 B/element vs native
+    read_array(T) delta    +143.41 B/element vs native
+
+decoded-equivalent keys / String / cached keys / max_cached_keys=2: 5000 elements, 146391 source bytes
+  Unique decoded keys: 2
+  Time per element
+    native cursor        172.74 ns/element  (RSD  2.98%)
+    read(T) loop         233.32 ns/element  (RSD  2.83%)
+    read_array(T)        231.34 ns/element  (RSD  3.03%)
+  Managed allocation per element
+    native cursor        137.14 B/element
+    read(T) loop         296.73 B/element
+    read_array(T)        295.80 B/element
+    read(T) loop delta    +159.59 B/element vs native
+    read_array(T) delta    +158.67 B/element vs native
+
+decoded-equivalent keys / streaming IO::Memory / cached keys / max_cached_keys=2: 5000 elements, 146391 source bytes
+  Unique decoded keys: 2
+  Time per element
+    native cursor        196.16 ns/element  (RSD  2.45%)
+    read(T) loop         238.47 ns/element  (RSD  2.88%)
+    read_array(T)        237.30 ns/element  (RSD  2.86%)
+  Managed allocation per element
+    native cursor        140.98 B/element
+    read(T) loop         283.29 B/element
+    read_array(T)        283.33 B/element
+    read(T) loop delta    +142.31 B/element vs native
+    read_array(T) delta    +142.35 B/element vs native
