@@ -12,11 +12,9 @@ describe "JSONTestSuite parsing conformance" do
     failures = [] of String
 
     JSONTestSuiteSupport.names("y").each do |name|
-      begin
-        FusedJSON.load(JSONTestSuiteSupport.source(name))
-      rescue error
-        failures << "#{name}: #{error.class}: #{error.message}"
-      end
+      FusedJSON.load(JSONTestSuiteSupport.source(name))
+    rescue error
+      failures << "#{name}: #{error.class}: #{error.message}"
     end
 
     failures.should be_empty
@@ -26,13 +24,11 @@ describe "JSONTestSuite parsing conformance" do
     failures = [] of String
 
     JSONTestSuiteSupport.names("n").each do |name|
-      begin
-        FusedJSON.load(JSONTestSuiteSupport.source(name))
-        failures << "#{name}: accepted"
-      rescue FusedJSON::ParseError
-      rescue error
-        failures << "#{name}: #{error.class}: #{error.message}"
-      end
+      FusedJSON.load(JSONTestSuiteSupport.source(name))
+      failures << "#{name}: accepted"
+    rescue FusedJSON::ParseError
+    rescue error
+      failures << "#{name}: #{error.class}: #{error.message}"
     end
 
     failures.should be_empty
@@ -48,11 +44,9 @@ describe "JSONTestSuite parsing conformance" do
     failures = [] of String
 
     JSONTestSuiteSupport::I_ACCEPT.each do |name|
-      begin
-        FusedJSON.load(JSONTestSuiteSupport.source(name))
-      rescue error
-        failures << "#{name}: #{error.class}: #{error.message}"
-      end
+      FusedJSON.load(JSONTestSuiteSupport.source(name))
+    rescue error
+      failures << "#{name}: #{error.class}: #{error.message}"
     end
 
     failures.should be_empty
@@ -62,13 +56,11 @@ describe "JSONTestSuite parsing conformance" do
     failures = [] of String
 
     JSONTestSuiteSupport::I_REJECT.each do |name|
-      begin
-        FusedJSON.load(JSONTestSuiteSupport.source(name))
-        failures << "#{name}: accepted"
-      rescue FusedJSON::ParseError
-      rescue error
-        failures << "#{name}: #{error.class}: #{error.message}"
-      end
+      FusedJSON.load(JSONTestSuiteSupport.source(name))
+      failures << "#{name}: accepted"
+    rescue FusedJSON::ParseError
+    rescue error
+      failures << "#{name}: #{error.class}: #{error.message}"
     end
 
     failures.should be_empty

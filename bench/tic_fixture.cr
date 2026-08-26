@@ -135,19 +135,17 @@ module TICFixtureCLI
     end
 
     backups.reverse_each do |destination, backup|
-      begin
-        unless File.info?(backup, follow_symlinks: false)
-          errors << "missing backup #{backup}"
-          next
-        end
-        if File.info?(destination, follow_symlinks: false)
-          errors << "could not restore #{destination}: destination exists"
-          next
-        end
-        File.rename(backup, destination)
-      rescue error
-        errors << "could not restore #{destination}: #{error.message}"
+      unless File.info?(backup, follow_symlinks: false)
+        errors << "missing backup #{backup}"
+        next
       end
+      if File.info?(destination, follow_symlinks: false)
+        errors << "could not restore #{destination}: destination exists"
+        next
+      end
+      File.rename(backup, destination)
+    rescue error
+      errors << "could not restore #{destination}: #{error.message}"
     end
 
     errors

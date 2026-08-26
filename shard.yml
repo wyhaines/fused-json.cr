@@ -13,7 +13,7 @@ crystal: ">= 1.21.0, < 2.0.0"
 development_dependencies:
   ameba:
     github: crystal-ameba/ameba
-    version: 1.7.0-dev
+    version: 1.7.0
 
 targets:
   ameba:

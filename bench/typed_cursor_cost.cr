@@ -485,13 +485,11 @@ module TypedCursorCost
         -> { record_read_array_stream(source, buffer_size, type, true, limits) },
       ]
       operations.each do |operation|
-        begin
-          operation.call
-          raise "max_cached_keys=#{limit} unexpectedly accepted #{unique_keys} decoded keys"
-        rescue error : FusedJSON::ParseError
-          unless error.message.try(&.includes?(%Q(max_cached_keys of #{limit})))
-            raise "unexpected max_cached_keys=#{limit} error: #{error.message}"
-          end
+        operation.call
+        raise "max_cached_keys=#{limit} unexpectedly accepted #{unique_keys} decoded keys"
+      rescue error : FusedJSON::ParseError
+        unless error.message.try(&.includes?(%Q(max_cached_keys of #{limit})))
+          raise "unexpected max_cached_keys=#{limit} error: #{error.message}"
         end
       end
     end
