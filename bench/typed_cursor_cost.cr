@@ -401,6 +401,7 @@ module TypedCursorCost
 
   def run_record_profile(name : String, source : String, elements : Int32,
                          unique_keys : Int32, type : T.class, buffer_size : Int32,
+                         selected_cache_profiles : Array(String),
                          warmup : Time::Span, calculation : Time::Span,
                          allocation_iterations : Int32, reverse_order : Bool) : Nil forall T
     cache_profiles = [
@@ -413,7 +414,9 @@ module TypedCursorCost
       },
     ]
 
-    cache_profiles.each do |cache_label, cache_keys, limits|
+    cache_profiles.each_with_index do |(cache_label, cache_keys, limits), index|
+      next unless selected_cache_profiles.includes?({"uncached", "cached", "bounded"}[index])
+
       run_shape(
         "#{name} / String / #{cache_label}",
         source,
@@ -446,7 +449,9 @@ module TypedCursorCost
       )
     end
 
-    verify_cache_limit_failures(source, type, buffer_size, unique_keys) if unique_keys > 0
+    if unique_keys > 0 && selected_cache_profiles.includes?("bounded")
+      verify_cache_limit_failures(source, type, buffer_size, unique_keys)
+    end
   end
 
   private def in_memory_pull(source : String, *, cache_keys : Bool,
@@ -706,6 +711,15 @@ if invalid_shape = selected_shapes.find { |name| !valid_shape_names.includes?(na
   abort "unknown cursor shape #{invalid_shape.inspect}; expected #{valid_shape_names.join(", ")}"
 end
 run_shape = ->(name : String) { selected_shapes.empty? || selected_shapes.includes?(name) }
+valid_cache_profiles = ["uncached", "cached", "bounded"]
+cache_profile_setting = ENV["FUSED_JSON_CURSOR_CACHE_PROFILES"]? || "all"
+selected_cache_profiles = cache_profile_setting == "all" ? valid_cache_profiles : cache_profile_setting.split(',').map(&.strip)
+if selected_cache_profiles.empty?
+  abort "FUSED_JSON_CURSOR_CACHE_PROFILES must select at least one profile"
+end
+if invalid_profile = selected_cache_profiles.find { |name| !valid_cache_profiles.includes?(name) }
+  abort "unknown cursor cache profile #{invalid_profile.inspect}; expected #{valid_cache_profiles.join(", ")}"
+end
 
 abort "FUSED_JSON_CURSOR_SCALARS must be positive" unless scalar_count > 0
 abort "FUSED_JSON_CURSOR_RECORDS must be positive" unless record_count > 0
@@ -755,6 +769,7 @@ receipt = JSON.build do |json|
     ]
     json.field "cache_keys_profiles", [false, true]
     json.field "bounded_cache_policy", "exact decoded unique-key count"
+    json.field "selected_cache_profiles", selected_cache_profiles
     json.field "selected_shapes", selected_shapes.empty? ? valid_shape_names : selected_shapes
     json.field "partial_key_cardinality", partial_key_cardinality
     json.field "buffer_size", buffer_size
@@ -816,35 +831,35 @@ end
 if run_shape.call("empty")
   TypedCursorCost.run_record_profile(
     "empty records", empty_source, record_count, 0,
-    TypedCursorCost::EmptyRecord, buffer_size, warmup, calculation,
+    TypedCursorCost::EmptyRecord, buffer_size, selected_cache_profiles, warmup, calculation,
     allocation_iterations, reverse_order
   )
 end
 if run_shape.call("integer")
   TypedCursorCost.run_record_profile(
     "one-integer records", int_source, record_count, 1,
-    TypedCursorCost::IntRecord, buffer_size, warmup, calculation,
+    TypedCursorCost::IntRecord, buffer_size, selected_cache_profiles, warmup, calculation,
     allocation_iterations, reverse_order
   )
 end
 if run_shape.call("string")
   TypedCursorCost.run_record_profile(
     "one-string records", string_source, record_count, 1,
-    TypedCursorCost::StringRecord, buffer_size, warmup, calculation,
+    TypedCursorCost::StringRecord, buffer_size, selected_cache_profiles, warmup, calculation,
     allocation_iterations, reverse_order
   )
 end
 if run_shape.call("nested")
   TypedCursorCost.run_record_profile(
     "nested records", nested_source, record_count, 4,
-    TypedCursorCost::NestedRecord, buffer_size, warmup, calculation,
+    TypedCursorCost::NestedRecord, buffer_size, selected_cache_profiles, warmup, calculation,
     allocation_iterations, reverse_order
   )
 end
 if run_shape.call("price")
   TypedCursorCost.run_record_profile(
     "negotiated-price records", price_source, record_count, 5,
-    TICBench::TypedNegotiatedPrice, buffer_size, warmup, calculation,
+    TICBench::TypedNegotiatedPrice, buffer_size, selected_cache_profiles, warmup, calculation,
     allocation_iterations, reverse_order
   )
 end
@@ -852,20 +867,20 @@ if run_shape.call("partial-keys")
   TypedCursorCost.run_record_profile(
     "partially repeated keys", partial_key_source, record_count,
     partial_unique_keys, TypedCursorCost::KeyProbeRecord, buffer_size,
-    warmup, calculation, allocation_iterations, reverse_order
+    selected_cache_profiles, warmup, calculation, allocation_iterations, reverse_order
   )
 end
 if run_shape.call("unique-keys")
   TypedCursorCost.run_record_profile(
     "unique high-cardinality keys", unique_key_source, record_count,
     record_count + 1, TypedCursorCost::KeyProbeRecord, buffer_size,
-    warmup, calculation, allocation_iterations, reverse_order
+    selected_cache_profiles, warmup, calculation, allocation_iterations, reverse_order
   )
 end
 if run_shape.call("equivalent-keys")
   TypedCursorCost.run_record_profile(
     "decoded-equivalent keys", equivalent_key_source, record_count, 2,
-    TypedCursorCost::KeyProbeRecord, buffer_size, warmup, calculation,
+    TypedCursorCost::KeyProbeRecord, buffer_size, selected_cache_profiles, warmup, calculation,
     allocation_iterations, reverse_order
   )
 end

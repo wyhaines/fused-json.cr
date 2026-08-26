@@ -55,10 +55,11 @@ Control its fixture sizes with `FUSED_JSON_CURSOR_SCALARS` and
 `FUSED_JSON_CURSOR_BUFFER`, partial key cardinality with
 `FUSED_JSON_CURSOR_PARTIAL_KEYS`, and sampling with the standard
 `FUSED_JSON_BENCH_*` variables. `FUSED_JSON_CURSOR_SHAPES` accepts `all` or a
-comma-separated subset of the shape names recorded in the receipt. Each
-transport and cache policy is reported separately. This is an attribution
-diagnostic, not the large-document release gate; use the end-to-end TiC modes
-for Crystal comparisons.
+comma-separated subset of the shape names recorded in the receipt.
+`FUSED_JSON_CURSOR_CACHE_PROFILES` similarly selects `uncached`, `cached`,
+and `bounded`; its default is `all`. Each transport and cache policy is
+reported separately. This is an attribution diagnostic, not the large-document
+release gate; use the end-to-end TiC modes for Crystal comparisons.
 
 `streaming-tree-cost` measures one operation per process so baseline and
 candidate binaries can be paired without sharing GC state. It supports direct
