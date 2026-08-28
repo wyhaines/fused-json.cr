@@ -1,6 +1,7 @@
 # Resource limits API decision
 
-Status: accepted and implemented for large-document Milestone 5.
+Status: accepted and implemented in 0.2.0, with repeated-document scope rules
+added in 0.3.0.
 
 ## Public API
 
@@ -44,6 +45,9 @@ enabling the general per-event limit traversal.
   not count transport bytes or bytes fetched into a buffer but not logically
   consumed. Gzip input therefore counts decompressed bytes; transcoding IO
   counts its UTF-8 output.
+  A repeated-document reader resets this budget for each document. NDJSON
+  terminators are excluded; whitespace-separated mode charges the separators
+  consumed while seeking the next document to that pending document.
 - `max_token_bytes` retains its existing meaning: raw bytes in one string or
   number token, including string quotes and escape spelling. Object keys and
   skipped tokens count. Its error points to the token opening byte.
@@ -59,6 +63,9 @@ enabling the general per-event limit traversal.
   element or object member counts once; duplicate members count.
 - `max_cached_keys` counts distinct decoded strings inserted into the
   parser-local key pool. Repeats and escape-equivalent spellings count once.
+  A repeated-document reader retains this pool and its budget for its complete
+  lifetime; all other value, entry, byte, and duplicate-tracking state resets
+  for each document.
 
 Document-sized counters and offsets use `Int64`. Adapters and tree builders do
 not count values a second time; the native scanner is authoritative.

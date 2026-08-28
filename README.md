@@ -5,11 +5,12 @@
 
 FusedJSON is an experimental, strict JSON parser for Crystal. It provides a fast in-memory `String` path and incremental `IO` parsing without first copying the complete input. Both paths avoid the standard parser's intermediate lexer.
 
-Version 0.2 adds typed reads at a pull cursor, non-accumulating typed arrays,
-exact raw-number access, and one resource-limit policy across dynamic, typed,
-pull, and streaming entry points. All paths enforce strict JSON, validated
-UTF-8, Unicode escapes, and nesting limits. Crystal 1.21 through the current
-stable 1.x release is supported.
+Version 0.3 adds reusable readers for NDJSON and whitespace-separated JSON
+streams. Version 0.2 added typed reads at a pull cursor, non-accumulating typed
+arrays, exact raw-number access, and one resource-limit policy across dynamic,
+typed, pull, and streaming entry points. All paths enforce strict JSON,
+validated UTF-8, Unicode escapes, and nesting limits. Crystal 1.21 through the
+current stable 1.x release is supported.
 
 ## Installation
 
@@ -19,7 +20,7 @@ Add the shard to your application's `shard.yml`:
 dependencies:
   fused_json:
     github: wyhaines/fused-json.cr
-    version: ~> 0.2.0
+    version: ~> 0.3.0
 ```
 
 Run `shards install`, then `require "fused_json"` in application code.
@@ -63,9 +64,10 @@ The existing `max_nesting` keyword remains available, as does
 resource, the smaller value wins. `buffer_size` remains an `IO` option and
 defaults to 32 KiB.
 
-Key caching is local to one parser and remains off by default. It hashes every
-materialized object key and reuses equal key strings. With duplicate rejection
-off, an untyped pull `skip` leaves keys inside the skipped value
+Key caching is local to one single-document parse or repeated-document reader
+and remains off by default. It hashes every materialized object key and reuses
+equal key strings. With duplicate rejection off, an untyped pull `skip` leaves
+keys inside the skipped value
 unmaterialized, so they do not consume `max_cached_keys`. Duplicate rejection
 must decode those keys; when key caching is also on, they enter both the
 per-object duplicate set and the parser-wide pool. The pool retains its entries
@@ -148,6 +150,47 @@ readers. The compile-checked [TiC streaming example](examples/tic_streaming.cr)
 shows typed root arrays, nested typed arrays, caller-wrapped gzip input, staged
 output, and two-pass input recreation.
 
+### NDJSON and repeated documents
+
+`FusedJSON.documents` reuses one streaming parser across a sequence instead of
+splitting it into lines and constructing a parser for every record. Supply a
+type to decode each document directly, or omit it to receive `JSON::Any`:
+
+```crystal
+require "fused_json"
+
+struct LogEvent
+  include JSON::Serializable
+
+  getter id : Int64
+  getter message : String
+end
+
+input = IO::Memory.new(%({"id":1,"message":"started"}\n{"id":2,"message":"done"}\n))
+reader = FusedJSON.documents(
+  input,
+  LogEvent,
+  framing: FusedJSON::DocumentFraming::NDJSON,
+  cache_keys: true
+)
+reader.each { |event| puts "#{event.id}: #{event.message}" }
+reader.finish
+```
+
+`DocumentFraming::NDJSON` accepts one complete JSON value per LF- or
+CRLF-terminated record. A complete final record may omit its newline, but blank
+records and multiline values are rejected.
+`DocumentFraming::WhitespaceSeparated` accepts multiline JSON values and
+requires at least one JSON whitespace byte between them. The framing argument
+is required and is never guessed.
+
+The reader borrows the `IO`, may read ahead, and never closes it. Per-document
+limits reset at each framing boundary. With `cache_keys: true`, the key cache
+is retained across documents and `max_cached_keys` bounds that reader-wide
+pool. See the [repeated-document guide](docs/repeated-document-reader.md) for
+completion, early-exit, error-location, and memory details. A runnable version
+is in [examples/documents.cr](examples/documents.cr).
+
 ### Large documents
 
 FusedJSON borrows an `IO` and never closes it. It does not detect compression;
@@ -187,6 +230,9 @@ $ crystal build --release --no-debug bench/typed.cr -o bin/typed-bench
 $ bin/typed-bench path/to/twitter.json
 $ crystal build --release --no-debug bench/stream.cr -o bin/stream-bench
 $ bin/stream-bench path/to/document.json
+$ crystal build --release --no-debug bench/document_reader.cr -o bin/document-reader-bench
+$ bin/document-reader-bench
+$ crystal build --release --no-debug bench/document_reader_memory.cr -o bin/document-reader-memory
 $ crystal build --release --no-debug bench/tic_fixture.cr -o bin/tic-fixture
 $ crystal build --release --no-debug bench/tic.cr -o bin/tic-bench
 $ crystal build --release --no-debug bench/typed_cursor_cost.cr -o bin/typed-cursor-cost
@@ -235,9 +281,6 @@ commands, compiler versions, raw receipts, and measurement caveats.
 
 The next planned work is:
 
-- Add a separate reader for NDJSON or repeated JSON documents, with buffer
-  reuse between records. `load` and `parse` will remain eager, strict,
-  single-document operations.
 - Add an opt-in dynamic value type for integers beyond `Int64`, exact decimals,
   and original number spellings. `JSON::Any` will keep Crystal-compatible
   numeric behavior. Typed decoding already supports `BigInt`, `BigFloat`, and

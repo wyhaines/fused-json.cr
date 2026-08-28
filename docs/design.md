@@ -47,8 +47,9 @@ The final pre-1.0 names are the `fused_json` shard and require path and the
 `FusedJSON` namespace. The name describes the direct scan-and-build paths
 without implying that this strict Crystal-native subset is a drop-in Ruby Oj
 port. The supported surface is the module facade, `Limits`, `ParseError`,
-`PullParser`, and `PullParser::Kind`. Concrete tree builders, streaming
-subclasses, adapters, scanners, and decoders remain implementation details.
+`PullParser`, `PullParser::Kind`, `DocumentFraming`, and `DocumentReader(T)`.
+Concrete tree builders, streaming subclasses, adapters, scanners, and decoders
+remain implementation details.
 [`api.md`](api.md) defines compatibility policy.
 
 The current API is:
@@ -70,9 +71,25 @@ FusedJSON.parse(source : IO, *, buffer_size : Int = 32 * 1024,
                 cache_keys : Bool = false,
                 max_token_bytes : Int? = nil,
                 limits : Limits = Limits::DEFAULT) : JSON::Any
+FusedJSON.documents(source : IO, *, framing : DocumentFraming,
+                    buffer_size : Int = 32 * 1024,
+                    max_nesting : Int = 512,
+                    cache_keys : Bool = false,
+                    max_token_bytes : Int? = nil,
+                    limits : Limits = Limits::DEFAULT) : DocumentReader(JSON::Any)
+FusedJSON.documents(source : IO, type : T.class, *,
+                    framing : DocumentFraming,
+                    buffer_size : Int = 32 * 1024,
+                    max_nesting : Int = 512,
+                    cache_keys : Bool = false,
+                    max_token_bytes : Int? = nil,
+                    limits : Limits = Limits::DEFAULT) : DocumentReader(T)
 ```
 
-`parse` is an alias for `load`. Options are keyword-only. `max_nesting` must be
+`parse` is an alias for `load`; these single-document entry points still
+require physical EOF. `documents` uses an explicit `DocumentFraming::NDJSON`
+or `DocumentFraming::WhitespaceSeparated` policy and reuses one streaming
+cursor across roots. Options are keyword-only. `max_nesting` must be
 between 1 and 512. The `IO` buffer defaults to 32 KiB and must be between 1 byte
 and 16 MiB. An explicit `max_token_bytes` must be between 1 and `Int32::MAX`.
 Values outside these ranges raise `ArgumentError`. `Limits` adds document,
@@ -81,8 +98,9 @@ duplicate-key rejection. Its exact counters and error locations are defined in
 [`resource-limits-decision.md`](resource-limits-decision.md). When legacy and
 `Limits` options overlap, the smaller value wins.
 
-`cache_keys` interns materialized object keys within one parser. It is disabled
-by default because its value depends on document shape. With duplicate
+`cache_keys` interns materialized object keys within one single-document parser
+or repeated-document reader. It is disabled by default because its value
+depends on document shape. With duplicate
 rejection off, an untyped pull `skip` does not materialize or cache keys inside
 the skipped value. Duplicate rejection must decode skipped keys; if caching is
 also on, those keys enter the pool. The cache must never be global: unbounded
@@ -313,9 +331,10 @@ reclamation remain runtime concerns.
 
 ## Architecture
 
-The current implementation has seven layers:
+The current implementation has eight layers:
 
-1. `FusedJSON.load`, `parse`, and `from_json` provide `String` and `IO` facades.
+1. `FusedJSON.load`, `parse`, `from_json`, and `documents` provide the public
+   facades.
 2. `ByteScanner` owns the retained `String`, byte cursor, recognition,
    Unicode validation, numeric conversion, errors, and optional key pool;
    `ASCIIStringScanner` accelerates validated plain spans behind a scalar
@@ -327,7 +346,11 @@ The current implementation has seven layers:
    with a bounded input buffer and reusable current-token scratch.
 6. `StreamingParser` recursively builds a `JSON::Any` tree from streaming pull
    events.
-7. Private concrete adapters for `String` and `IO` mirror native state into the
+7. `DocumentReader(T)` owns a private streaming specialization that replaces
+   physical-root EOF with an NDJSON or whitespace boundary. It resets
+   per-document parser state without replacing the input buffer or optional
+   reader-wide key pool.
+8. Private concrete adapters for `String` and `IO` mirror native state into the
    nominal stdlib pull-parser type required by generated deserializers; a
    generic shared base keeps each native parser type statically known and can
    bound borrowed readers to one current value.

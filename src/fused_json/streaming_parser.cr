@@ -16,31 +16,12 @@ module FusedJSON
     end
   end
 
-  # :nodoc:
-  # Builds a standard `JSON::Any` tree from a caller-owned IO without first
-  # loading the complete JSON document into a String. `max_token_bytes`
-  # optionally limits each raw string or number in the decoded stream.
-  class StreamingParser
-    @pull : StreamingPullParser
-
-    def initialize(input : IO, *, buffer_size : Int = StreamingPullParser::DEFAULT_BUFFER_SIZE,
-                   max_nesting : Int = PullParser::MAX_NESTING, cache_keys : Bool = false,
-                   max_token_bytes : Int? = nil,
-                   limits : Limits = Limits::DEFAULT)
-      @pull = DynamicStreamingPullParser.new(
-        input,
-        buffer_size: buffer_size,
-        max_nesting: max_nesting,
-        cache_keys: cache_keys,
-        max_token_bytes: max_token_bytes,
-        limits: limits
-      )
+  private class StreamingTreeBuilder
+    def initialize(@pull : StreamingPullParser)
     end
 
-    def parse : JSON::Any
-      value = read_value
-      @pull.finish
-      value
+    def read : JSON::Any
+      read_value
     end
 
     private def read_value : JSON::Any
@@ -89,6 +70,36 @@ module FusedJSON
       end
       @pull.read_end_object
       JSON::Any.new(values)
+    end
+  end
+
+  # :nodoc:
+  # Builds a standard `JSON::Any` tree from a caller-owned IO without first
+  # loading the complete JSON document into a String. `max_token_bytes`
+  # optionally limits each raw string or number in the decoded stream.
+  class StreamingParser
+    @pull : StreamingPullParser
+    @tree : StreamingTreeBuilder
+
+    def initialize(input : IO, *, buffer_size : Int = StreamingPullParser::DEFAULT_BUFFER_SIZE,
+                   max_nesting : Int = PullParser::MAX_NESTING, cache_keys : Bool = false,
+                   max_token_bytes : Int? = nil,
+                   limits : Limits = Limits::DEFAULT)
+      @pull = DynamicStreamingPullParser.new(
+        input,
+        buffer_size: buffer_size,
+        max_nesting: max_nesting,
+        cache_keys: cache_keys,
+        max_token_bytes: max_token_bytes,
+        limits: limits
+      )
+      @tree = StreamingTreeBuilder.new(@pull)
+    end
+
+    def parse : JSON::Any
+      value = @tree.read
+      @pull.finish
+      value
     end
   end
 end

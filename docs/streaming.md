@@ -2,7 +2,9 @@
 
 FusedJSON can parse one complete JSON document directly from an `IO`. The
 streaming entry points use the same strict grammar, numeric behavior, nesting
-rules, and duplicate-key behavior as their `String` counterparts.
+rules, and duplicate-key behavior as their `String` counterparts. A separate
+reader handles explicitly framed NDJSON and whitespace-separated streams while
+reusing the same input buffer.
 
 ## Entry Points
 
@@ -25,6 +27,8 @@ FusedJSON.from_json(io : IO, type : T.class, *, buffer_size : Int = 32 * 1024,
                     limits : Limits = Limits::DEFAULT) : T
 pull.read(type : T.class) : T
 pull.read_array(type : T.class, & : T ->) : Nil
+FusedJSON.documents(io : IO, *, framing : DocumentFraming, ...) : DocumentReader(JSON::Any)
+FusedJSON.documents(io : IO, type : T.class, *, framing : DocumentFraming, ...) : DocumentReader(T)
 ```
 
 Use the pull reader when values should be processed incrementally:
@@ -108,16 +112,66 @@ the decoded UTF-8 stream. Input fetched into a read-ahead buffer does not count
 until it is consumed. If pull traversal stops early, an unread tail is neither
 charged nor validated.
 
+## Repeated-document streams
+
+Create one reader and iterate it when an `IO` contains several framed JSON
+documents:
+
+```crystal
+require "fused_json"
+
+struct StreamEvent
+  include JSON::Serializable
+
+  getter id : Int64
+end
+
+input = IO::Memory.new(%({"id":1}\n{"id":2}\n))
+reader = FusedJSON.documents(
+  input,
+  StreamEvent,
+  framing: FusedJSON::DocumentFraming::NDJSON
+)
+reader.each { |event| puts event.id }
+reader.finish
+```
+
+The required `framing` is `DocumentFraming::NDJSON` or
+`DocumentFraming::WhitespaceSeparated`. NDJSON permits space and tab around
+one value on each LF or CRLF record, accepts a complete final record without a
+newline, and rejects blank records or raw line endings inside a value.
+Whitespace-separated mode permits multiline values but requires one or more
+JSON whitespace bytes between roots. FusedJSON does not infer a format and
+does not support RFC 7464 record separators.
+
+Each `next` completes one dynamic or typed value before returning it. If a
+caller block raises or breaks, the reader is already at that document's
+boundary and may be resumed. `finish` validates only legal trailing framing;
+it raises instead of draining another unread document. A parser, limit,
+constructor, or IO error is terminal for that reader.
+
+The input and token buffers are reused between documents. Per-document limits
+reset at framing boundaries, while an enabled key cache is reader-wide so a
+repeated schema can reuse decoded keys. Bound that pool with `max_cached_keys`
+for untrusted streams. Returned results are owned by the caller; accumulating
+them naturally retains their complete output even though parser storage stays
+bounded by current state.
+
+The reader may have buffered part of a later document when iteration stops.
+Discarding it therefore also abandons those buffered bytes. The complete
+[repeated-document guide](repeated-document-reader.md) defines framing,
+locations, limits, and lifecycle behavior.
+
 ## IO Ownership and Exhaustion
 
 The input is borrowed. FusedJSON never closes it; the caller remains
 responsible for its lifetime on success and on every error path. FusedJSON may
 read ahead into its refill buffer, and a caller-supplied IO or encoding wrapper
 may buffer farther independently. Do not rely on the underlying IO being
-positioned immediately after the current event. The facade APIs consume to
-EOF. In the pull API, advancing after the root scans trailing whitespace and
-probes EOF; `finish` then asserts that EOF was reached. These APIs are therefore
-for one document per IO, not concatenated documents.
+positioned immediately after the current event. The single-document facade
+APIs consume to EOF. In the pull API, advancing after the root scans trailing
+whitespace and probes EOF; `finish` then asserts that EOF was reached. Use the
+repeated-document reader, not these entry points, for concatenated documents.
 
 Advancing a typed value performs the same one-event lookahead as every other
 pull read. A following string or number is scanned completely; if that token is

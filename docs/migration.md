@@ -10,6 +10,7 @@ for Crystal's JSON generator.
 | `JSON::PullParser.new(source)` | `FusedJSON::PullParser.new(source)` |
 | `T.new(json_pull)` at the current cursor | `fused_pull.read(T)` |
 | `Array(T).new(json_pull) { |value| ... }` | `fused_pull.read_array(T) { |value| ... }` |
+| `io.each_line { |line| T.from_json(line) }` | `FusedJSON.documents(io, T, framing: FusedJSON::DocumentFraming::NDJSON).each { |value| ... }` |
 | Ruby `Oj.load(source, mode: :strict)` | `FusedJSON.load(source)` |
 
 Add `fused_json` to `shard.yml`, run `shards install`, and require
@@ -37,6 +38,49 @@ results on representative documents before enabling `cache_keys`.
 For `IO`, the caller retains ownership and the parser requires EOF after one
 document. Review buffering, read-ahead, transcoding offsets, and resource limits
 in the [streaming guide](streaming.md) before migrating network input.
+
+## NDJSON and repeated streams
+
+Use `FusedJSON.documents` when one `IO` contains several records. It keeps the
+streaming parser and buffer alive between results, avoiding the line `String`
+and parser setup performed by an `each_line` loop:
+
+```crystal
+require "fused_json"
+
+struct MigratedEvent
+  include JSON::Serializable
+
+  getter id : Int64
+end
+
+input = IO::Memory.new(%({"id":1}\n{"id":2}\n))
+reader = FusedJSON.documents(
+  input,
+  MigratedEvent,
+  framing: FusedJSON::DocumentFraming::NDJSON
+)
+reader.each { |event| puts event.id }
+reader.finish
+```
+
+Choose `DocumentFraming::NDJSON` only for one value per LF or CRLF record. It
+rejects blank lines and pretty-printed multiline values. Choose
+`DocumentFraming::WhitespaceSeparated` for multiline values separated by JSON
+whitespace. That mode treats whitespace as framing, so it is not equivalent to
+checking each physical line independently. Both modes require explicit
+selection.
+
+Single-document `load`, `parse`, `from_json`, and `PullParser` calls retain
+their EOF requirement; do not substitute `documents` merely to make accidental
+trailing content parse successfully. Reader errors are terminal. If iteration
+stops early, the caller-owned IO may already have supplied bytes from a later
+record, so resume through the same reader or abandon the stream.
+
+Resource policies are applied per document, except that an enabled decoded-key
+cache and its `max_cached_keys` budget last for the complete reader. Review the
+[repeated-document guide](repeated-document-reader.md) before migrating
+untrusted or long-lived streams.
 
 ## Resource limits
 

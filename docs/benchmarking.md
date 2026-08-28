@@ -14,6 +14,10 @@ $ taskset -c 4 bin/parse-bench path/to/document.json
 $ crystal build --release --no-debug bench/pull.cr -o bin/pull-bench
 $ crystal build --release --no-debug bench/typed.cr -o bin/typed-bench
 $ crystal build --release --no-debug bench/stream.cr -o bin/stream-bench
+$ crystal build --release --no-debug bench/document_reader.cr \
+    -o bin/document-reader-bench
+$ crystal build --release --no-debug bench/document_reader_memory.cr \
+    -o bin/document-reader-memory
 $ crystal build --release --no-debug bench/typed_cursor_cost.cr -o bin/typed-cursor-cost
 $ crystal build --release --no-debug bench/streaming_tree_cost.cr \
     -o bin/streaming-tree-cost
@@ -61,6 +65,50 @@ comma-separated subset of the shape names recorded in the receipt.
 and `bounded`; its default is `all`. Each transport and cache policy is
 reported separately. This is an attribution diagnostic, not the large-document
 release gate; use the end-to-end TiC modes for Crystal comparisons.
+
+`document-reader-bench` generates deterministic NDJSON streams and compares a
+reused dynamic or typed `FusedJSON.documents` reader with fresh-parser
+`IO#each_line` loops using FusedJSON and Crystal JSON. It reports MiB/s,
+records/s, managed bytes per record, and first-record latency. The profiles are
+`repeated-schema`, `unique-keys`, `escaped-strings`, `mixed-scalars`, and
+`periodic-wide`:
+
+```console
+$ GC_NPROCS=1 GC_MARKERS=1 FUSED_JSON_DOCUMENT_PROFILE=all \
+    taskset -c 4 bin/document-reader-bench
+```
+
+Use `FUSED_JSON_DOCUMENT_RECORDS` and `FUSED_JSON_DOCUMENT_BUFFER` to control
+stream and buffer size. Set `FUSED_JSON_DOCUMENT_RETAIN=1` to accumulate every
+result instead of retaining only the current value. The standard
+`FUSED_JSON_BENCH_WARMUP`, `FUSED_JSON_BENCH_TIME`,
+`FUSED_JSON_BENCH_ALLOCATIONS`, and `FUSED_JSON_BENCH_REVERSE` settings apply;
+`FUSED_JSON_DOCUMENT_LATENCY_ITERATIONS` controls the first-record probe.
+
+Do not infer retained-heap or peak-RSS behavior from cumulative managed
+allocation. For memory validation, run the default and retained modes in fresh
+processes under an external RSS tool while increasing record count. Alternate
+comparison order, keep generated profile settings identical, and record the
+commit, compiler, CPU placement, and environment as for the other benchmarks.
+
+`document-reader-memory` supplies a fixed record repeatedly without retaining
+the logical input, so external peak RSS reflects the parser and decoded output
+rather than a source `String`. It supports `typed` and `dynamic` modes and
+discards each result unless retention is explicitly requested:
+
+```console
+$ GC_NPROCS=1 GC_MARKERS=1 \
+    FUSED_JSON_DOCUMENT_MODE=typed \
+    FUSED_JSON_DOCUMENT_RECORDS=5000000 \
+    taskset -c 4 /usr/bin/time -f 'peak_rss_kib=%M elapsed_seconds=%e' \
+    bin/document-reader-memory
+```
+
+Run each size and mode in a fresh process. `FUSED_JSON_DOCUMENT_CACHE_KEYS=1`
+enables the reader-wide cache, `FUSED_JSON_DOCUMENT_BUFFER` changes its input
+buffer, and `FUSED_JSON_DOCUMENT_RETAIN=1` intentionally accumulates output.
+The generated stream contains 66 logical bytes per record and reports its
+record count, byte count, read calls, and checksum as JSON.
 
 `streaming-tree-cost` measures one operation per process so baseline and
 candidate binaries can be paired without sharing GC state. It supports direct

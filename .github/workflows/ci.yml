@@ -125,9 +125,14 @@ jobs:
           test -f /tmp/fused-json-docs/FusedJSON/Limits.html
           test -f /tmp/fused-json-docs/FusedJSON/ParseError.html
           test -f /tmp/fused-json-docs/FusedJSON/PullParser.html
+          test -f /tmp/fused-json-docs/FusedJSON/DocumentFraming.html
+          test -f /tmp/fused-json-docs/FusedJSON/DocumentReader.html
           test ! -e /tmp/fused-json-docs/FusedJSON/Parser.html
           test ! -e /tmp/fused-json-docs/FusedJSON/StreamingParser.html
           test ! -e /tmp/fused-json-docs/FusedJSON/StreamingPullParser.html
+          test ! -e /tmp/fused-json-docs/FusedJSON/RepeatedStreamingPullParser.html
+          test ! -e /tmp/fused-json-docs/FusedJSON/NDJSONStreamingPullParser.html
+          test ! -e /tmp/fused-json-docs/FusedJSON/WhitespaceSeparatedStreamingPullParser.html
 
       - name: Run specs
         run: crystal spec --order=random --error-on-warnings
@@ -152,6 +157,8 @@ jobs:
           crystal build --release --no-debug bench/pull.cr -o /tmp/fused-json-pull-bench
           crystal build --release --no-debug bench/typed.cr -o /tmp/fused-json-typed-bench
           crystal build --release --no-debug bench/stream.cr -o /tmp/fused-json-stream-bench
+          crystal build --release --no-debug bench/document_reader.cr -o /tmp/fused-json-document-reader-bench
+          crystal build --release --no-debug bench/document_reader_memory.cr -o /tmp/fused-json-document-reader-memory
           crystal build --release --no-debug bench/tic_fixture.cr -o /tmp/fused-json-tic-fixture
           crystal build --release --no-debug bench/tic.cr -o /tmp/fused-json-tic-bench
           crystal build --release --no-debug bench/sunlight_compat_scan.cr -o /tmp/fused-json-sunlight-compat-scan
@@ -159,6 +166,21 @@ jobs:
           crystal build --release --no-debug bench/streaming_tree_cost.cr -o /tmp/fused-json-streaming-tree-cost
           crystal build --release --no-debug -Dfused_json_limits_api bench/limits_overhead.cr -o /tmp/fused-json-limits-overhead
           crystal build --release --no-debug -Dfused_json_force_scalar_string_scan bench/parse.cr -o /tmp/fused-json-scalar-bench
+
+      - name: Smoke test repeated-document benchmarks
+        if: ${{ matrix.experimental == false }}
+        run: |
+          FUSED_JSON_DOCUMENT_RECORDS=32 \
+            FUSED_JSON_BENCH_WARMUP=0 \
+            FUSED_JSON_BENCH_TIME=0.01 \
+            FUSED_JSON_BENCH_ALLOCATIONS=1 \
+            FUSED_JSON_DOCUMENT_LATENCY_ITERATIONS=1 \
+            /tmp/fused-json-document-reader-bench > /dev/null
+          FUSED_JSON_DOCUMENT_RECORDS=1000 \
+            /tmp/fused-json-document-reader-memory \
+            > /tmp/fused-json-document-reader-memory.json
+          jq -e '.mode == "typed" and .records == 1000 and .source_bytes == 66000 and .retain == false' \
+            /tmp/fused-json-document-reader-memory.json > /dev/null
 
       - name: Smoke test Sunlight scanner
         if: ${{ matrix.experimental == false }}

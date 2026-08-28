@@ -4,6 +4,22 @@ All notable changes to FusedJSON are recorded here. The project follows semantic
 
 ## Unreleased
 
+### Added
+
+- Experimental `FusedJSON.documents` dynamic and typed iterators for NDJSON
+  and whitespace-separated JSON streams.
+- Reader-wide input-buffer and optional decoded-key reuse across documents,
+  with per-document resource-limit resets and absolute stream locations.
+- Deterministic repeated-document benchmarks comparing parser reuse with
+  FusedJSON and Crystal `IO#each_line` loops and checking no-retention peak RSS
+  without retaining a generated input.
+
+### Changed
+
+- Streaming root completion now has an internal document-boundary hook; all
+  existing single-document entry points retain their strict physical-EOF
+  requirement.
+
 ## 0.2.0 - 2026-08-25
 
 ### Added

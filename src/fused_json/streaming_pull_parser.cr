@@ -48,7 +48,8 @@ module FusedJSON
                              max_nesting : Int, cache_keys : Bool,
                              enforce_dynamic_numbers : Bool,
                              max_token_bytes : Int? = nil,
-                             limits : Limits = Limits::DEFAULT)
+                             limits : Limits = Limits::DEFAULT,
+                             prime : Bool = true)
       unless buffer_size > 0 && buffer_size <= MAX_BUFFER_SIZE
         raise ArgumentError.new("buffer_size must be between 1 and #{MAX_BUFFER_SIZE}")
       end
@@ -79,7 +80,7 @@ module FusedJSON
         enforce_dynamic_numbers: enforce_dynamic_numbers,
         prime: false
       )
-      prime_reader
+      prime_reader if prime
     end
 
     @[AlwaysInline]

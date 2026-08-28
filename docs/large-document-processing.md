@@ -262,8 +262,9 @@ MiB.
 
 FusedJSON will not validate CMS schemas, download files, detect compression,
 resolve provider references, store application rows, or choose a multipass
-strategy. NDJSON and concatenated-document reading remain a separate roadmap
-item because TiC files contain one document.
+strategy. TiC files contain one document, so the separate
+[`FusedJSON.documents`](repeated-document-reader.md) API for NDJSON and repeated
+documents does not change this workflow.
 
 ## Format references
 

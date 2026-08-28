@@ -116,17 +116,22 @@ module FusedJSON
     end
 
     protected def prime_reader : Nil
+      raise_error("expected a JSON value") unless prime_reader?
+    end
+
+    protected def prime_reader? : Bool
       unless @limits_active
         skip_whitespace_unlimited
-        raise_error("expected a JSON value") if eof?
+        return false if eof?
         emit_value_unlimited
-        return
+        return true
       end
 
       skip_whitespace
       enforce_available_byte
-      raise_error("expected a JSON value") if eof?
+      return false if eof?
       emit_value
+      true
     end
 
     def int_value : Int64
@@ -364,7 +369,7 @@ module FusedJSON
       release_token
 
       if @frames.empty?
-        @limits_active ? finish_document : finish_document_unlimited
+        @limits_active ? finish_root : finish_root_unlimited
         return
       end
 
@@ -392,14 +397,47 @@ module FusedJSON
       end
     end
 
-    private def finish_document_unlimited : Nil
-      skip_whitespace_unlimited
-      raise_error("unexpected trailing content") unless eof?
+    protected def finish_root_unlimited : Nil
+      finish_document_unlimited
+    end
+
+    protected def finish_root : Nil
+      finish_document
+    end
+
+    protected def publish_eof : Nil
       set_event_position
       @event_context_id = 0_i64
       @kind = Kind::EOF
       @object_key = false
       reset_string
+    end
+
+    protected def reset_document_state : Nil
+      release_token
+      @frames.clear
+      @kind = Kind::EOF
+      @bool_value = false
+      @int_value = 0_i64
+      @float_value = 0.0
+      @byte_offset = current_offset
+      @object_key = false
+      @string_start = 0
+      @string_finish = 0
+      @string_escaped = false
+      @string_materialized = false
+      @next_frame_id = 0_i64
+      @event_context_id = 0_i64
+      @number_token = NumberToken.new(0, 0, false, false)
+      @int_materialized = false
+      @float_materialized = false
+      resource_limits.try &.reset_document(current_offset)
+    end
+
+    private def finish_document_unlimited : Nil
+      skip_whitespace_unlimited
+      raise_error("unexpected trailing content") unless eof?
+      publish_eof
     end
 
     private def next_array_value_unlimited(*, first : Bool) : Nil
@@ -545,11 +583,7 @@ module FusedJSON
       skip_whitespace
       enforce_available_byte
       raise_error("unexpected trailing content") unless eof?
-      set_event_position
-      @event_context_id = 0_i64
-      @kind = Kind::EOF
-      @object_key = false
-      reset_string
+      publish_eof
     end
 
     private def next_array_value(*, first : Bool) : Nil

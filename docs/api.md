@@ -1,8 +1,9 @@
 # Public API and Compatibility
 
 FusedJSON's supported pre-1.0 surface is the `FusedJSON` facade,
-`FusedJSON::Limits`, `FusedJSON::ParseError`, `FusedJSON::PullParser`, and
-`FusedJSON::PullParser::Kind`. The shard name and require path are
+`FusedJSON::Limits`, `FusedJSON::ParseError`, `FusedJSON::PullParser`,
+`FusedJSON::PullParser::Kind`, `FusedJSON::DocumentFraming`, and
+`FusedJSON::DocumentReader(T)`. The shard name and require path are
 `fused_json`; the namespace is `FusedJSON`. Parser, adapter, scanner, and
 stream-builder classes not listed here are implementation details even if
 Crystal's constant lookup can reach them.
@@ -10,16 +11,17 @@ Crystal's constant lookup can reach them.
 ## Entry Points and Options
 
 `load` and its `parse` alias return `JSON::Any`. `from_json` constructs the
-requested type, while `PullParser` exposes forward-only events. Every input
-must contain exactly one strict JSON document.
+requested type, while `PullParser` exposes forward-only events. These entry
+points require exactly one strict JSON document. `documents` creates a reader
+for an explicitly framed sequence of strict documents.
 
 | Option | Inputs | Default | Accepted values |
 | --- | --- | --- | --- |
-| `max_nesting` | `String`, `IO` | `512` | `1..512` |
-| `cache_keys` | `String`, `IO` | `false` | `Bool` |
-| `buffer_size` | `IO` | `32 * 1024` | `1..16 MiB` |
-| `max_token_bytes` | `IO` | `nil` | `nil` or `1..Int32::MAX` |
-| `limits` | `String`, `IO` | `FusedJSON::Limits::DEFAULT` | `FusedJSON::Limits` |
+| `max_nesting` | `String`, `IO`, reader | `512` | `1..512` |
+| `cache_keys` | `String`, `IO`, reader | `false` | `Bool` |
+| `buffer_size` | `IO`, reader | `32 * 1024` | `1..16 MiB` |
+| `max_token_bytes` | `IO`, reader | `nil` | `nil` or `1..Int32::MAX` |
+| `limits` | `String`, `IO`, reader | `FusedJSON::Limits::DEFAULT` | `FusedJSON::Limits` |
 
 Options are keyword-only. Existing `max_nesting` and streaming
 `max_token_bytes` calls remain valid. When one of those keywords and `limits`
@@ -50,14 +52,71 @@ member counts as one container entry, including duplicate members. The full
 contract is recorded in the
 [resource-limits decision](resource-limits-decision.md).
 
-Key caching is scoped to one parse. `max_cached_keys` counts actual pool
-insertions. With duplicate rejection off, an untyped pull `skip` does not
-materialize keys inside the skipped value and therefore does not use that
-budget. Duplicate rejection must decode keys even while skipping; when
+Key caching is scoped to one single-document parse or one repeated-document
+reader. `max_cached_keys` counts actual pool insertions. With duplicate
+rejection off, an untyped pull `skip` does not materialize keys inside the
+skipped value and therefore does not use that budget. Duplicate rejection must
+decode keys even while skipping; when
 `cache_keys` is also true, those keys enter the pool and count. The duplicate
 sets remain independent of the pool and may retain the same decoded keys in
 every open object. The cache limit has no effect when `cache_keys` is false.
 Duplicate comparison is case-sensitive and does not normalize Unicode.
+
+## Repeated-document readers
+
+`documents` borrows one `IO` and returns a forward-only iterator specialized
+for dynamic or typed results:
+
+```text
+FusedJSON.documents(source : IO, *, framing : DocumentFraming,
+                    buffer_size : Int = 32 * 1024,
+                    max_nesting : Int = 512,
+                    cache_keys : Bool = false,
+                    max_token_bytes : Int? = nil,
+                    limits : Limits = Limits::DEFAULT) : DocumentReader(JSON::Any)
+FusedJSON.documents(source : IO, type : T.class, *,
+                    framing : DocumentFraming,
+                    buffer_size : Int = 32 * 1024,
+                    max_nesting : Int = 512,
+                    cache_keys : Bool = false,
+                    max_token_bytes : Int? = nil,
+                    limits : Limits = Limits::DEFAULT) : DocumentReader(T)
+```
+
+`DocumentFraming::NDJSON` accepts exactly one value per LF- or CRLF-terminated
+record. Space and horizontal tab may surround the value. Empty records, raw
+line endings inside the value, lone CR, and trailing non-padding bytes are
+errors. A complete final record may end at physical EOF without a line ending.
+
+`DocumentFraming::WhitespaceSeparated` accepts multiline documents separated
+by one or more space, tab, LF, or CR bytes. It rejects adjacent roots without a
+separator. Separator validation occurs on the following `next` or `finish`, so
+a completed self-delimiting value can be returned before an open source reaches
+physical EOF. A numeric root still needs a separator or EOF to establish its
+token boundary.
+
+`next` returns one fully decoded result or `Iterator::Stop`. `documents_read`
+counts only returned results, `exhausted?` reports whether clean exhaustion has
+been established, and `finish` requires that only legal trailing framing
+remains. `finish` does not drain an unread document. Repeated calls after clean
+exhaustion are idempotent. A caller callback runs after the record boundary has
+been validated, so iteration may resume after a callback exception or `break`.
+A parse, limit, typed-constructor, or IO failure makes the reader discard-only.
+
+Dynamic values use the same mapping as `load`. Typed values use the same
+constructors and scalar fast paths as `from_json` and cannot inspect a later
+document. Per-document limits reset at framing boundaries. NDJSON document
+bytes exclude LF or CRLF; whitespace-separated document bytes include the
+separator consumed while seeking that document. The optional key cache and
+`max_cached_keys` budget span the reader's lifetime, allowing equal keys to be
+reused across documents.
+
+Offsets are absolute from the reader's initial position, and line and column
+state does not reset between documents. The reader uses one reusable input
+buffer, may read ahead into later documents, and never closes its caller-owned
+IO. It does not recover after errors or implement RFC 7464 record-separator
+framing. The [repeated-document guide](repeated-document-reader.md) gives the
+complete framing and lifetime contract.
 
 ## Typed Pull Reads
 

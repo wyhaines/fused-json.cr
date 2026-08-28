@@ -10,6 +10,7 @@ require "./fused_json/pull_parser"
 require "./fused_json/streaming_pull_parser"
 require "./fused_json/streaming_parser"
 require "./fused_json/json_pull_adapter"
+require "./fused_json/document_reader"
 
 # A fast, strict JSON parser for Crystal.
 module FusedJSON

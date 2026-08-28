@@ -86,6 +86,7 @@ module FusedJSON
     getter byte_kind : ByteKind
     property selected_value_frame_id : Int64
 
+    @document_byte_limit : Int64?
     @total_values : Int64
     @containers : Array(ContainerState)?
 
@@ -121,11 +122,21 @@ module FusedJSON
       @max_container_entries = limits.max_container_entries
       @max_cached_keys = limits.max_cached_keys
       @reject_duplicate_keys = limits.reject_duplicate_keys
-      @byte_limit = @max_document_bytes
+      @document_byte_limit = @max_document_bytes
+      @byte_limit = @document_byte_limit
       @byte_kind = ByteKind::Document
       @total_values = 0_i64
       @selected_value_frame_id = 0_i64
       @containers = [] of ContainerState if @max_container_entries || @reject_duplicate_keys
+    end
+
+    def reset_document(start : Int64) : Nil
+      @document_byte_limit = absolute_limit(start, @max_document_bytes)
+      @byte_limit = @document_byte_limit
+      @byte_kind = ByteKind::Document
+      @total_values = 0_i64
+      @selected_value_frame_id = 0_i64
+      @containers.try &.clear
     end
 
     def record_value? : Bool
@@ -171,13 +182,9 @@ module FusedJSON
 
     def begin_typed_value(start : Int64) : Nil
       limit = @max_typed_value_bytes || return
-      typed_limit = if limit > Int64::MAX - start
-                      Int64::MAX
-                    else
-                      start + limit
-                    end
+      typed_limit = absolute_limit(start, limit) || raise "missing typed-value byte limit"
 
-      if (document_limit = @max_document_bytes) && document_limit <= typed_limit
+      if (document_limit = @document_byte_limit) && document_limit <= typed_limit
         @byte_limit = document_limit
         @byte_kind = ByteKind::Document
       else
@@ -187,8 +194,13 @@ module FusedJSON
     end
 
     def end_typed_value : Nil
-      @byte_limit = @max_document_bytes
+      @byte_limit = @document_byte_limit
       @byte_kind = ByteKind::Document
+    end
+
+    private def absolute_limit(start : Int64, limit : Int64?) : Int64?
+      return unless limit
+      limit > Int64::MAX - start ? Int64::MAX : start + limit
     end
   end
 end
