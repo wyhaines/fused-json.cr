@@ -29,7 +29,7 @@ jobs:
 
       - name: Check Node harnesses
         run: |
-          for harness in scripts/m6_build_attestation.mjs scripts/tic_campaign.mjs scripts/tic_campaign_audit.mjs scripts/dynamic_gate.mjs; do
+          for harness in scripts/m6_build_attestation.mjs scripts/tic_campaign.mjs scripts/tic_campaign_audit.mjs scripts/dynamic_gate.mjs scripts/streaming_performance_campaign.mjs; do
             node --check "$harness"
             node "$harness" --self-audit > /dev/null
           done
@@ -164,6 +164,7 @@ jobs:
           crystal build --release --no-debug bench/sunlight_compat_scan.cr -o /tmp/fused-json-sunlight-compat-scan
           crystal build --release --no-debug bench/typed_cursor_cost.cr -o /tmp/fused-json-typed-cursor-cost
           crystal build --release --no-debug bench/streaming_tree_cost.cr -o /tmp/fused-json-streaming-tree-cost
+          crystal build --release --no-debug bench/streaming_token_cost.cr -o /tmp/fused-json-streaming-token-cost
           crystal build --release --no-debug -Dfused_json_limits_api bench/limits_overhead.cr -o /tmp/fused-json-limits-overhead
           crystal build --release --no-debug -Dfused_json_force_scalar_string_scan bench/parse.cr -o /tmp/fused-json-scalar-bench
 
@@ -181,6 +182,28 @@ jobs:
             > /tmp/fused-json-document-reader-memory.json
           jq -e '.mode == "typed" and .records == 1000 and .source_bytes == 66000 and .retain == false' \
             /tmp/fused-json-document-reader-memory.json > /dev/null
+
+      - name: Smoke test streaming token benchmark
+        if: ${{ matrix.experimental == false }}
+        run: |
+          FUSED_JSON_BENCH_COMMIT="$GITHUB_SHA" \
+            FUSED_JSON_TOKEN_PROFILE=escape-dense \
+            FUSED_JSON_TOKEN_CONSUMER=typed \
+            FUSED_JSON_TOKEN_TRANSPORT=chunked-memory \
+            FUSED_JSON_TOKEN_CHUNK=7 \
+            FUSED_JSON_TOKEN_VALUES=16 \
+            FUSED_JSON_TOKEN_BYTES=96 \
+            FUSED_JSON_TOKEN_BOUNDARY_PREFLIGHT=1 \
+            FUSED_JSON_BENCH_WARMUP=0 \
+            FUSED_JSON_BENCH_TIME=0.01 \
+            FUSED_JSON_BENCH_ALLOCATIONS=1 \
+            FUSED_JSON_TOKEN_LATENCY_ITERATIONS=1 \
+            /tmp/fused-json-streaming-token-cost \
+            > /tmp/fused-json-streaming-token-cost.txt
+          tail -n 1 /tmp/fused-json-streaming-token-cost.txt \
+            | jq -e --arg commit "$GITHUB_SHA" \
+              '.receipt == "fused-json-streaming-token-cost" and .version == 1 and .fused_json_commit == $commit and .profile == "escape-dense" and .consumer == "typed" and .transport == "chunked-memory" and .boundary_preflight == true and .expected_values == 16 and .preflight_bytes_read == .source_bytes' \
+            > /dev/null
 
       - name: Smoke test Sunlight scanner
         if: ${{ matrix.experimental == false }}

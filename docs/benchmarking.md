@@ -2,11 +2,14 @@
 
 Benchmark only optimized builds and verify semantics before measuring. The
 programs under `bench/` abort on result mismatches and retain results in
-observable sinks. The [post-0.2 performance plan](post-0.2-performance-plan.md)
-defines the attribution work, staged decision gates, and paired validation for
-typed, key-cache, and direct streaming-tree experiments. The
-[final results](post-0.2-performance-results.md) record their decisions and
-closeout validation; this guide remains the command and protocol reference.
+observable sinks. The completed
+[post-0.2 performance plan](post-0.2-performance-plan.md) defines the
+attribution work and paired validation for typed, key-cache, and direct
+streaming-tree experiments, and its
+[final results](post-0.2-performance-results.md) record their decisions. The
+current [streaming specification](streaming-performance.md) and
+[implementation plan](streaming-performance-plan.md) define the next
+measurement work. This guide remains the command and protocol reference.
 
 ```console
 $ crystal build --release --no-debug bench/parse.cr -o bin/parse-bench
@@ -21,6 +24,8 @@ $ crystal build --release --no-debug bench/document_reader_memory.cr \
 $ crystal build --release --no-debug bench/typed_cursor_cost.cr -o bin/typed-cursor-cost
 $ crystal build --release --no-debug bench/streaming_tree_cost.cr \
     -o bin/streaming-tree-cost
+$ crystal build --release --no-debug bench/streaming_token_cost.cr \
+    -o bin/streaming-token-cost
 $ crystal build --release --no-debug bench/limits_overhead.cr \
     -o bin/limits-overhead-default
 $ crystal build --release --no-debug -Dfused_json_limits_api \
@@ -135,6 +140,48 @@ small equivalent fixture through one-byte, irregular, and buffer-adjacent read
 patterns. File mode accepts one path argument. Pairing scripts may bind
 `FUSED_JSON_BENCH_PAIR_ID` and `FUSED_JSON_BENCH_ORDER_POSITION` into the
 receipt.
+
+`streaming-token-cost` separates refill, token-boundary, scan, and string
+materialization costs. Select its generated token, public consumer, and
+transport independently:
+
+```console
+$ GC_NPROCS=1 GC_MARKERS=1 \
+    FUSED_JSON_BENCH_COMMIT=$(git rev-parse HEAD) \
+    FUSED_JSON_TOKEN_PROFILE=escape-sparse \
+    FUSED_JSON_TOKEN_CONSUMER=pull-materialize \
+    FUSED_JSON_TOKEN_TRANSPORT=chunked-memory \
+    FUSED_JSON_TOKEN_CHUNK=4096 \
+    taskset -c 4 bin/streaming-token-cost
+```
+
+Profiles cover numbers, short and long plain strings, raw UTF-8, several escape
+densities, Unicode and surrogate escapes, and repeated or unique object keys.
+Consumers cover materializing and skipping pull traversal, dynamic trees,
+typed reads, and dynamic or typed document readers. Transports are `string`,
+`io-memory`, and `chunked-memory`; document readers require one of the IO
+transports. `FUSED_JSON_TOKEN_LIMITS` selects `none`, `token`, `document`, or
+`duplicate-keys`. The remaining `FUSED_JSON_TOKEN_*` settings control value
+count, token size, leading alignment padding, parser buffer, key caching,
+latency samples, and boundary preflight.
+
+The campaign runner records an exploratory baseline or pairs two binaries. It
+creates a new checksummed output directory and refuses to overwrite one:
+
+```console
+$ node scripts/streaming_performance_campaign.mjs \
+    --mode=collect \
+    --output=/tmp/fused-json-streaming-baseline \
+    --binary=bin/streaming-token-cost \
+    --commit=$(git rev-parse HEAD) \
+    --matrix=attribution \
+    --samples=3
+```
+
+Use `--mode=compare` with `--baseline`, `--baseline-commit`, `--candidate`, and
+`--candidate-commit` for paired measurements. Available focused matrices are
+reported by `--self-audit`. Formal commands and gates are frozen in the
+streaming performance protocol before a runtime candidate is measured.
 
 `limits-overhead` measures the cost of carrying a disabled limits policy. Both
 configurations avoid allocating counter and duplicate-key state. The tool

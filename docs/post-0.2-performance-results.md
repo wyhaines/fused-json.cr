@@ -104,6 +104,10 @@ strings and boundary-spanning tokens. Any shared-scanner change must preserve
 lazy pull/skip behavior and repeat the existing String, pull, typed, boundary,
 offset, and bounded-memory gates.
 
+That follow-up is now defined by the
+[streaming performance specification](streaming-performance.md) and its
+[implementation plan](streaming-performance-plan.md).
+
 The checksummed Stage 3 evidence is under
 `benchmark-data/post-0.2-performance/closeout-5224d09/`. Compiled binaries and
 the generated 4 GiB fixture are omitted; their source, build identities,
