@@ -266,68 +266,8 @@ module FusedJSON
 
     protected def scan_string : Bool
       consume_token_ascii(0x22_u8) # opening quote
+      decoded_shrinkage = 0
 
-      loop do
-        enforce_available_byte
-        if @input_position >= @input_size
-          raise_error("unterminated string") unless refill
-        end
-        enforce_stream_token_byte
-
-        byte = @input_buffer[@input_position]
-        case byte
-        when 0x22_u8 # "
-          consume_token_ascii(byte)
-          finish_token
-          return false
-        when 0x5c_u8 # \
-          scan_escaped_string_tail(scan_escape)
-          return true
-        else
-          raise_error("unescaped control byte in string") if byte < 0x20_u8
-          if byte < 0x80_u8
-            start = @input_position
-            @input_position = ASCIIStringScanner.find_special(@input_buffer, @input_position, @input_size)
-            advance_ascii_span(@input_position - start)
-          else
-            scan_utf8_sequence
-          end
-        end
-      end
-    end
-
-    protected def scan_string_unlimited : Bool
-      consume_token_ascii_unlimited(0x22_u8) # opening quote
-
-      loop do
-        if @input_position >= @input_size
-          raise_error("unterminated string") unless refill
-        end
-
-        byte = @input_buffer[@input_position]
-        case byte
-        when 0x22_u8 # "
-          consume_token_ascii_unlimited(byte)
-          finish_token
-          return false
-        when 0x5c_u8 # \
-          scan_escaped_string_tail_unlimited(scan_escape_unlimited)
-          return true
-        else
-          raise_error("unescaped control byte in string") if byte < 0x20_u8
-          if byte < 0x80_u8
-            start = @input_position
-            @input_position = ASCIIStringScanner.find_special(@input_buffer, @input_position, @input_size)
-            advance_ascii_span_unlimited(@input_position - start)
-          else
-            scan_utf8_sequence_unlimited
-          end
-        end
-      end
-    end
-
-    @[NoInline]
-    private def scan_escaped_string_tail(decoded_shrinkage : Int32) : Nil
       loop do
         enforce_available_byte
         if @input_position >= @input_size
@@ -344,7 +284,7 @@ module FusedJSON
           # start slot without growing every streaming parser instance.
           @string_start = decoded_shrinkage
           finish_token
-          return
+          return decoded_shrinkage > 0
         when 0x5c_u8 # \
           decoded_shrinkage += scan_escape
         else
@@ -360,8 +300,10 @@ module FusedJSON
       end
     end
 
-    @[NoInline]
-    private def scan_escaped_string_tail_unlimited(decoded_shrinkage : Int32) : Nil
+    protected def scan_string_unlimited : Bool
+      consume_token_ascii_unlimited(0x22_u8) # opening quote
+      decoded_shrinkage = 0
+
       loop do
         if @input_position >= @input_size
           raise_error("unterminated string") unless refill
@@ -373,7 +315,7 @@ module FusedJSON
           consume_token_ascii_unlimited(byte)
           @string_start = decoded_shrinkage
           finish_token
-          return
+          return decoded_shrinkage > 0
         when 0x5c_u8 # \
           decoded_shrinkage += scan_escape_unlimited
         else
