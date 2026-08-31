@@ -873,6 +873,7 @@ module FusedJSON
       consume_token_raw_unlimited(byte)
     end
 
+    @[NoInline]
     private def decode_escaped_string(bytes : Bytes, decoded_bytesize : Int32) : String
       String.new(decoded_bytesize) do |output|
         {decode_escaped_string_into(bytes, output), 0}
