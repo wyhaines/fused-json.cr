@@ -1,6 +1,6 @@
 # Streaming performance protocol
 
-Status: frozen for the first runtime candidate, with the build-root amendment
+Status: frozen for the escaped-string runtime candidate, with the amendments
 below. This protocol was written at the benchmark-only commit
 `773124b6c9a0e0ab9e659c27edc5a37cd6cbaeda`, before any streaming runtime
 change was measured.
@@ -46,6 +46,33 @@ the String parser source; source review and the complete String correctness
 suite enforce that restriction. The existing version-2 cross-binary controls
 remain diagnostic evidence, but they do not decide acceptance. Thresholds and
 target membership are unchanged.
+
+Campaign format version 4 preserves that fixed-binary policy and adds external
+peak-RSS capture for every child. It also admits the frozen `tree` matrix
+described below. No version-3 throughput result is reinterpreted; campaigns
+that decide final acceptance use version 4.
+
+## Decoder-strategy amendment
+
+The first runtime strategy measured decoded shrinkage while the streaming
+scanner validated each escape. Candidate
+`bc99cd589f385acadb42b55c4bbab9b5015b8559` cleared the escaped target gate,
+but its full attribution campaign failed the per-profile guardrail floor. The
+extra scan bookkeeping affected plain and skipped values even when no escaped
+string was materialized, so that strategy is rejected.
+
+Replacement candidate `ab892f2c67e2379c368a2825a03dba6714add55f`
+restores the streaming string and escape scanners to the runtime reference.
+Only escaped-value decoding changes. It gives `String.new` the validated raw
+content length as capacity, writes the decoded bytes directly, and returns the
+actual byte count. Crystal then shrinks the allocation to that returned count.
+This keeps the retained string right-sized without carrying sizing work through
+plain or skipped scans.
+
+This amendment was recorded before the replacement receives a full attribution
+campaign or a 20-pair formal campaign. Its earlier five-pair screens remain
+screening or diagnostic evidence. Target membership, correctness requirements,
+and all throughput, allocation, latency, and memory thresholds are unchanged.
 
 ## Reference build and host
 
@@ -137,12 +164,12 @@ $ node scripts/streaming_performance_campaign.mjs \
 The baseline is diagnostic. It reports medians and noise, but it does not by
 itself accept an optimization.
 
-## First candidate: escaped-string materialization
+## Escaped-string materialization candidate
 
-The first candidate may only account for decoded size during the existing
-streaming validation pass and use that information to build an owned decoded
-string. It must not change the String parser, public API, skip behavior, JSON
-grammar, cache policy, or error locations.
+The candidate may either account for decoded size during the existing streaming
+validation pass or use the capacity-and-returned-size decoder admitted above.
+It must not change the String parser, public API, skip behavior, JSON grammar,
+cache policy, or error locations.
 
 The `escaped` comparison matrix declares 12 targets:
 
@@ -169,20 +196,46 @@ If screening passes, the complete `attribution` matrix receives five paired
 runs. Its 42 streaming guardrails must have a geometric mean of at least 0.99x
 and no median below 0.97x. The nine String controls use the same floors stated
 above. Existing `small-objects`, `nested`, and `escaped-strings` tree profiles
-over ordinary and 4 KiB short-read IO remain end-to-end controls, with caching
-both off and on.
+use 50,000 generated records over ordinary and 4 KiB short-read IO, with
+caching both off and on. The four escaped-string profiles must have a geometric
+mean of at least 1.02x and no median below 0.98x. The other eight tree profiles
+are guardrails: their geometric mean must be at least 0.99x and no median may
+fall below 0.97x. The same managed-allocation tolerance applies.
+
+The tree comparison uses five balanced pairs with the screening durations:
+
+```console
+$ node scripts/streaming_performance_campaign.mjs \
+    --mode=compare \
+    --output=docs/benchmark-data/streaming-performance/candidate-COMMIT/tree-v4-normalized \
+    --baseline=/tmp/fused-json-streaming-tree-cost-normalized-baseline-773124b \
+    --baseline-commit=773124b6c9a0e0ab9e659c27edc5a37cd6cbaeda \
+    --candidate=/tmp/fused-json-streaming-tree-cost-normalized-candidate-COMMIT \
+    --candidate-commit=FULL_COMMIT \
+    --matrix=tree \
+    --pairs=5 \
+    --cpu=4 \
+    --max-load=2 \
+    --min-core-idle-percent=90 \
+    --warmup=0.5 \
+    --time=1 \
+    --allocations=3 \
+    --latency-iterations=50
+```
 
 A candidate that clears screening receives 20 pairs, evenly balanced for
 process order, with 1 second of warmup, 2 seconds of measurement, five
 allocation iterations, and 100 latency iterations. The target geometric mean
 must remain at least 1.05x and its one-sided 95% paired-bootstrap lower bound
-must be at least 1.02x. The analysis uses campaign format version 3, 10,000
+must be at least 1.02x. The analysis uses campaign format version 4, 10,000
 resamples, and seed `0x5eed2026`.
 
 First-value latency may not regress by more than 2% in either ordinary or
-short-read IO. Fresh-process peak RSS may not rise by more than the greater of
-1 MiB or 2%. Returned strings must remain valid after the reader advances, and
-the scratch-retention bound must remain unchanged.
+short-read IO. The campaign wrapper records GNU `time` peak RSS for every fresh
+child. On every target and guardrail profile, median candidate peak RSS may not
+exceed median baseline peak RSS by more than the greater of 1 MiB or 2%.
+Returned strings must remain valid after the reader advances, and the
+scratch-retention bound must remain unchanged.
 
 ## Later candidates
 

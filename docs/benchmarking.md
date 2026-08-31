@@ -196,10 +196,18 @@ apply the appropriate threshold to each. String controls run the baseline
 binary in both labeled positions, so they measure host drift without folding
 unrelated link-layout changes into the control. Target and guardrail profiles
 continue to compare the two supplied binaries. Each observation records both
-its balanced order position and the binary role actually used. Before creating
-the output directory, the runner requires the one-minute host load to be at
-most 2 and samples the selected CPU and its hardware-thread sibling for one
-second; both must be at least 90% idle.
+its balanced order position and the binary role actually used. GNU `time`
+records fresh-process peak RSS alongside each benchmark receipt.
+
+The `tree` matrix expects `streaming-tree-cost` binaries instead of
+`streaming-token-cost` binaries. It compares `small-objects`, `nested`, and
+`escaped-strings` over ordinary and deterministic 4 KiB short-read IO, with key
+caching both off and on. The escaped profiles are targets; the other profiles
+are guardrails.
+
+Before creating the output directory, the runner requires the one-minute host
+load to be at most 2 and samples the selected CPU and its hardware-thread
+sibling for one second; both must be at least 90% idle.
 `--max-load` and `--min-core-idle-percent` make those limits explicit for
 exploratory runs. Do not relax the limits frozen by a formal protocol. Formal
 commands and gates are frozen in the

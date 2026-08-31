@@ -7,7 +7,8 @@ import path from "node:path";
 import {spawnSync} from "node:child_process";
 
 const RECEIPT = "fused-json-streaming-performance-campaign";
-const VERSION = 3;
+const VERSION = 4;
+const GNU_TIME = "/usr/bin/time";
 const TASKSET = "/usr/bin/taskset";
 const QUIET_SAMPLE_MILLISECONDS = 1_000;
 
@@ -16,6 +17,7 @@ class UsageError extends Error {}
 function entry(id, profile, consumer, transport, options = {}) {
   return Object.freeze({
     id,
+    benchmark: "token",
     profile,
     consumer,
     transport,
@@ -26,6 +28,19 @@ function entry(id, profile, consumer, transport, options = {}) {
     chunk_size: options.chunk_size ?? 4 * 1024,
     cache_keys: options.cache_keys ?? false,
     limit_policy: options.limit_policy ?? "none",
+  });
+}
+
+function treeEntry(id, shape, transport, cacheKeys) {
+  return Object.freeze({
+    id,
+    benchmark: "tree",
+    shape,
+    transport,
+    records: 50_000,
+    buffer_size: 32 * 1024,
+    chunk_size: 4 * 1024,
+    cache_keys: cacheKeys,
   });
 }
 
@@ -121,6 +136,21 @@ const MATRICES = Object.freeze({
     entry("number-chunked", "floats", "pull-materialize", "chunked-memory", {values: 20_000}),
   ]),
 
+  tree: Object.freeze([
+    treeEntry("small-objects-io", "small-objects", "io-memory", false),
+    treeEntry("small-objects-io-cached", "small-objects", "io-memory", true),
+    treeEntry("small-objects-chunked", "small-objects", "chunked-memory", false),
+    treeEntry("small-objects-chunked-cached", "small-objects", "chunked-memory", true),
+    treeEntry("nested-io", "nested", "io-memory", false),
+    treeEntry("nested-io-cached", "nested", "io-memory", true),
+    treeEntry("nested-chunked", "nested", "chunked-memory", false),
+    treeEntry("nested-chunked-cached", "nested", "chunked-memory", true),
+    treeEntry("escaped-strings-io", "escaped-strings", "io-memory", false),
+    treeEntry("escaped-strings-io-cached", "escaped-strings", "io-memory", true),
+    treeEntry("escaped-strings-chunked", "escaped-strings", "chunked-memory", false),
+    treeEntry("escaped-strings-chunked-cached", "escaped-strings", "chunked-memory", true),
+  ]),
+
   smoke: Object.freeze([
     entry("plain", "plain-long", "pull-materialize", "io-memory", {values: 16, token_bytes: 96}),
     entry("escaped", "escape-dense", "typed", "chunked-memory", {values: 16, token_bytes: 96, chunk_size: 7}),
@@ -134,6 +164,9 @@ function matrixGroup(matrix, entryValue) {
   }
   if (matrix === "escaped") {
     return entryValue.transport === "string" ? "string-control" : "target";
+  }
+  if (matrix === "tree") {
+    return entryValue.shape === "escaped-strings" ? "target" : "guardrail";
   }
   if (matrix === "boundary") return "target";
   return "diagnostic";
@@ -160,6 +193,8 @@ function usage() {
     "    --candidate-commit=40hex [--matrix=escaped] [--pairs=5]",
     "  All campaigns require one-minute load <= --max-load (default 2)",
     "    and selected-core sibling idle >= --min-core-idle-percent (default 90).",
+    "  The tree matrix requires streaming-tree-cost binaries.",
+    "  Every fresh child records external peak RSS through GNU time.",
     "  scripts/streaming_performance_campaign.mjs --self-audit",
   ].join("\n");
 }
@@ -401,7 +436,7 @@ function appendJournal(file, value) {
 }
 
 function childEnvironment(entryValue, options, commitValue, pairId, orderPosition) {
-  return {
+  const environment = {
     PATH: "/usr/bin:/bin",
     LANG: "C",
     LC_ALL: "C",
@@ -414,6 +449,20 @@ function childEnvironment(entryValue, options, commitValue, pairId, orderPositio
     FUSED_JSON_BENCH_WARMUP: String(options.warmup),
     FUSED_JSON_BENCH_TIME: String(options.time),
     FUSED_JSON_BENCH_ALLOCATIONS: String(options.allocations),
+  };
+  if (entryValue.benchmark === "tree") {
+    return {
+      ...environment,
+      FUSED_JSON_TREE_MODE: entryValue.transport,
+      FUSED_JSON_TREE_SHAPE: entryValue.shape,
+      FUSED_JSON_TREE_RECORDS: String(entryValue.records),
+      FUSED_JSON_TREE_BUFFER: String(entryValue.buffer_size),
+      FUSED_JSON_TREE_CHUNK: String(entryValue.chunk_size),
+      FUSED_JSON_TREE_CACHE_KEYS: entryValue.cache_keys ? "1" : "0",
+    };
+  }
+  return {
+    ...environment,
     FUSED_JSON_TOKEN_LATENCY_ITERATIONS: String(options.latency_iterations),
     FUSED_JSON_TOKEN_PROFILE: entryValue.profile,
     FUSED_JSON_TOKEN_CONSUMER: entryValue.consumer,
@@ -444,22 +493,8 @@ function parseReceipt(stdout) {
 function receiptIssues(receipt, entryValue, options, commitValue, pairId, orderPosition) {
   const issues = [];
   const check = (condition, message) => { if (!condition) issues.push(message); };
-  check(receipt?.receipt === "fused-json-streaming-token-cost" && receipt?.version === 1,
-    "wrong receipt identity");
   check(receipt?.release_build === true, "benchmark was not a release build");
   check(receipt?.fused_json_commit === commitValue, "commit mismatch");
-  check(receipt?.profile === entryValue.profile && receipt?.consumer === entryValue.consumer &&
-    receipt?.transport === entryValue.transport, "workload identity mismatch");
-  check(receipt?.values === entryValue.values && receipt?.requested_token_bytes === entryValue.token_bytes &&
-    receipt?.leading_padding === entryValue.leading_padding, "fixture parameters differ");
-  check(receipt?.buffer_size === entryValue.buffer_size, "buffer size differs");
-  const expectedChunks = entryValue.transport === "chunked-memory" ? [entryValue.chunk_size] : [];
-  check(JSON.stringify(receipt?.chunk_pattern) === JSON.stringify(expectedChunks), "chunk pattern differs");
-  check(receipt?.cache_keys === entryValue.cache_keys && receipt?.limit_policy === entryValue.limit_policy,
-    "cache or limit policy differs");
-  check(receipt?.warmup_seconds === options.warmup && receipt?.calculation_seconds === options.time &&
-    receipt?.allocation_iterations === options.allocations &&
-    receipt?.latency_iterations === options.latency_iterations, "measurement parameters differ");
   check(receipt?.pair_id === pairId && receipt?.order_position === orderPosition,
     "pair identity differs");
   check(receipt?.gc_nprocs === "1" && receipt?.gc_markers === "1", "GC settings differ");
@@ -469,17 +504,55 @@ function receiptIssues(receipt, entryValue, options, commitValue, pairId, orderP
     "invalid RSD");
   check(Number.isSafeInteger(receipt?.managed_bytes_per_operation) &&
     receipt.managed_bytes_per_operation >= 0, "invalid allocation result");
-  check(Number.isFinite(receipt?.one_value_microseconds) && receipt.one_value_microseconds > 0,
-    "invalid one-value latency");
-  check(/^[0-9a-f]{64}$/.test(receipt?.source_sha256 ?? "") &&
-    /^[0-9a-f]{64}$/.test(receipt?.benchmark_source_sha256 ?? "") &&
-    /^[0-9a-f]{64}$/.test(receipt?.benchmark_support_sha256 ?? ""), "invalid source identity");
-  if (entryValue.transport === "string") {
-    check(receipt?.preflight_read_calls === 0 && receipt?.preflight_bytes_read === 0,
-      "String transport unexpectedly read an IO");
+
+  if (entryValue.benchmark === "tree") {
+    check(receipt?.receipt === "fused-json-streaming-tree-cost" && receipt?.version === 1,
+      "wrong receipt identity");
+    check(receipt?.shape === entryValue.shape && receipt?.mode === entryValue.transport,
+      "workload identity mismatch");
+    check(receipt?.generated_records === entryValue.records &&
+      receipt?.buffer_size === entryValue.buffer_size, "fixture parameters differ");
+    const expectedChunk = entryValue.transport === "chunked-memory" ? entryValue.chunk_size : null;
+    check(receipt?.chunk_size === expectedChunk, "chunk size differs");
+    check(receipt?.cache_keys === entryValue.cache_keys, "cache policy differs");
+    check(receipt?.warmup_seconds === options.warmup &&
+      receipt?.calculation_seconds === options.time &&
+      receipt?.allocation_iterations === options.allocations, "measurement parameters differ");
+    check(/^[0-9a-f]{64}$/.test(receipt?.source_sha256 ?? "") &&
+      /^[0-9a-f]{64}$/.test(receipt?.result_sha256 ?? ""), "invalid source identity");
   } else {
-    check(receipt?.preflight_read_calls > 0 && receipt?.preflight_bytes_read === receipt?.source_bytes,
-      "streaming preflight did not consume its IO");
+    check(receipt?.receipt === "fused-json-streaming-token-cost" && receipt?.version === 1,
+      "wrong receipt identity");
+    check(receipt?.profile === entryValue.profile && receipt?.consumer === entryValue.consumer &&
+      receipt?.transport === entryValue.transport, "workload identity mismatch");
+    check(receipt?.values === entryValue.values &&
+      receipt?.requested_token_bytes === entryValue.token_bytes &&
+      receipt?.leading_padding === entryValue.leading_padding, "fixture parameters differ");
+    check(receipt?.buffer_size === entryValue.buffer_size, "buffer size differs");
+    const expectedChunks = entryValue.transport === "chunked-memory" ? [entryValue.chunk_size] : [];
+    check(JSON.stringify(receipt?.chunk_pattern) === JSON.stringify(expectedChunks),
+      "chunk pattern differs");
+    check(receipt?.cache_keys === entryValue.cache_keys &&
+      receipt?.limit_policy === entryValue.limit_policy, "cache or limit policy differs");
+    check(receipt?.warmup_seconds === options.warmup &&
+      receipt?.calculation_seconds === options.time &&
+      receipt?.allocation_iterations === options.allocations &&
+      receipt?.latency_iterations === options.latency_iterations,
+      "measurement parameters differ");
+    check(Number.isFinite(receipt?.one_value_microseconds) && receipt.one_value_microseconds > 0,
+      "invalid one-value latency");
+    check(/^[0-9a-f]{64}$/.test(receipt?.source_sha256 ?? "") &&
+      /^[0-9a-f]{64}$/.test(receipt?.benchmark_source_sha256 ?? "") &&
+      /^[0-9a-f]{64}$/.test(receipt?.benchmark_support_sha256 ?? ""),
+      "invalid source identity");
+    if (entryValue.transport === "string") {
+      check(receipt?.preflight_read_calls === 0 && receipt?.preflight_bytes_read === 0,
+        "String transport unexpectedly read an IO");
+    } else {
+      check(receipt?.preflight_read_calls > 0 &&
+        receipt?.preflight_bytes_read === receipt?.source_bytes,
+        "streaming preflight did not consume its IO");
+    }
   }
   return issues;
 }
@@ -489,7 +562,11 @@ function runChild(binary, commitValue, entryValue, options, pairId, orderPositio
   const stdoutFile = path.join(directory, `${stem}.stdout.txt`);
   const stderrFile = path.join(directory, `${stem}.stderr.txt`);
   const receiptFile = path.join(directory, `${stem}.receipt.json`);
-  const command = [TASKSET, "-c", String(options.cpu), binary];
+  const peakRssFile = path.join(directory, `${stem}.peak-rss-kib.txt`);
+  const command = [
+    GNU_TIME, "-f", "%M", "-o", peakRssFile,
+    TASKSET, "-c", String(options.cpu), binary,
+  ];
   const startedAt = new Date().toISOString();
   const loadBefore = os.loadavg();
   const result = spawnSync(command[0], command.slice(1), {
@@ -503,6 +580,12 @@ function runChild(binary, commitValue, entryValue, options, pairId, orderPositio
   fs.writeFileSync(stderrFile, result.stderr ?? "", {encoding: "utf8", flag: "wx"});
   if (result.error) throw new Error(`${stem} failed to start: ${result.error.message}`);
   if (result.status !== 0) throw new Error(`${stem} exited with status ${result.status}`);
+  const peakRssText = fs.readFileSync(peakRssFile, "utf8").trim();
+  if (!/^\d+$/.test(peakRssText)) throw new Error(`${stem} has invalid peak RSS output`);
+  const peakRssKib = Number(peakRssText);
+  if (!Number.isSafeInteger(peakRssKib) || peakRssKib <= 0) {
+    throw new Error(`${stem} has invalid peak RSS value`);
+  }
 
   const receipt = parseReceipt(result.stdout);
   const issues = receiptIssues(receipt, entryValue, options, commitValue, pairId, orderPosition);
@@ -519,6 +602,8 @@ function runChild(binary, commitValue, entryValue, options, pairId, orderPositio
     stdout: path.basename(stdoutFile),
     stderr: path.basename(stderrFile),
     receipt: path.basename(receiptFile),
+    peak_rss: path.basename(peakRssFile),
+    peak_rss_kib: peakRssKib,
     measurement: receipt,
   };
 }
@@ -548,8 +633,9 @@ function collectSummary(entries, observations) {
       median_nanoseconds_per_byte: median(selected.map((item) => item.measurement.nanoseconds_per_byte)),
       median_managed_bytes_per_operation: median(selected.map((item) =>
         item.measurement.managed_bytes_per_operation)),
-      median_one_value_microseconds: median(selected.map((item) =>
-        item.measurement.one_value_microseconds)),
+      median_one_value_microseconds: entryValue.benchmark === "token" ?
+        median(selected.map((item) => item.measurement.one_value_microseconds)) : null,
+      median_peak_rss_kib: median(selected.map((item) => item.peak_rss_kib)),
       maximum_rsd_percent: Math.max(...selected.map((item) => item.measurement.relative_stddev_percent)),
     };
   });
@@ -579,6 +665,10 @@ function comparisonGroup(profiles, group) {
     ),
     minimum_profile_median: Math.min(...selected.map((profile) =>
       profile.median_throughput_ratio)),
+    every_allocation_within_limit: selected.every((profile) =>
+      profile.allocation_within_limit),
+    every_peak_rss_within_limit: selected.every((profile) =>
+      profile.peak_rss_within_limit),
   };
 }
 
@@ -591,10 +681,32 @@ function compareSummary(entries, observations) {
       pair[item.order_position] = item.measurement;
       pairs.set(item.pair_id, pair);
     }
-    const ratios = [...pairs.values()].map((pair) => {
+    const paired = [...pairs.values()];
+    const ratios = paired.map((pair) => {
       if (!pair.baseline || !pair.candidate) throw new Error(`${entryValue.id} has an incomplete pair`);
       return pair.candidate.mib_per_second / pair.baseline.mib_per_second;
     });
+    const baselineAllocation = median(paired.map((pair) =>
+      pair.baseline.managed_bytes_per_operation));
+    const candidateAllocation = median(paired.map((pair) =>
+      pair.candidate.managed_bytes_per_operation));
+    const allocationTolerance = Math.max(4 * 1024, baselineAllocation * 0.001);
+    const selectedObservations = selected.reduce((result, item) => {
+      const pair = result.get(item.pair_id) ?? {};
+      pair[item.order_position] = item;
+      result.set(item.pair_id, pair);
+      return result;
+    }, new Map());
+    const pairedObservations = [...selectedObservations.values()];
+    const baselinePeakRss = median(pairedObservations.map((pair) =>
+      pair.baseline.peak_rss_kib));
+    const candidatePeakRss = median(pairedObservations.map((pair) =>
+      pair.candidate.peak_rss_kib));
+    const peakRssTolerance = Math.max(1024, baselinePeakRss * 0.02);
+    const latencyRatios = paired.flatMap((pair) =>
+      Number.isFinite(pair.baseline.one_value_microseconds) &&
+      Number.isFinite(pair.candidate.one_value_microseconds) ?
+        [pair.candidate.one_value_microseconds / pair.baseline.one_value_microseconds] : []);
     return {
       entry_id: entryValue.id,
       group: entryValue.group,
@@ -603,10 +715,19 @@ function compareSummary(entries, observations) {
       median_throughput_ratio: median(ratios),
       geometric_mean_throughput_ratio: geometricMean(ratios),
       minimum_throughput_ratio: Math.min(...ratios),
-      median_allocation_delta_bytes: median([...pairs.values()].map((pair) =>
+      median_allocation_delta_bytes: median(paired.map((pair) =>
         pair.candidate.managed_bytes_per_operation - pair.baseline.managed_bytes_per_operation)),
-      median_latency_ratio: median([...pairs.values()].map((pair) =>
-        pair.candidate.one_value_microseconds / pair.baseline.one_value_microseconds)),
+      median_baseline_managed_bytes_per_operation: baselineAllocation,
+      median_candidate_managed_bytes_per_operation: candidateAllocation,
+      allocation_tolerance_bytes: allocationTolerance,
+      allocation_within_limit: candidateAllocation - baselineAllocation <= allocationTolerance,
+      median_latency_ratio: latencyRatios.length === 0 ? null : median(latencyRatios),
+      median_baseline_peak_rss_kib: baselinePeakRss,
+      median_candidate_peak_rss_kib: candidatePeakRss,
+      median_peak_rss_delta_kib: candidatePeakRss - baselinePeakRss,
+      median_peak_rss_ratio: candidatePeakRss / baselinePeakRss,
+      peak_rss_tolerance_kib: peakRssTolerance,
+      peak_rss_within_limit: candidatePeakRss - baselinePeakRss <= peakRssTolerance,
     };
   });
   const matrixRatio = geometricMean(profiles.map((profile) => profile.geometric_mean_throughput_ratio));
@@ -616,6 +737,9 @@ function compareSummary(entries, observations) {
   const target = groups.target ?? null;
   const guardrail = groups.guardrail ?? null;
   const stringControl = groups["string-control"] ?? null;
+  const tokenTargetsWithLatency = profiles.filter((profile) =>
+    profile.group === "target" && profile.median_latency_ratio !== null);
+  const treeMatrix = entries.every((entryValue) => entryValue.benchmark === "tree");
   return {
     mode: "compare",
     profiles,
@@ -624,10 +748,14 @@ function compareSummary(entries, observations) {
     minimum_profile_median: Math.min(...profiles.map((profile) => profile.median_throughput_ratio)),
     groups,
     screening: {
-      target_geometric_mean_at_least_1_05: target === null ? null :
+      target_geometric_mean_at_least_1_05: target === null || treeMatrix ? null :
         target.geometric_mean_throughput_ratio >= 1.05,
+      tree_target_geometric_mean_at_least_1_02: target === null || !treeMatrix ? null :
+        target.geometric_mean_throughput_ratio >= 1.02,
       every_target_median_at_least_0_98: target === null ? null :
         target.minimum_profile_median >= 0.98,
+      target_bootstrap_lower_95_at_least_1_02: target === null || treeMatrix ? null :
+        target.paired_bootstrap_lower_95 >= 1.02,
       guardrail_geometric_mean_at_least_0_99: guardrail === null ? null :
         guardrail.geometric_mean_throughput_ratio >= 0.99,
       every_guardrail_median_at_least_0_97: guardrail === null ? null :
@@ -636,6 +764,16 @@ function compareSummary(entries, observations) {
         stringControl.geometric_mean_throughput_ratio >= 0.99,
       every_string_control_median_at_least_0_97: stringControl === null ? null :
         stringControl.minimum_profile_median >= 0.97,
+      every_target_allocation_within_limit: target === null ? null :
+        target.every_allocation_within_limit,
+      every_guardrail_allocation_within_limit: guardrail === null ? null :
+        guardrail.every_allocation_within_limit,
+      every_target_peak_rss_within_limit: target === null ? null :
+        target.every_peak_rss_within_limit,
+      every_guardrail_peak_rss_within_limit: guardrail === null ? null :
+        guardrail.every_peak_rss_within_limit,
+      every_target_latency_at_most_1_02: tokenTargetsWithLatency.length === 0 ? null :
+        tokenTargetsWithLatency.every((profile) => profile.median_latency_ratio <= 1.02),
     },
   };
 }
@@ -665,14 +803,20 @@ function bootstrapLowerBound(profileRatios, samples, seed) {
 
 function crossObservationIssues(entries, observations, options) {
   const issues = [];
-  const benchmarkSources = new Set(observations.map((item) =>
+  const tokenObservations = observations.filter((item) =>
+    entries.find((entryValue) => entryValue.id === item.entry_id)?.benchmark === "token");
+  const benchmarkSources = new Set(tokenObservations.map((item) =>
     `${item.measurement.benchmark_source_sha256}:${item.measurement.benchmark_support_sha256}`));
-  if (benchmarkSources.size !== 1) issues.push("benchmark source hashes differ across observations");
+  if (tokenObservations.length > 0 && benchmarkSources.size !== 1) {
+    issues.push("benchmark source hashes differ across observations");
+  }
 
   for (const entryValue of entries) {
     const selected = observations.filter((item) => item.entry_id === entryValue.id);
     const sources = new Set(selected.map((item) =>
-      `${item.measurement.source_sha256}:${item.measurement.expected_checksum}`));
+      entryValue.benchmark === "tree" ?
+        `${item.measurement.source_sha256}:${item.measurement.result_sha256}` :
+        `${item.measurement.source_sha256}:${item.measurement.expected_checksum}`));
     if (sources.size !== 1) issues.push(`${entryValue.id} source or semantic identity differs`);
     const compilers = new Set(selected.map((item) =>
       `${item.measurement.crystal_version}:${item.measurement.crystal_build_commit}:${item.measurement.llvm_version}:${item.measurement.target}`));
@@ -757,6 +901,10 @@ function initialCampaign(options, entries, environmentGate) {
       environment_gate: environmentGate,
     },
     runner,
+    tools: {
+      gnu_time: fileIdentity(GNU_TIME),
+      taskset: fileIdentity(TASKSET),
+    },
     binaries,
     controls: options.mode === "compare" ? {
       string_control_binary_role: "baseline",
@@ -768,6 +916,7 @@ function initialCampaign(options, entries, environmentGate) {
 }
 
 function runCampaign(options) {
+  if (!fs.existsSync(GNU_TIME)) throw new Error(`${GNU_TIME} is required`);
   if (!fs.existsSync(TASKSET)) throw new Error(`${TASKSET} is required`);
   if (fs.existsSync(options.output)) throw new Error(`output path already exists: ${options.output}`);
   const environmentGate = quietHostGate(options);
@@ -848,9 +997,13 @@ function selfAudit() {
       const key = `${matrix}:${entryValue.id}`;
       if (ids.has(key)) throw new Error(`duplicate matrix entry ${key}`);
       ids.add(key);
-      if (!Number.isSafeInteger(entryValue.values) || entryValue.values < 1 ||
-          !Number.isSafeInteger(entryValue.token_bytes) || entryValue.token_bytes < 1) {
-        throw new Error(`invalid fixture size in ${key}`);
+      if (entryValue.benchmark === "tree") {
+        if (!Number.isSafeInteger(entryValue.records) || entryValue.records < 1) {
+          throw new Error(`invalid tree fixture size in ${key}`);
+        }
+      } else if (!Number.isSafeInteger(entryValue.values) || entryValue.values < 1 ||
+                 !Number.isSafeInteger(entryValue.token_bytes) || entryValue.token_bytes < 1) {
+        throw new Error(`invalid token fixture size in ${key}`);
       }
     }
   }
@@ -866,7 +1019,8 @@ function selfAudit() {
   if (Math.abs(idlePercent({total: 10, idle: 4}, {total: 110, idle: 79}) - 75) > 1e-12) {
     throw new Error("CPU-idle self-audit failed");
   }
-  const groupCounts = Object.fromEntries(["attribution", "escaped", "boundary", "smoke"].map((matrix) => {
+  const groupCounts = Object.fromEntries(
+    ["attribution", "escaped", "boundary", "tree", "smoke"].map((matrix) => {
     const counts = {};
     for (const entryValue of matrixEntries(matrix)) {
       counts[entryValue.group] = (counts[entryValue.group] ?? 0) + 1;
@@ -877,6 +1031,7 @@ function selfAudit() {
     attribution: {"string-control": 9, guardrail: 42},
     escaped: {"string-control": 4, target: 12},
     boundary: {target: 10},
+    tree: {guardrail: 8, target: 4},
     smoke: {diagnostic: 3},
   };
   if (JSON.stringify(groupCounts) !== JSON.stringify(expectedGroupCounts)) {
@@ -934,6 +1089,40 @@ function selfAudit() {
   if (!receiptIssues(fakeReceipt, fakeEntry, fakeOptions, "a".repeat(40),
     "self-audit", "measured").includes("invalid source identity")) {
     throw new Error("receipt validation self-audit accepted invalid data");
+  }
+  const fakeTreeEntry = MATRICES.tree[0];
+  const fakeTreeReceipt = {
+    receipt: "fused-json-streaming-tree-cost",
+    version: 1,
+    release_build: true,
+    fused_json_commit: "a".repeat(40),
+    shape: fakeTreeEntry.shape,
+    mode: fakeTreeEntry.transport,
+    generated_records: fakeTreeEntry.records,
+    buffer_size: fakeTreeEntry.buffer_size,
+    chunk_size: null,
+    cache_keys: false,
+    warmup_seconds: 0,
+    calculation_seconds: 0.01,
+    allocation_iterations: 1,
+    pair_id: "self-audit",
+    order_position: "measured",
+    gc_nprocs: "1",
+    gc_markers: "1",
+    iterations_per_second: 1,
+    relative_stddev_percent: 0,
+    managed_bytes_per_operation: 0,
+    source_sha256: "b".repeat(64),
+    result_sha256: "c".repeat(64),
+  };
+  if (receiptIssues(fakeTreeReceipt, fakeTreeEntry, fakeOptions, "a".repeat(40),
+    "self-audit", "measured").length !== 0) {
+    throw new Error("tree receipt validation self-audit rejected valid data");
+  }
+  fakeTreeReceipt.result_sha256 = "bad";
+  if (!receiptIssues(fakeTreeReceipt, fakeTreeEntry, fakeOptions, "a".repeat(40),
+    "self-audit", "measured").includes("invalid source identity")) {
+    throw new Error("tree receipt validation self-audit accepted invalid data");
   }
   process.stdout.write(`${JSON.stringify({
     self_audit: "fused-json-streaming-performance-campaign",
