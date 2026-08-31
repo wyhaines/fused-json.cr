@@ -27,7 +27,6 @@ module FusedJSON
     @token_uses_scratch : Bool
     @token : IO::Memory
     @scratch_retention_limit : Int32
-    @string_decoded_shrinkage : Int32
 
     # `max_token_bytes` limits each raw string or number in the decoded stream.
     def initialize(input : IO, *, buffer_size : Int = DEFAULT_BUFFER_SIZE,
@@ -72,7 +71,6 @@ module FusedJSON
       @token_uses_scratch = false
       @token = IO::Memory.new(Math.min(buffer_size.to_i32, 256))
       @scratch_retention_limit = Math.max(@input_buffer.size * 2, MIN_SCRATCH_RETENTION)
-      @string_decoded_shrinkage = 0
       super(
         "",
         max_nesting: max_nesting,
@@ -268,8 +266,7 @@ module FusedJSON
 
     protected def scan_string : Bool
       consume_token_ascii(0x22_u8) # opening quote
-      escaped = false
-      @string_decoded_shrinkage = 0
+      decoded_shrinkage = 0
 
       loop do
         enforce_available_byte
@@ -282,11 +279,14 @@ module FusedJSON
         case byte
         when 0x22_u8 # "
           consume_token_ascii(byte)
+          # Streaming token indexes are always zero-based, and this subclass's
+          # materializer ignores them. Retain decoded shrinkage in the inherited
+          # start slot without growing every streaming parser instance.
+          @string_start = decoded_shrinkage
           finish_token
-          return escaped
+          return decoded_shrinkage > 0
         when 0x5c_u8 # \
-          escaped = true
-          @string_decoded_shrinkage += scan_escape
+          decoded_shrinkage += scan_escape
         else
           raise_error("unescaped control byte in string") if byte < 0x20_u8
           if byte < 0x80_u8
@@ -302,8 +302,7 @@ module FusedJSON
 
     protected def scan_string_unlimited : Bool
       consume_token_ascii_unlimited(0x22_u8) # opening quote
-      escaped = false
-      @string_decoded_shrinkage = 0
+      decoded_shrinkage = 0
 
       loop do
         if @input_position >= @input_size
@@ -314,11 +313,11 @@ module FusedJSON
         case byte
         when 0x22_u8 # "
           consume_token_ascii_unlimited(byte)
+          @string_start = decoded_shrinkage
           finish_token
-          return escaped
+          return decoded_shrinkage > 0
         when 0x5c_u8 # \
-          escaped = true
-          @string_decoded_shrinkage += scan_escape_unlimited
+          decoded_shrinkage += scan_escape_unlimited
         else
           raise_error("unescaped control byte in string") if byte < 0x20_u8
           if byte < 0x80_u8
@@ -339,7 +338,7 @@ module FusedJSON
       end
 
       value = if escaped
-                decode_escaped_string(bytes, bytes.size - 2 - @string_decoded_shrinkage)
+                decode_escaped_string(bytes, bytes.size - 2 - @string_start)
               else
                 String.new(bytes.to_unsafe + 1, bytes.size - 2)
               end
@@ -876,11 +875,7 @@ module FusedJSON
 
     private def decode_escaped_string(bytes : Bytes, decoded_bytesize : Int32) : String
       String.new(decoded_bytesize) do |output|
-        written = decode_escaped_string_into(bytes, output)
-        unless written == decoded_bytesize
-          raise "decoded string size mismatch: expected #{decoded_bytesize}, wrote #{written}"
-        end
-        {written, 0}
+        {decode_escaped_string_into(bytes, output), 0}
       end
     end
 

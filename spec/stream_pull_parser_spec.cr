@@ -113,7 +113,7 @@ class FusedJSON::StreamingPullParser
 
   def __spec_decoded_string_bytesize : Int32
     bytes = token_bytes
-    bytes.size - 2 - @string_decoded_shrinkage
+    bytes.size - 2 - @string_start
   end
 end
 
