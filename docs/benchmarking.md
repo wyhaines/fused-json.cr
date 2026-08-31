@@ -182,12 +182,14 @@ Use `--mode=compare` with `--baseline`, `--baseline-commit`, `--candidate`, and
 `--candidate-commit` for paired measurements. Available focused matrices are
 reported by `--self-audit`. Comparison summaries keep declared targets,
 streaming guardrails, and unaffected String controls in separate groups and
-apply the appropriate threshold to each. Before creating the output directory, the runner
-requires the one-minute host load to be at most 2 and samples the selected CPU
-and its hardware-thread sibling for one second; both must be at least 90% idle.
+apply the appropriate threshold to each. Before creating the output directory,
+the runner requires the one-minute host load to be at most 2 and samples the
+selected CPU and its hardware-thread sibling for one second; both must be at
+least 90% idle.
 `--max-load` and `--min-core-idle-percent` make those limits explicit for
 exploratory runs. Do not relax the limits frozen by a formal protocol. Formal
-commands and gates are frozen in the streaming performance protocol before a
+commands and gates are frozen in the
+[streaming performance protocol](streaming-performance-protocol.md) before a
 runtime candidate is measured.
 
 `limits-overhead` measures the cost of carrying a disabled limits policy. Both

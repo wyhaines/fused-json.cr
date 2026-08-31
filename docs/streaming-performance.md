@@ -1,10 +1,12 @@
 # Streaming performance specification
 
-Status: planned. The runtime reference is
+Status: in progress. The runtime reference is
 `1d7e5e0ea88940946fd1ea25d30241331442b344`, after the repeated-document
 reader was added. The accompanying
 [implementation plan](streaming-performance-plan.md) describes how candidates
-will be built and evaluated.
+will be built and evaluated, and the
+[measurement protocol](streaming-performance-protocol.md) freezes the first
+candidate's workloads and acceptance gates.
 
 ## Objective
 

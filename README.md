@@ -287,7 +287,7 @@ The next planned work is:
   `BigDecimal` after loading `big/json`.
 - Improve streaming performance by profiling buffer refills, token scanning,
   and escaped-string decoding. The [specification](docs/streaming-performance.md)
-  and [implementation plan](docs/streaming-performance-plan.md) define the
+  and [measurement protocol](docs/streaming-performance-protocol.md) define the
   workloads and acceptance criteria. An eventless `IO` tree builder was tested,
   but its gains were inconsistent and it made escaped-string workloads slower.
 - Expand fuzzing and platform coverage on ARM64 and macOS. The word scanner

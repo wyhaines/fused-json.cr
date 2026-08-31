@@ -1,9 +1,9 @@
 # Streaming performance implementation plan
 
-Status: ready to begin. This plan implements the contracts in the
-[streaming performance specification](streaming-performance.md). Work proceeds
-through the sections below without committing a runtime optimization until its
-benchmark target and controls have been frozen.
+Status: in progress. This plan implements the contracts in the
+[streaming performance specification](streaming-performance.md). The
+[measurement protocol](streaming-performance-protocol.md) freezes the first
+runtime candidate's benchmark target and controls.
 
 ## Working rules
 
