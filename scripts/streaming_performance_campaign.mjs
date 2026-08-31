@@ -9,6 +9,7 @@ import {spawnSync} from "node:child_process";
 const RECEIPT = "fused-json-streaming-performance-campaign";
 const VERSION = 1;
 const TASKSET = "/usr/bin/taskset";
+const QUIET_SAMPLE_MILLISECONDS = 1_000;
 
 class UsageError extends Error {}
 
@@ -18,7 +19,7 @@ function entry(id, profile, consumer, transport, options = {}) {
     profile,
     consumer,
     transport,
-    values: options.values ?? 4_000,
+    values: options.values ?? 1_000,
     token_bytes: options.token_bytes ?? 512,
     leading_padding: options.leading_padding ?? 0,
     buffer_size: options.buffer_size ?? 32 * 1024,
@@ -30,15 +31,15 @@ function entry(id, profile, consumer, transport, options = {}) {
 
 const MATRICES = Object.freeze({
   attribution: Object.freeze([
-    entry("integers-string", "integers", "pull-materialize", "string", {values: 50_000}),
-    entry("integers-io", "integers", "pull-materialize", "io-memory", {values: 50_000}),
-    entry("integers-chunked", "integers", "pull-materialize", "chunked-memory", {values: 50_000}),
-    entry("floats-string", "floats", "pull-materialize", "string", {values: 50_000}),
-    entry("floats-io", "floats", "pull-materialize", "io-memory", {values: 50_000}),
-    entry("floats-chunked", "floats", "pull-materialize", "chunked-memory", {values: 50_000}),
-    entry("plain-short-string", "plain-short", "pull-materialize", "string", {values: 50_000}),
-    entry("plain-short-io", "plain-short", "pull-materialize", "io-memory", {values: 50_000}),
-    entry("plain-short-chunked", "plain-short", "pull-materialize", "chunked-memory", {values: 50_000}),
+    entry("integers-string", "integers", "pull-materialize", "string", {values: 20_000}),
+    entry("integers-io", "integers", "pull-materialize", "io-memory", {values: 20_000}),
+    entry("integers-chunked", "integers", "pull-materialize", "chunked-memory", {values: 20_000}),
+    entry("floats-string", "floats", "pull-materialize", "string", {values: 20_000}),
+    entry("floats-io", "floats", "pull-materialize", "io-memory", {values: 20_000}),
+    entry("floats-chunked", "floats", "pull-materialize", "chunked-memory", {values: 20_000}),
+    entry("plain-short-string", "plain-short", "pull-materialize", "string", {values: 10_000}),
+    entry("plain-short-io", "plain-short", "pull-materialize", "io-memory", {values: 10_000}),
+    entry("plain-short-chunked", "plain-short", "pull-materialize", "chunked-memory", {values: 10_000}),
 
     entry("plain-long-string", "plain-long", "pull-materialize", "string"),
     entry("plain-long-io", "plain-long", "pull-materialize", "io-memory"),
@@ -59,16 +60,16 @@ const MATRICES = Object.freeze({
     entry("surrogate-escape-io", "surrogate-escape", "pull-materialize", "io-memory"),
     entry("surrogate-escape-chunked", "surrogate-escape", "pull-materialize", "chunked-memory"),
 
-    entry("plain-boundary-io", "plain-long", "pull-materialize", "io-memory", {values: 64, token_bytes: 65_536}),
-    entry("plain-boundary-chunked", "plain-long", "pull-materialize", "chunked-memory", {values: 64, token_bytes: 65_536}),
-    entry("sparse-boundary-io", "escape-sparse", "pull-materialize", "io-memory", {values: 64, token_bytes: 65_536}),
-    entry("sparse-boundary-chunked", "escape-sparse", "pull-materialize", "chunked-memory", {values: 64, token_bytes: 65_536}),
-    entry("dense-boundary-io", "escape-dense", "pull-materialize", "io-memory", {values: 64, token_bytes: 65_536}),
-    entry("dense-boundary-chunked", "escape-dense", "pull-materialize", "chunked-memory", {values: 64, token_bytes: 65_536}),
-    entry("unicode-boundary-io", "unicode-escape", "pull-materialize", "io-memory", {values: 64, token_bytes: 65_536}),
-    entry("unicode-boundary-chunked", "unicode-escape", "pull-materialize", "chunked-memory", {values: 64, token_bytes: 65_536}),
-    entry("surrogate-boundary-io", "surrogate-escape", "pull-materialize", "io-memory", {values: 64, token_bytes: 65_536}),
-    entry("surrogate-boundary-chunked", "surrogate-escape", "pull-materialize", "chunked-memory", {values: 64, token_bytes: 65_536}),
+    entry("plain-boundary-io", "plain-long", "pull-materialize", "io-memory", {values: 8, token_bytes: 65_536}),
+    entry("plain-boundary-chunked", "plain-long", "pull-materialize", "chunked-memory", {values: 8, token_bytes: 65_536}),
+    entry("sparse-boundary-io", "escape-sparse", "pull-materialize", "io-memory", {values: 8, token_bytes: 65_536}),
+    entry("sparse-boundary-chunked", "escape-sparse", "pull-materialize", "chunked-memory", {values: 8, token_bytes: 65_536}),
+    entry("dense-boundary-io", "escape-dense", "pull-materialize", "io-memory", {values: 8, token_bytes: 65_536}),
+    entry("dense-boundary-chunked", "escape-dense", "pull-materialize", "chunked-memory", {values: 8, token_bytes: 65_536}),
+    entry("unicode-boundary-io", "unicode-escape", "pull-materialize", "io-memory", {values: 8, token_bytes: 65_536}),
+    entry("unicode-boundary-chunked", "unicode-escape", "pull-materialize", "chunked-memory", {values: 8, token_bytes: 65_536}),
+    entry("surrogate-boundary-io", "surrogate-escape", "pull-materialize", "io-memory", {values: 8, token_bytes: 65_536}),
+    entry("surrogate-boundary-chunked", "surrogate-escape", "pull-materialize", "chunked-memory", {values: 8, token_bytes: 65_536}),
 
     entry("sparse-skip", "escape-sparse", "pull-skip", "io-memory"),
     entry("sparse-tree", "escape-sparse", "dynamic-tree", "io-memory"),
@@ -76,12 +77,12 @@ const MATRICES = Object.freeze({
     entry("sparse-doc-dynamic", "escape-sparse", "document-dynamic", "io-memory"),
     entry("sparse-doc-typed", "escape-sparse", "document-typed", "io-memory"),
 
-    entry("key-repeated-plain", "key-repeated-plain", "dynamic-tree", "io-memory", {values: 10_000, token_bytes: 96}),
-    entry("key-repeated-plain-cached", "key-repeated-plain", "dynamic-tree", "io-memory", {values: 10_000, token_bytes: 96, cache_keys: true}),
-    entry("key-repeated-escaped", "key-repeated-escaped", "dynamic-tree", "io-memory", {values: 10_000, token_bytes: 96}),
-    entry("key-repeated-escaped-cached", "key-repeated-escaped", "dynamic-tree", "io-memory", {values: 10_000, token_bytes: 96, cache_keys: true}),
-    entry("key-unique-plain", "key-unique-plain", "dynamic-tree", "io-memory", {values: 10_000, token_bytes: 96}),
-    entry("key-unique-escaped", "key-unique-escaped", "dynamic-tree", "io-memory", {values: 10_000, token_bytes: 96}),
+    entry("key-repeated-plain", "key-repeated-plain", "dynamic-tree", "io-memory", {values: 2_000, token_bytes: 96}),
+    entry("key-repeated-plain-cached", "key-repeated-plain", "dynamic-tree", "io-memory", {values: 2_000, token_bytes: 96, cache_keys: true}),
+    entry("key-repeated-escaped", "key-repeated-escaped", "dynamic-tree", "io-memory", {values: 2_000, token_bytes: 96}),
+    entry("key-repeated-escaped-cached", "key-repeated-escaped", "dynamic-tree", "io-memory", {values: 2_000, token_bytes: 96, cache_keys: true}),
+    entry("key-unique-plain", "key-unique-plain", "dynamic-tree", "io-memory", {values: 2_000, token_bytes: 96}),
+    entry("key-unique-escaped", "key-unique-escaped", "dynamic-tree", "io-memory", {values: 2_000, token_bytes: 96}),
 
     entry("sparse-token-limit", "escape-sparse", "pull-materialize", "io-memory", {limit_policy: "token"}),
     entry("sparse-document-limit", "escape-sparse", "pull-materialize", "io-memory", {limit_policy: "document"}),
@@ -108,16 +109,16 @@ const MATRICES = Object.freeze({
   ]),
 
   boundary: Object.freeze([
-    entry("plain-io", "plain-long", "pull-materialize", "io-memory", {values: 64, token_bytes: 65_536}),
-    entry("plain-chunked", "plain-long", "pull-materialize", "chunked-memory", {values: 64, token_bytes: 65_536}),
-    entry("utf8-io", "raw-utf8", "pull-materialize", "io-memory", {values: 64, token_bytes: 65_536}),
-    entry("utf8-chunked", "raw-utf8", "pull-materialize", "chunked-memory", {values: 64, token_bytes: 65_536}),
-    entry("sparse-io", "escape-sparse", "pull-materialize", "io-memory", {values: 64, token_bytes: 65_536}),
-    entry("sparse-chunked", "escape-sparse", "pull-materialize", "chunked-memory", {values: 64, token_bytes: 65_536}),
-    entry("dense-io", "escape-dense", "pull-materialize", "io-memory", {values: 64, token_bytes: 65_536}),
-    entry("dense-chunked", "escape-dense", "pull-materialize", "chunked-memory", {values: 64, token_bytes: 65_536}),
-    entry("number-io", "floats", "pull-materialize", "io-memory", {values: 50_000}),
-    entry("number-chunked", "floats", "pull-materialize", "chunked-memory", {values: 50_000}),
+    entry("plain-io", "plain-long", "pull-materialize", "io-memory", {values: 8, token_bytes: 65_536}),
+    entry("plain-chunked", "plain-long", "pull-materialize", "chunked-memory", {values: 8, token_bytes: 65_536}),
+    entry("utf8-io", "raw-utf8", "pull-materialize", "io-memory", {values: 8, token_bytes: 65_536}),
+    entry("utf8-chunked", "raw-utf8", "pull-materialize", "chunked-memory", {values: 8, token_bytes: 65_536}),
+    entry("sparse-io", "escape-sparse", "pull-materialize", "io-memory", {values: 8, token_bytes: 65_536}),
+    entry("sparse-chunked", "escape-sparse", "pull-materialize", "chunked-memory", {values: 8, token_bytes: 65_536}),
+    entry("dense-io", "escape-dense", "pull-materialize", "io-memory", {values: 8, token_bytes: 65_536}),
+    entry("dense-chunked", "escape-dense", "pull-materialize", "chunked-memory", {values: 8, token_bytes: 65_536}),
+    entry("number-io", "floats", "pull-materialize", "io-memory", {values: 20_000}),
+    entry("number-chunked", "floats", "pull-materialize", "chunked-memory", {values: 20_000}),
   ]),
 
   smoke: Object.freeze([
@@ -135,6 +136,8 @@ function usage() {
     "  scripts/streaming_performance_campaign.mjs --mode=compare --output=DIR",
     "    --baseline=PATH --baseline-commit=40hex --candidate=PATH",
     "    --candidate-commit=40hex [--matrix=escaped] [--pairs=5]",
+    "  All campaigns require one-minute load <= --max-load (default 2)",
+    "    and selected-core sibling idle >= --min-core-idle-percent (default 90).",
     "  scripts/streaming_performance_campaign.mjs --self-audit",
   ].join("\n");
 }
@@ -156,7 +159,7 @@ function parseArgs(args) {
   }
   const common = new Set([
     "allocations", "cpu", "latency-iterations", "matrix", "mode", "output",
-    "time", "warmup",
+    "max-load", "min-core-idle-percent", "time", "warmup",
   ]);
   const permitted = mode === "collect" ?
     new Set([...common, "binary", "commit", "samples"]) :
@@ -177,11 +180,19 @@ function parseArgs(args) {
     output: path.resolve(values.output),
     matrix,
     cpu: nonnegativeInteger(values.cpu ?? "4", "--cpu"),
+    max_load: nonnegativeNumber(values["max-load"] ?? "2", "--max-load"),
+    min_core_idle_percent: percentage(
+      values["min-core-idle-percent"] ?? "90",
+      "--min-core-idle-percent",
+    ),
     warmup: nonnegativeNumber(values.warmup ?? "0.5", "--warmup"),
     time: positiveNumber(values.time ?? "1", "--time"),
     allocations: positiveInteger(values.allocations ?? "3", "--allocations"),
     latency_iterations: positiveInteger(values["latency-iterations"] ?? "50", "--latency-iterations"),
   };
+  if (parsed.cpu >= os.cpus().length) {
+    throw new UsageError(`--cpu must be below the ${os.cpus().length} available logical CPUs`);
+  }
 
   if (mode === "collect") {
     if (!values.binary || !values.commit) {
@@ -229,6 +240,14 @@ function nonnegativeNumber(value, name) {
   return number;
 }
 
+function percentage(value, name) {
+  const number = Number(value);
+  if (!Number.isFinite(number) || number < 0 || number > 100) {
+    throw new UsageError(`${name} must be between 0 and 100`);
+  }
+  return number;
+}
+
 function executablePath(value, name) {
   const resolved = fs.realpathSync(value);
   try {
@@ -246,6 +265,93 @@ function commit(value, name) {
 
 function sha256(buffer) {
   return crypto.createHash("sha256").update(buffer).digest("hex");
+}
+
+function optionalText(file) {
+  try {
+    return fs.readFileSync(file, "utf8").trim();
+  } catch {
+    return null;
+  }
+}
+
+function expandCpuList(value) {
+  const cpus = [];
+  for (const segment of value.split(",")) {
+    const match = segment.match(/^(\d+)(?:-(\d+))?$/);
+    if (match === null) throw new Error(`invalid CPU list: ${value}`);
+    const first = Number(match[1]);
+    const last = Number(match[2] ?? match[1]);
+    if (last < first) throw new Error(`invalid CPU range: ${segment}`);
+    for (let cpu = first; cpu <= last; cpu += 1) cpus.push(cpu);
+  }
+  return [...new Set(cpus)];
+}
+
+function coreLogicalCpus(cpu) {
+  const siblings = optionalText(
+    `/sys/devices/system/cpu/cpu${cpu}/topology/thread_siblings_list`,
+  );
+  return siblings === null ? [cpu] : expandCpuList(siblings);
+}
+
+function cpuTimeSnapshots(cpus) {
+  const lines = fs.readFileSync("/proc/stat", "utf8").split("\n");
+  return Object.fromEntries(cpus.map((cpu) => {
+    const prefix = `cpu${cpu}`;
+    const line = lines.find((candidate) => candidate.startsWith(`${prefix} `));
+    if (!line) throw new Error(`/proc/stat has no ${prefix} entry`);
+    const fields = line.trim().split(/\s+/).slice(1).map(Number);
+    if (fields.length < 5 || fields.some((field) => !Number.isFinite(field))) {
+      throw new Error(`/proc/stat has invalid ${prefix} counters`);
+    }
+    return [cpu, {total: fields.reduce((sum, field) => sum + field, 0), idle: fields[3] + fields[4]}];
+  }));
+}
+
+function idlePercent(before, after) {
+  const total = after.total - before.total;
+  const idle = after.idle - before.idle;
+  if (total <= 0 || idle < 0 || idle > total) throw new Error("invalid CPU utilization interval");
+  return idle * 100 / total;
+}
+
+function blockFor(milliseconds) {
+  Atomics.wait(new Int32Array(new SharedArrayBuffer(4)), 0, 0, milliseconds);
+}
+
+function quietHostGate(options) {
+  const load = os.loadavg()[0];
+  const logicalCpus = coreLogicalCpus(options.cpu);
+  const before = cpuTimeSnapshots(logicalCpus);
+  blockFor(QUIET_SAMPLE_MILLISECONDS);
+  const after = cpuTimeSnapshots(logicalCpus);
+  const idle = logicalCpus.map((cpu) => ({
+    cpu,
+    idle_percent: idlePercent(before[cpu], after[cpu]),
+  }));
+  const issues = [];
+  if (load > options.max_load) {
+    issues.push(`one-minute load ${load.toFixed(2)} exceeds ${options.max_load}`);
+  }
+  for (const sample of idle) {
+    if (sample.idle_percent < options.min_core_idle_percent) {
+      issues.push(`CPU ${sample.cpu} idle ${sample.idle_percent.toFixed(1)}% is below ${options.min_core_idle_percent}%`);
+    }
+  }
+  if (issues.length > 0) throw new Error(`quiet-host gate failed: ${issues.join("; ")}`);
+
+  const cpufreq = `/sys/devices/system/cpu/cpu${options.cpu}/cpufreq`;
+  return {
+    one_minute_load: load,
+    maximum_one_minute_load: options.max_load,
+    sample_milliseconds: QUIET_SAMPLE_MILLISECONDS,
+    minimum_core_idle_percent: options.min_core_idle_percent,
+    logical_cpu_idle: idle,
+    scaling_driver: optionalText(`${cpufreq}/scaling_driver`),
+    scaling_governor: optionalText(`${cpufreq}/scaling_governor`),
+    energy_performance_preference: optionalText(`${cpufreq}/energy_performance_preference`),
+  };
 }
 
 function fileIdentity(file) {
@@ -563,7 +669,7 @@ function writeChecksums(output) {
   fs.writeFileSync(path.join(output, "SHA256SUMS"), contents, {encoding: "utf8", flag: "wx"});
 }
 
-function initialCampaign(options, entries) {
+function initialCampaign(options, entries, environmentGate) {
   const runner = fileIdentity(fs.realpathSync(process.argv[1]));
   const binaries = options.mode === "collect" ? {
     measured: fileIdentity(options.binary),
@@ -585,6 +691,7 @@ function initialCampaign(options, entries) {
       architecture: os.arch(),
       cpu_model: os.cpus()[0]?.model ?? null,
       logical_cpus: os.cpus().length,
+      environment_gate: environmentGate,
     },
     runner,
     binaries,
@@ -596,13 +703,14 @@ function initialCampaign(options, entries) {
 function runCampaign(options) {
   if (!fs.existsSync(TASKSET)) throw new Error(`${TASKSET} is required`);
   if (fs.existsSync(options.output)) throw new Error(`output path already exists: ${options.output}`);
+  const environmentGate = quietHostGate(options);
   fs.mkdirSync(options.output, {recursive: true});
   const receiptsDirectory = path.join(options.output, "receipts");
   fs.mkdirSync(receiptsDirectory);
   const partialFile = path.join(options.output, "campaign.partial.json");
   const journalFile = path.join(options.output, "journal.jsonl");
   const entries = MATRICES[options.matrix];
-  const campaign = initialCampaign(options, entries);
+  const campaign = initialCampaign(options, entries, environmentGate);
   updatePartial(partialFile, campaign);
 
   try {
@@ -680,6 +788,12 @@ function selfAudit() {
   }
   if (Math.abs(geometricMean([2, 8]) - 4) > 1e-12) {
     throw new Error("geometric mean self-audit failed");
+  }
+  if (JSON.stringify(expandCpuList("0-1,4,6-7")) !== JSON.stringify([0, 1, 4, 6, 7])) {
+    throw new Error("CPU-list self-audit failed");
+  }
+  if (Math.abs(idlePercent({total: 10, idle: 4}, {total: 110, idle: 79}) - 75) > 1e-12) {
+    throw new Error("CPU-idle self-audit failed");
   }
   const lower = bootstrapLowerBound([[1.1, 1.1, 1.1], [1.2, 1.2, 1.2]], 100, 7);
   if (Math.abs(lower - Math.sqrt(1.1 * 1.2)) > 1e-12) {
