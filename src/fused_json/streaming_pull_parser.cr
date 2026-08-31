@@ -266,7 +266,7 @@ module FusedJSON
 
     protected def scan_string : Bool
       consume_token_ascii(0x22_u8) # opening quote
-      decoded_shrinkage = 0
+      escaped = false
 
       loop do
         enforce_available_byte
@@ -279,14 +279,11 @@ module FusedJSON
         case byte
         when 0x22_u8 # "
           consume_token_ascii(byte)
-          # Streaming token indexes are always zero-based, and this subclass's
-          # materializer ignores them. Retain decoded shrinkage in the inherited
-          # start slot without growing every streaming parser instance.
-          @string_start = decoded_shrinkage
           finish_token
-          return decoded_shrinkage > 0
+          return escaped
         when 0x5c_u8 # \
-          decoded_shrinkage += scan_escape
+          escaped = true
+          scan_escape
         else
           raise_error("unescaped control byte in string") if byte < 0x20_u8
           if byte < 0x80_u8
@@ -302,7 +299,7 @@ module FusedJSON
 
     protected def scan_string_unlimited : Bool
       consume_token_ascii_unlimited(0x22_u8) # opening quote
-      decoded_shrinkage = 0
+      escaped = false
 
       loop do
         if @input_position >= @input_size
@@ -313,11 +310,11 @@ module FusedJSON
         case byte
         when 0x22_u8 # "
           consume_token_ascii_unlimited(byte)
-          @string_start = decoded_shrinkage
           finish_token
-          return decoded_shrinkage > 0
+          return escaped
         when 0x5c_u8 # \
-          decoded_shrinkage += scan_escape_unlimited
+          escaped = true
+          scan_escape_unlimited
         else
           raise_error("unescaped control byte in string") if byte < 0x20_u8
           if byte < 0x80_u8
@@ -338,7 +335,7 @@ module FusedJSON
       end
 
       value = if escaped
-                decode_escaped_string(bytes, bytes.size - 2 - @string_start)
+                decode_escaped_string(bytes)
               else
                 String.new(bytes.to_unsafe + 1, bytes.size - 2)
               end
@@ -620,7 +617,7 @@ module FusedJSON
       @stream_column += count
     end
 
-    private def scan_escape : Int32
+    private def scan_escape : Nil
       slash_offset = @stream_offset
       consume_token_ascii(0x5c_u8)
       enforce_available_byte
@@ -630,25 +627,21 @@ module FusedJSON
       case byte
       when 0x22_u8, 0x5c_u8, 0x2f_u8, 0x62_u8, 0x66_u8, 0x6e_u8, 0x72_u8, 0x74_u8
         consume_token_ascii(byte)
-        1
       when 0x75_u8 # u
         consume_token_ascii(byte)
         codepoint = scan_hex4
         if 0xd800 <= codepoint <= 0xdbff
           low = scan_low_surrogate
           raise_error("invalid low surrogate") unless 0xdc00 <= low <= 0xdfff
-          8
         elsif 0xdc00 <= codepoint <= 0xdfff
           raise_error("unexpected low surrogate")
-        else
-          6 - decoded_codepoint_bytesize(codepoint)
         end
       else
         raise_error("invalid string escape", slash_offset)
       end
     end
 
-    private def scan_escape_unlimited : Int32
+    private def scan_escape_unlimited : Nil
       slash_offset = @stream_offset
       consume_token_ascii_unlimited(0x5c_u8)
       byte = current_byte? || raise_error("unterminated string escape", slash_offset)
@@ -656,32 +649,17 @@ module FusedJSON
       case byte
       when 0x22_u8, 0x5c_u8, 0x2f_u8, 0x62_u8, 0x66_u8, 0x6e_u8, 0x72_u8, 0x74_u8
         consume_token_ascii_unlimited(byte)
-        1
       when 0x75_u8 # u
         consume_token_ascii_unlimited(byte)
         codepoint = scan_hex4_unlimited
         if 0xd800 <= codepoint <= 0xdbff
           low = scan_low_surrogate_unlimited
           raise_error("invalid low surrogate") unless 0xdc00 <= low <= 0xdfff
-          8
         elsif 0xdc00 <= codepoint <= 0xdfff
           raise_error("unexpected low surrogate")
-        else
-          6 - decoded_codepoint_bytesize(codepoint)
         end
       else
         raise_error("invalid string escape", slash_offset)
-      end
-    end
-
-    @[AlwaysInline]
-    private def decoded_codepoint_bytesize(codepoint : Int32) : Int32
-      if codepoint <= 0x7f
-        1
-      elsif codepoint <= 0x7ff
-        2
-      else
-        3
       end
     end
 
@@ -874,8 +852,8 @@ module FusedJSON
     end
 
     @[NoInline]
-    private def decode_escaped_string(bytes : Bytes, decoded_bytesize : Int32) : String
-      String.new(decoded_bytesize) do |output|
+    private def decode_escaped_string(bytes : Bytes) : String
+      String.new(bytes.size - 2) do |output|
         {decode_escaped_string_into(bytes, output), 0}
       end
     end

@@ -110,11 +110,6 @@ class FusedJSON::StreamingPullParser
   def __spec_token_scratch : IO::Memory
     @token
   end
-
-  def __spec_decoded_string_bytesize : Int32
-    bytes = token_bytes
-    bytes.size - 2 - @string_start
-  end
 end
 
 describe "streaming FusedJSON::PullParser" do
@@ -177,7 +172,7 @@ describe "streaming FusedJSON::PullParser" do
     end
   end
 
-  it "measures escaped output bytes exactly at every source split" do
+  it "decodes escaped output bytes exactly at every source split" do
     sources = [
       %q("\b\f\n\r\t\"\\\/"),
       %q("λ𝄞prefix-\n-raw-λ𝄞-\u0000-\u007f-\u0080-\u07ff-\u0800-\uffff-\uD800\uDC00-\uDBFF\uDFFF-end"),
@@ -193,9 +188,10 @@ describe "streaming FusedJSON::PullParser" do
         )
         pull = FusedJSON::PullParser.new(io, buffer_size: 7)
 
-        pull.__spec_decoded_string_bytesize.should eq(expected.bytesize),
+        actual = pull.read_string
+        actual.bytesize.should eq(expected.bytesize),
           "decoded size diverged at source split #{split}/#{source.bytesize}"
-        pull.read_string.should eq(expected)
+        actual.should eq(expected)
         pull.finish
         io.closed_called.should be_false
       end
@@ -413,8 +409,9 @@ describe "streaming FusedJSON::PullParser" do
     escaped = FusedJSON::PullParser.new(escaped_io, buffer_size: 1)
     expected = "café\n"
 
-    escaped.__spec_decoded_string_bytesize.should eq(expected.bytesize)
-    escaped.read_string.should eq(expected)
+    value = escaped.read_string
+    value.bytesize.should eq(expected.bytesize)
+    value.should eq(expected)
     escaped.byte_offset.should eq(9_i64)
     escaped.finish
     escaped_io.pos.should eq(8)
