@@ -27,7 +27,7 @@ module FusedJSON
     @token_uses_scratch : Bool
     @token : IO::Memory
     @scratch_retention_limit : Int32
-    @string_decoded_bytesize : Int32
+    @string_decoded_shrinkage : Int32
 
     # `max_token_bytes` limits each raw string or number in the decoded stream.
     def initialize(input : IO, *, buffer_size : Int = DEFAULT_BUFFER_SIZE,
@@ -72,7 +72,7 @@ module FusedJSON
       @token_uses_scratch = false
       @token = IO::Memory.new(Math.min(buffer_size.to_i32, 256))
       @scratch_retention_limit = Math.max(@input_buffer.size * 2, MIN_SCRATCH_RETENTION)
-      @string_decoded_bytesize = 0
+      @string_decoded_shrinkage = 0
       super(
         "",
         max_nesting: max_nesting,
@@ -268,8 +268,8 @@ module FusedJSON
 
     protected def scan_string : Bool
       consume_token_ascii(0x22_u8) # opening quote
-      content_offset = @stream_offset
-      @string_decoded_bytesize = 0
+      escaped = false
+      @string_decoded_shrinkage = 0
 
       loop do
         enforce_available_byte
@@ -283,12 +283,10 @@ module FusedJSON
         when 0x22_u8 # "
           consume_token_ascii(byte)
           finish_token
-          return false
+          return escaped
         when 0x5c_u8 # \
-          @string_decoded_bytesize = (@stream_offset - content_offset).to_i32
-          add_string_decoded_bytes(scan_escape)
-          scan_escaped_string_tail
-          return true
+          escaped = true
+          @string_decoded_shrinkage += scan_escape
         else
           raise_error("unescaped control byte in string") if byte < 0x20_u8
           if byte < 0x80_u8
@@ -304,8 +302,8 @@ module FusedJSON
 
     protected def scan_string_unlimited : Bool
       consume_token_ascii_unlimited(0x22_u8) # opening quote
-      content_offset = @stream_offset
-      @string_decoded_bytesize = 0
+      escaped = false
+      @string_decoded_shrinkage = 0
 
       loop do
         if @input_position >= @input_size
@@ -317,12 +315,10 @@ module FusedJSON
         when 0x22_u8 # "
           consume_token_ascii_unlimited(byte)
           finish_token
-          return false
+          return escaped
         when 0x5c_u8 # \
-          @string_decoded_bytesize = (@stream_offset - content_offset).to_i32
-          add_string_decoded_bytes(scan_escape_unlimited)
-          scan_escaped_string_tail_unlimited
-          return true
+          escaped = true
+          @string_decoded_shrinkage += scan_escape_unlimited
         else
           raise_error("unescaped control byte in string") if byte < 0x20_u8
           if byte < 0x80_u8
@@ -336,66 +332,6 @@ module FusedJSON
       end
     end
 
-    private def scan_escaped_string_tail : Nil
-      loop do
-        enforce_available_byte
-        if @input_position >= @input_size
-          raise_error("unterminated string") unless refill
-        end
-        enforce_stream_token_byte
-
-        byte = @input_buffer[@input_position]
-        case byte
-        when 0x22_u8 # "
-          consume_token_ascii(byte)
-          finish_token
-          return
-        when 0x5c_u8 # \
-          add_string_decoded_bytes(scan_escape)
-        else
-          raise_error("unescaped control byte in string") if byte < 0x20_u8
-          if byte < 0x80_u8
-            start = @input_position
-            @input_position = ASCIIStringScanner.find_special(@input_buffer, @input_position, @input_size)
-            count = @input_position - start
-            advance_ascii_span(count)
-            add_string_decoded_bytes(count)
-          else
-            add_string_decoded_bytes(scan_utf8_sequence)
-          end
-        end
-      end
-    end
-
-    private def scan_escaped_string_tail_unlimited : Nil
-      loop do
-        if @input_position >= @input_size
-          raise_error("unterminated string") unless refill
-        end
-
-        byte = @input_buffer[@input_position]
-        case byte
-        when 0x22_u8 # "
-          consume_token_ascii_unlimited(byte)
-          finish_token
-          return
-        when 0x5c_u8 # \
-          add_string_decoded_bytes(scan_escape_unlimited)
-        else
-          raise_error("unescaped control byte in string") if byte < 0x20_u8
-          if byte < 0x80_u8
-            start = @input_position
-            @input_position = ASCIIStringScanner.find_special(@input_buffer, @input_position, @input_size)
-            count = @input_position - start
-            advance_ascii_span_unlimited(count)
-            add_string_decoded_bytes(count)
-          else
-            add_string_decoded_bytes(scan_utf8_sequence_unlimited)
-          end
-        end
-      end
-    end
-
     protected def materialize_string(start : Int32, finish : Int32, escaped : Bool, *, key : Bool) : String
       bytes = token_bytes
       if !escaped && key && @key_pool
@@ -403,7 +339,7 @@ module FusedJSON
       end
 
       value = if escaped
-                decode_escaped_string(bytes, @string_decoded_bytesize)
+                decode_escaped_string(bytes, bytes.size - 2 - @string_decoded_shrinkage)
               else
                 String.new(bytes.to_unsafe + 1, bytes.size - 2)
               end
@@ -702,11 +638,11 @@ module FusedJSON
         if 0xd800 <= codepoint <= 0xdbff
           low = scan_low_surrogate
           raise_error("invalid low surrogate") unless 0xdc00 <= low <= 0xdfff
-          4
+          8
         elsif 0xdc00 <= codepoint <= 0xdfff
           raise_error("unexpected low surrogate")
         else
-          decoded_codepoint_bytesize(codepoint)
+          6 - decoded_codepoint_bytesize(codepoint)
         end
       else
         raise_error("invalid string escape", slash_offset)
@@ -728,11 +664,11 @@ module FusedJSON
         if 0xd800 <= codepoint <= 0xdbff
           low = scan_low_surrogate_unlimited
           raise_error("invalid low surrogate") unless 0xdc00 <= low <= 0xdfff
-          4
+          8
         elsif 0xdc00 <= codepoint <= 0xdfff
           raise_error("unexpected low surrogate")
         else
-          decoded_codepoint_bytesize(codepoint)
+          6 - decoded_codepoint_bytesize(codepoint)
         end
       else
         raise_error("invalid string escape", slash_offset)
@@ -748,14 +684,6 @@ module FusedJSON
       else
         3
       end
-    end
-
-    @[AlwaysInline]
-    private def add_string_decoded_bytes(count : Int32) : Nil
-      if count > Int32::MAX - @string_decoded_bytesize
-        raise_error("token exceeds maximum supported size", @token_offset)
-      end
-      @string_decoded_bytesize += count
     end
 
     private def scan_hex4 : Int32
@@ -846,91 +774,77 @@ module FusedJSON
       value
     end
 
-    private def scan_utf8_sequence : Int32
+    private def scan_utf8_sequence : Nil
       first = current_byte
       case first
       when 0xc2_u8..0xdf_u8
         consume_utf8_lead(first)
         consume_utf8_continuation(0x80_u8, 0xbf_u8)
-        2
       when 0xe0_u8
         consume_utf8_lead(first)
         consume_utf8_continuation(0xa0_u8, 0xbf_u8)
         consume_utf8_continuation(0x80_u8, 0xbf_u8)
-        3
       when 0xe1_u8..0xec_u8, 0xee_u8..0xef_u8
         consume_utf8_lead(first)
         consume_utf8_continuation(0x80_u8, 0xbf_u8)
         consume_utf8_continuation(0x80_u8, 0xbf_u8)
-        3
       when 0xed_u8
         consume_utf8_lead(first)
         consume_utf8_continuation(0x80_u8, 0x9f_u8)
         consume_utf8_continuation(0x80_u8, 0xbf_u8)
-        3
       when 0xf0_u8
         consume_utf8_lead(first)
         consume_utf8_continuation(0x90_u8, 0xbf_u8)
         consume_utf8_continuation(0x80_u8, 0xbf_u8)
         consume_utf8_continuation(0x80_u8, 0xbf_u8)
-        4
       when 0xf1_u8..0xf3_u8
         consume_utf8_lead(first)
         consume_utf8_continuation(0x80_u8, 0xbf_u8)
         consume_utf8_continuation(0x80_u8, 0xbf_u8)
         consume_utf8_continuation(0x80_u8, 0xbf_u8)
-        4
       when 0xf4_u8
         consume_utf8_lead(first)
         consume_utf8_continuation(0x80_u8, 0x8f_u8)
         consume_utf8_continuation(0x80_u8, 0xbf_u8)
         consume_utf8_continuation(0x80_u8, 0xbf_u8)
-        4
       else
         raise_error("invalid UTF-8 in string")
       end
     end
 
-    private def scan_utf8_sequence_unlimited : Int32
+    private def scan_utf8_sequence_unlimited : Nil
       first = current_byte
       case first
       when 0xc2_u8..0xdf_u8
         consume_utf8_lead_unlimited(first)
         consume_utf8_continuation_unlimited(0x80_u8, 0xbf_u8)
-        2
       when 0xe0_u8
         consume_utf8_lead_unlimited(first)
         consume_utf8_continuation_unlimited(0xa0_u8, 0xbf_u8)
         consume_utf8_continuation_unlimited(0x80_u8, 0xbf_u8)
-        3
       when 0xe1_u8..0xec_u8, 0xee_u8..0xef_u8
         consume_utf8_lead_unlimited(first)
         consume_utf8_continuation_unlimited(0x80_u8, 0xbf_u8)
         consume_utf8_continuation_unlimited(0x80_u8, 0xbf_u8)
-        3
       when 0xed_u8
         consume_utf8_lead_unlimited(first)
         consume_utf8_continuation_unlimited(0x80_u8, 0x9f_u8)
         consume_utf8_continuation_unlimited(0x80_u8, 0xbf_u8)
-        3
       when 0xf0_u8
         consume_utf8_lead_unlimited(first)
         consume_utf8_continuation_unlimited(0x90_u8, 0xbf_u8)
         consume_utf8_continuation_unlimited(0x80_u8, 0xbf_u8)
         consume_utf8_continuation_unlimited(0x80_u8, 0xbf_u8)
-        4
       when 0xf1_u8..0xf3_u8
         consume_utf8_lead_unlimited(first)
         consume_utf8_continuation_unlimited(0x80_u8, 0xbf_u8)
         consume_utf8_continuation_unlimited(0x80_u8, 0xbf_u8)
         consume_utf8_continuation_unlimited(0x80_u8, 0xbf_u8)
-        4
       when 0xf4_u8
         consume_utf8_lead_unlimited(first)
         consume_utf8_continuation_unlimited(0x80_u8, 0x8f_u8)
         consume_utf8_continuation_unlimited(0x80_u8, 0xbf_u8)
         consume_utf8_continuation_unlimited(0x80_u8, 0xbf_u8)
-        4
       else
         raise_error("invalid UTF-8 in string")
       end
@@ -962,7 +876,7 @@ module FusedJSON
 
     private def decode_escaped_string(bytes : Bytes, decoded_bytesize : Int32) : String
       String.new(decoded_bytesize) do |output|
-        written = decode_escaped_string_into(bytes, output, decoded_bytesize)
+        written = decode_escaped_string_into(bytes, output)
         unless written == decoded_bytesize
           raise "decoded string size mismatch: expected #{decoded_bytesize}, wrote #{written}"
         end
@@ -970,8 +884,7 @@ module FusedJSON
       end
     end
 
-    private def decode_escaped_string_into(bytes : Bytes, output : Pointer(UInt8),
-                                           decoded_bytesize : Int32) : Int32
+    private def decode_escaped_string_into(bytes : Bytes, output : Pointer(UInt8)) : Int32
       index = 1
       segment_start = index
       limit = bytes.size - 1
@@ -984,38 +897,31 @@ module FusedJSON
         end
 
         count = index - segment_start
-        ensure_decoded_capacity(written, count, decoded_bytesize)
         (output + written).copy_from(bytes.to_unsafe + segment_start, count)
         written += count
         index += 1
         case byte = bytes[index]
         when 0x22_u8, 0x5c_u8, 0x2f_u8
-          ensure_decoded_capacity(written, 1, decoded_bytesize)
           output[written] = byte
           written += 1
           index += 1
         when 0x62_u8
-          ensure_decoded_capacity(written, 1, decoded_bytesize)
           output[written] = 0x08_u8
           written += 1
           index += 1
         when 0x66_u8
-          ensure_decoded_capacity(written, 1, decoded_bytesize)
           output[written] = 0x0c_u8
           written += 1
           index += 1
         when 0x6e_u8
-          ensure_decoded_capacity(written, 1, decoded_bytesize)
           output[written] = 0x0a_u8
           written += 1
           index += 1
         when 0x72_u8
-          ensure_decoded_capacity(written, 1, decoded_bytesize)
           output[written] = 0x0d_u8
           written += 1
           index += 1
         when 0x74_u8
-          ensure_decoded_capacity(written, 1, decoded_bytesize)
           output[written] = 0x09_u8
           written += 1
           index += 1
@@ -1027,23 +933,14 @@ module FusedJSON
             index += 6
             codepoint = 0x10000 + ((codepoint - 0xd800) << 10) + (low - 0xdc00)
           end
-          width = codepoint <= 0xffff ? decoded_codepoint_bytesize(codepoint) : 4
-          ensure_decoded_capacity(written, width, decoded_bytesize)
           written += write_decoded_codepoint(output + written, codepoint)
         end
         segment_start = index
       end
 
       count = limit - segment_start
-      ensure_decoded_capacity(written, count, decoded_bytesize)
       (output + written).copy_from(bytes.to_unsafe + segment_start, count)
       written + count
-    end
-
-    @[AlwaysInline]
-    private def ensure_decoded_capacity(written : Int32, count : Int32,
-                                        capacity : Int32) : Nil
-      raise "decoded string exceeded its measured size" if count > capacity - written
     end
 
     @[AlwaysInline]
