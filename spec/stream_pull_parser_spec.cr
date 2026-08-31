@@ -110,6 +110,10 @@ class FusedJSON::StreamingPullParser
   def __spec_token_scratch : IO::Memory
     @token
   end
+
+  def __spec_decoded_string_bytesize : Int32
+    @string_decoded_bytesize
+  end
 end
 
 describe "streaming FusedJSON::PullParser" do
@@ -170,6 +174,36 @@ describe "streaming FusedJSON::PullParser" do
       io.read_calls.should be <= source.bytesize + 2
       io.closed_called.should be_false
     end
+  end
+
+  it "measures escaped output bytes exactly at every source split" do
+    sources = [
+      %q("\b\f\n\r\t\"\\\/"),
+      %q("λ𝄞prefix-\n-raw-λ𝄞-\u0000-\u007f-\u0080-\u07ff-\u0800-\uffff-\uD800\uDC00-\uDBFF\uDFFF-end"),
+    ]
+
+    sources.each do |source|
+      expected = JSON.parse(source).as_s
+      1.upto(source.bytesize - 1) do |split|
+        io = StreamSpecSupport::ChunkedIO.new(
+          source,
+          chunks: [split, source.bytesize - split],
+          max_chunk: 3
+        )
+        pull = FusedJSON::PullParser.new(io, buffer_size: 7)
+
+        pull.__spec_decoded_string_bytesize.should eq(expected.bytesize),
+          "decoded size diverged at source split #{split}/#{source.bytesize}"
+        pull.read_string.should eq(expected)
+        pull.finish
+        io.closed_called.should be_false
+      end
+    end
+
+    empty_io = StreamSpecSupport::ChunkedIO.new(%q(""), max_chunk: 1)
+    empty = FusedJSON::PullParser.new(empty_io, buffer_size: 1)
+    empty.read_string.should eq("")
+    empty.finish
   end
 
   it "parses and skips long strings, keys, escapes, and numbers with tiny buffers" do
@@ -370,6 +404,19 @@ describe "streaming FusedJSON::PullParser" do
     pull.location_i64.should eq({1_i64, 7_i64})
     pull.finish
     io.pos.should eq(6)
+
+    escaped_io = IO::Memory.new(
+      Bytes[0x22_u8, 0x63_u8, 0x61_u8, 0x66_u8, 0xe9_u8, 0x5c_u8, 0x6e_u8, 0x22_u8]
+    )
+    escaped_io.set_encoding("ISO-8859-1")
+    escaped = FusedJSON::PullParser.new(escaped_io, buffer_size: 1)
+    expected = "café\n"
+
+    escaped.__spec_decoded_string_bytesize.should eq(expected.bytesize)
+    escaped.read_string.should eq(expected)
+    escaped.byte_offset.should eq(9_i64)
+    escaped.finish
+    escaped_io.pos.should eq(8)
   end
 
   it "applies token limits after IO transcoding" do

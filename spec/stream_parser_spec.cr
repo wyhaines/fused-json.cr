@@ -185,7 +185,7 @@ describe FusedJSON::StreamingParser do
     uncached_duplicate.as_h["a"].as_i64.should eq(2_i64)
     cached_duplicate.should eq(uncached_duplicate)
 
-    repeated = %q([{"cache-key-across-objects":1},{"cache-key-across-objects":2}])
+    repeated = %q([{"cache-key-across-objects":1},{"\u0063ache-key-across-objects":2}])
     uncached, _ = parse_stream(repeated, cache_keys: false)
     cached, _ = parse_stream(repeated, cache_keys: true)
     uncached_keys = uncached.as_a.map { |entry| entry.as_h.keys.first }
