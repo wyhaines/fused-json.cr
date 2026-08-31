@@ -7,7 +7,7 @@ import path from "node:path";
 import {spawnSync} from "node:child_process";
 
 const RECEIPT = "fused-json-streaming-performance-campaign";
-const VERSION = 1;
+const VERSION = 2;
 const TASKSET = "/usr/bin/taskset";
 const QUIET_SAMPLE_MILLISECONDS = 1_000;
 
@@ -127,6 +127,24 @@ const MATRICES = Object.freeze({
     entry("documents", "key-repeated-escaped", "document-typed", "io-memory", {values: 16, token_bytes: 96, cache_keys: true}),
   ]),
 });
+
+function matrixGroup(matrix, entryValue) {
+  if (matrix === "attribution") {
+    return entryValue.transport === "string" ? "string-control" : "guardrail";
+  }
+  if (matrix === "escaped") {
+    return entryValue.transport === "string" ? "string-control" : "target";
+  }
+  if (matrix === "boundary") return "target";
+  return "diagnostic";
+}
+
+function matrixEntries(matrix) {
+  return MATRICES[matrix].map((entryValue) => Object.freeze({
+    ...entryValue,
+    group: matrixGroup(matrix, entryValue),
+  }));
+}
 
 function usage() {
   return [
@@ -520,6 +538,7 @@ function collectSummary(entries, observations) {
     const selected = observations.filter((item) => item.entry_id === entryValue.id);
     return {
       entry_id: entryValue.id,
+      group: entryValue.group,
       samples: selected.length,
       median_mib_per_second: median(selected.map((item) => item.measurement.mib_per_second)),
       median_nanoseconds_per_byte: median(selected.map((item) => item.measurement.nanoseconds_per_byte)),
@@ -542,6 +561,23 @@ function collectSummary(entries, observations) {
   };
 }
 
+function comparisonGroup(profiles, group) {
+  const selected = profiles.filter((profile) => profile.group === group);
+  if (selected.length === 0) return null;
+  return {
+    profile_count: selected.length,
+    geometric_mean_throughput_ratio: geometricMean(selected.map((profile) =>
+      profile.geometric_mean_throughput_ratio)),
+    paired_bootstrap_lower_95: bootstrapLowerBound(
+      selected.map((profile) => profile.ratios),
+      10_000,
+      0x5eed2026,
+    ),
+    minimum_profile_median: Math.min(...selected.map((profile) =>
+      profile.median_throughput_ratio)),
+  };
+}
+
 function compareSummary(entries, observations) {
   const profiles = entries.map((entryValue) => {
     const selected = observations.filter((item) => item.entry_id === entryValue.id);
@@ -557,6 +593,7 @@ function compareSummary(entries, observations) {
     });
     return {
       entry_id: entryValue.id,
+      group: entryValue.group,
       pairs: ratios.length,
       ratios,
       median_throughput_ratio: median(ratios),
@@ -570,16 +607,31 @@ function compareSummary(entries, observations) {
   });
   const matrixRatio = geometricMean(profiles.map((profile) => profile.geometric_mean_throughput_ratio));
   const lower = bootstrapLowerBound(profiles.map((profile) => profile.ratios), 10_000, 0x5eed2026);
+  const groups = Object.fromEntries([...new Set(profiles.map((profile) => profile.group))].map((group) =>
+    [group, comparisonGroup(profiles, group)]));
+  const target = groups.target ?? null;
+  const guardrail = groups.guardrail ?? null;
+  const stringControl = groups["string-control"] ?? null;
   return {
     mode: "compare",
     profiles,
     matrix_geometric_mean_throughput_ratio: matrixRatio,
     matrix_paired_bootstrap_lower_95: lower,
     minimum_profile_median: Math.min(...profiles.map((profile) => profile.median_throughput_ratio)),
+    groups,
     screening: {
-      target_geometric_mean_at_least_1_05: matrixRatio >= 1.05,
-      every_profile_median_at_least_0_98: profiles.every((profile) =>
-        profile.median_throughput_ratio >= 0.98),
+      target_geometric_mean_at_least_1_05: target === null ? null :
+        target.geometric_mean_throughput_ratio >= 1.05,
+      every_target_median_at_least_0_98: target === null ? null :
+        target.minimum_profile_median >= 0.98,
+      guardrail_geometric_mean_at_least_0_99: guardrail === null ? null :
+        guardrail.geometric_mean_throughput_ratio >= 0.99,
+      every_guardrail_median_at_least_0_97: guardrail === null ? null :
+        guardrail.minimum_profile_median >= 0.97,
+      string_control_geometric_mean_at_least_0_99: stringControl === null ? null :
+        stringControl.geometric_mean_throughput_ratio >= 0.99,
+      every_string_control_median_at_least_0_97: stringControl === null ? null :
+        stringControl.minimum_profile_median >= 0.97,
     },
   };
 }
@@ -709,7 +761,7 @@ function runCampaign(options) {
   fs.mkdirSync(receiptsDirectory);
   const partialFile = path.join(options.output, "campaign.partial.json");
   const journalFile = path.join(options.output, "journal.jsonl");
-  const entries = MATRICES[options.matrix];
+  const entries = matrixEntries(options.matrix);
   const campaign = initialCampaign(options, entries, environmentGate);
   updatePartial(partialFile, campaign);
 
@@ -794,6 +846,22 @@ function selfAudit() {
   }
   if (Math.abs(idlePercent({total: 10, idle: 4}, {total: 110, idle: 79}) - 75) > 1e-12) {
     throw new Error("CPU-idle self-audit failed");
+  }
+  const groupCounts = Object.fromEntries(["attribution", "escaped", "boundary", "smoke"].map((matrix) => {
+    const counts = {};
+    for (const entryValue of matrixEntries(matrix)) {
+      counts[entryValue.group] = (counts[entryValue.group] ?? 0) + 1;
+    }
+    return [matrix, counts];
+  }));
+  const expectedGroupCounts = {
+    attribution: {"string-control": 9, guardrail: 42},
+    escaped: {"string-control": 4, target: 12},
+    boundary: {target: 10},
+    smoke: {diagnostic: 3},
+  };
+  if (JSON.stringify(groupCounts) !== JSON.stringify(expectedGroupCounts)) {
+    throw new Error("matrix-group self-audit failed");
   }
   const lower = bootstrapLowerBound([[1.1, 1.1, 1.1], [1.2, 1.2, 1.2]], 100, 7);
   if (Math.abs(lower - Math.sqrt(1.1 * 1.2)) > 1e-12) {
