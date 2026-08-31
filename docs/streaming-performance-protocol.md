@@ -1,9 +1,30 @@
 # Streaming performance protocol
 
-Status: frozen for the first runtime candidate. This protocol was written at
-the benchmark-only commit
+Status: frozen for the first runtime candidate, with the build-root amendment
+below. This protocol was written at the benchmark-only commit
 `773124b6c9a0e0ab9e659c27edc5a37cd6cbaeda`, before any streaming runtime
 change was measured.
+
+## Build-root amendment
+
+Crystal embeds absolute paths derived from `__FILE__` and `__DIR__`. The first
+prepared baseline binary was built in
+`/tmp/fused-json-baseline-773124b`, while the first two candidate binaries were
+built in the repository worktree. This changed read-only section sizes and
+code placement in otherwise unchanged String-parser controls. Candidate
+`726f862a1163966ed47da863631d9ac4a398e381`, for example, cleared both target
+throughput floors but failed the unaffected sparse-String control. Inspection
+then confirmed different embedded build roots and different placement for the
+identical control code.
+
+Those campaigns remain checksummed evidence, but they are build-root
+confounded and cannot accept or reject a runtime candidate. The attribution
+baseline and comparisons are recollected from binaries built sequentially in
+the same absolute worktree, `/tmp/fused-json-streaming-build`. The compiler,
+build command, cache configuration, and benchmark/support sources remain
+unchanged. Both binaries must contain that exact embedded root, verified with
+`strings`, before a campaign starts. No throughput or acceptance threshold is
+changed by this amendment.
 
 ## Reference build and host
 
@@ -23,10 +44,11 @@ change was measured.
   `balance_performance` energy preference. Baseline and candidate campaigns
   must record the same policy.
 
-Baseline and candidate binaries are built separately with `--release
---no-debug` using the same compiler. Their benchmark and support source hashes
-must match byte for byte. Commit identities, binary hashes, compiler details,
-fixture hashes, process order, GC settings, and CPU policy are recorded in the
+Baseline and candidate binaries are built sequentially in
+`/tmp/fused-json-streaming-build` with `--release --no-debug` using the same
+compiler. Their benchmark and support source hashes must match byte for byte.
+Commit identities, binary hashes, compiler details, fixture hashes, process
+order, GC settings, CPU policy, and the shared build root are recorded with the
 campaign artifact.
 
 ## Quiet-host requirement

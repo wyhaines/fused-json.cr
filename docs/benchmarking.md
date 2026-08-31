@@ -44,6 +44,16 @@ use a separate process-level RSS tool for peak memory. The one-shot TiC modes
 intentionally have no internal warmup and rely on a separately warmed page
 cache.
 
+Build both sides of a compiled-binary comparison from the same absolute source
+directory. Crystal embeds paths derived from `__FILE__` and `__DIR__`; building
+otherwise identical sources in differently named worktrees can change section
+sizes and code placement enough to move an unaffected control. Reuse one clean
+temporary worktree, build and save the baseline binary, switch that worktree to
+the candidate, and build the candidate with the same compiler and command.
+Record the shared build directory with the binary hashes. Separate worktrees
+are suitable for correctness work, but not for binaries in the same formal
+performance comparison.
+
 `typed-cursor-cost` compares native structural reads, repeated `read(T)`, and
 `read_array(T)` for scalar arrays and a record ladder covering empty, integer,
 string, nested, negotiated-price, partially repeated key, unique key, and
