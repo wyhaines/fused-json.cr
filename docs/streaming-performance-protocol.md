@@ -26,6 +26,27 @@ unchanged. Both binaries must contain that exact embedded root, verified with
 `strings`, before a campaign starts. No throughput or acceptance threshold is
 changed by this amendment.
 
+## Fixed-binary control amendment
+
+Campaign format version 2 ran each unaffected String profile once from the
+baseline binary and once from the candidate binary. The build-root correction
+removed one source of layout drift, but the unchanged String scanner still
+moved as streaming methods changed size and inlining. The resulting control
+ratios measured executable layout as well as host drift, even though the
+candidate did not change the String parser.
+
+Campaign format version 3 therefore runs the baseline binary in both balanced
+positions of every `string-control` pair. Receipts retain the `baseline` and
+`candidate` order labels but each observation also records
+`binary_role: baseline`, and campaign identity checks enforce that policy.
+These controls now answer their intended question: whether performance drifted
+between the two time slots. Target and guardrail entries still compare separate
+baseline and candidate binaries. A candidate remains ineligible if it changes
+the String parser source; source review and the complete String correctness
+suite enforce that restriction. The existing version-2 cross-binary controls
+remain diagnostic evidence, but they do not decide acceptance. Thresholds and
+target membership are unchanged.
+
 ## Reference build and host
 
 - Runtime reference: `1d7e5e0ea88940946fd1ea25d30241331442b344`.
@@ -155,7 +176,7 @@ A candidate that clears screening receives 20 pairs, evenly balanced for
 process order, with 1 second of warmup, 2 seconds of measurement, five
 allocation iterations, and 100 latency iterations. The target geometric mean
 must remain at least 1.05x and its one-sided 95% paired-bootstrap lower bound
-must be at least 1.02x. The analysis uses campaign format version 2, 10,000
+must be at least 1.02x. The analysis uses campaign format version 3, 10,000
 resamples, and seed `0x5eed2026`.
 
 First-value latency may not regress by more than 2% in either ordinary or

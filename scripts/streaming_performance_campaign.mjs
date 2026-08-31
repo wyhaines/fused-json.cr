@@ -7,7 +7,7 @@ import path from "node:path";
 import {spawnSync} from "node:child_process";
 
 const RECEIPT = "fused-json-streaming-performance-campaign";
-const VERSION = 2;
+const VERSION = 3;
 const TASKSET = "/usr/bin/taskset";
 const QUIET_SAMPLE_MILLISECONDS = 1_000;
 
@@ -144,6 +144,10 @@ function matrixEntries(matrix) {
     ...entryValue,
     group: matrixGroup(matrix, entryValue),
   }));
+}
+
+function comparisonBinaryRole(entryValue, orderPosition) {
+  return entryValue.group === "string-control" ? "baseline" : orderPosition;
 }
 
 function usage() {
@@ -659,7 +663,7 @@ function bootstrapLowerBound(profileRatios, samples, seed) {
   return estimates[Math.floor(samples * 0.05)];
 }
 
-function crossObservationIssues(entries, observations, mode) {
+function crossObservationIssues(entries, observations, options) {
   const issues = [];
   const benchmarkSources = new Set(observations.map((item) =>
     `${item.measurement.benchmark_source_sha256}:${item.measurement.benchmark_support_sha256}`));
@@ -673,10 +677,17 @@ function crossObservationIssues(entries, observations, mode) {
     const compilers = new Set(selected.map((item) =>
       `${item.measurement.crystal_version}:${item.measurement.crystal_build_commit}:${item.measurement.llvm_version}:${item.measurement.target}`));
     if (compilers.size !== 1) issues.push(`${entryValue.id} compiler identity differs`);
-    if (mode === "compare") {
+    if (options.mode === "compare") {
       const roles = new Set(selected.map((item) => item.order_position));
       if (!roles.has("baseline") || !roles.has("candidate")) {
         issues.push(`${entryValue.id} is missing a comparison role`);
+      }
+      for (const item of selected) {
+        const binaryRole = comparisonBinaryRole(entryValue, item.order_position);
+        const expectedCommit = options[`${binaryRole}_commit`];
+        if (item.binary_role !== binaryRole || item.measurement.fused_json_commit !== expectedCommit) {
+          issues.push(`${entryValue.id} used the wrong comparison binary`);
+        }
       }
     }
   }
@@ -747,6 +758,10 @@ function initialCampaign(options, entries, environmentGate) {
     },
     runner,
     binaries,
+    controls: options.mode === "compare" ? {
+      string_control_binary_role: "baseline",
+      purpose: "fixed-binary host-drift control",
+    } : null,
     entries,
     observations: [],
   };
@@ -774,8 +789,11 @@ function runCampaign(options) {
         const roles = options.mode === "collect" ? ["measured"] :
           (round % 2 === 0 ? ["baseline", "candidate"] : ["candidate", "baseline"]);
         for (const role of roles) {
-          const binary = options.mode === "collect" ? options.binary : options[role];
-          const commitValue = options.mode === "collect" ? options.commit : options[`${role}_commit`];
+          const binaryRole = options.mode === "collect" ? "measured" :
+            comparisonBinaryRole(entryValue, role);
+          const binary = options.mode === "collect" ? options.binary : options[binaryRole];
+          const commitValue = options.mode === "collect" ? options.commit :
+            options[`${binaryRole}_commit`];
           const observation = runChild(
             binary,
             commitValue,
@@ -785,6 +803,7 @@ function runCampaign(options) {
             role,
             receiptsDirectory,
           );
+          observation.binary_role = binaryRole;
           campaign.observations.push(observation);
           appendJournal(journalFile, {
             event: "observation-complete",
@@ -798,7 +817,7 @@ function runCampaign(options) {
       }
     }
 
-    const issues = crossObservationIssues(entries, campaign.observations, options.mode);
+    const issues = crossObservationIssues(entries, campaign.observations, options);
     if (issues.length > 0) throw new Error(`campaign identity checks failed: ${issues.join("; ")}`);
     const summary = options.mode === "collect" ?
       collectSummary(entries, campaign.observations) : compareSummary(entries, campaign.observations);
@@ -862,6 +881,10 @@ function selfAudit() {
   };
   if (JSON.stringify(groupCounts) !== JSON.stringify(expectedGroupCounts)) {
     throw new Error("matrix-group self-audit failed");
+  }
+  if (comparisonBinaryRole(matrixEntries("escaped")[0], "candidate") !== "baseline" ||
+      comparisonBinaryRole(matrixEntries("escaped")[1], "candidate") !== "candidate") {
+    throw new Error("comparison control policy self-audit failed");
   }
   const lower = bootstrapLowerBound([[1.1, 1.1, 1.1], [1.2, 1.2, 1.2]], 100, 7);
   if (Math.abs(lower - Math.sqrt(1.1 * 1.2)) > 1e-12) {
