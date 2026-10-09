@@ -1,0 +1,532 @@
+{
+  "mode": "collect",
+  "profiles": [
+    {
+      "entry_id": "integers-string",
+      "group": "string-control",
+      "samples": 3,
+      "median_mib_per_second": 365.2947763335982,
+      "median_nanoseconds_per_byte": 2.6106979299789543,
+      "median_managed_bytes_per_operation": 0,
+      "median_one_value_microseconds": 0.17894,
+      "maximum_rsd_percent": 1.0445864773662221
+    },
+    {
+      "entry_id": "integers-io",
+      "group": "guardrail",
+      "samples": 3,
+      "median_mib_per_second": 277.6068421581581,
+      "median_nanoseconds_per_byte": 3.4353415391070334,
+      "median_managed_bytes_per_operation": 35232,
+      "median_one_value_microseconds": 2.1921,
+      "maximum_rsd_percent": 2.9251063801127044
+    },
+    {
+      "entry_id": "integers-chunked",
+      "group": "guardrail",
+      "samples": 3,
+      "median_mib_per_second": 277.8319722523126,
+      "median_nanoseconds_per_byte": 3.4325578466547846,
+      "median_managed_bytes_per_operation": 34053,
+      "median_one_value_microseconds": 1.9238,
+      "maximum_rsd_percent": 4.8964761280143705
+    },
+    {
+      "entry_id": "floats-string",
+      "group": "string-control",
+      "samples": 3,
+      "median_mib_per_second": 331.72702684217154,
+      "median_nanoseconds_per_byte": 2.8748767487672544,
+      "median_managed_bytes_per_operation": 0,
+      "median_one_value_microseconds": 0.18214,
+      "maximum_rsd_percent": 2.2269131457115843
+    },
+    {
+      "entry_id": "floats-io",
+      "group": "guardrail",
+      "samples": 3,
+      "median_mib_per_second": 237.89720373395392,
+      "median_nanoseconds_per_byte": 4.008766397577193,
+      "median_managed_bytes_per_operation": 32784,
+      "median_one_value_microseconds": 1.91238,
+      "maximum_rsd_percent": 0.6657189702113306
+    },
+    {
+      "entry_id": "floats-chunked",
+      "group": "guardrail",
+      "samples": 3,
+      "median_mib_per_second": 238.02468940836548,
+      "median_nanoseconds_per_byte": 4.006619308176409,
+      "median_managed_bytes_per_operation": 33957,
+      "median_one_value_microseconds": 1.9941200000000001,
+      "maximum_rsd_percent": 1.216068851150782
+    },
+    {
+      "entry_id": "plain-short-string",
+      "group": "string-control",
+      "samples": 3,
+      "median_mib_per_second": 111.93445588904144,
+      "median_nanoseconds_per_byte": 8.51993524988954,
+      "median_managed_bytes_per_operation": 2334613,
+      "median_one_value_microseconds": 0.18074,
+      "maximum_rsd_percent": 1.2408744892830585
+    },
+    {
+      "entry_id": "plain-short-io",
+      "group": "guardrail",
+      "samples": 3,
+      "median_mib_per_second": 99.02116453993125,
+      "median_nanoseconds_per_byte": 9.631014953592791,
+      "median_managed_bytes_per_operation": 2368523,
+      "median_one_value_microseconds": 1.929,
+      "maximum_rsd_percent": 1.2871570450926415
+    },
+    {
+      "entry_id": "plain-short-chunked",
+      "group": "guardrail",
+      "samples": 3,
+      "median_mib_per_second": 99.29660649761122,
+      "median_nanoseconds_per_byte": 9.604299180447748,
+      "median_managed_bytes_per_operation": 2369680,
+      "median_one_value_microseconds": 2.11596,
+      "maximum_rsd_percent": 3.348270377509641
+    },
+    {
+      "entry_id": "plain-long-string",
+      "group": "string-control",
+      "samples": 3,
+      "median_mib_per_second": 2365.0746273199106,
+      "median_nanoseconds_per_byte": 0.40323223013345183,
+      "median_managed_bytes_per_operation": 785120,
+      "median_one_value_microseconds": 0.3146,
+      "maximum_rsd_percent": 2.6875275639206087
+    },
+    {
+      "entry_id": "plain-long-io",
+      "group": "guardrail",
+      "samples": 3,
+      "median_mib_per_second": 2065.091650528513,
+      "median_nanoseconds_per_byte": 0.46180725981928156,
+      "median_managed_bytes_per_operation": 819840,
+      "median_one_value_microseconds": 1.10886,
+      "maximum_rsd_percent": 5.507622228519404
+    },
+    {
+      "entry_id": "plain-long-chunked",
+      "group": "guardrail",
+      "samples": 3,
+      "median_mib_per_second": 2029.196084546951,
+      "median_nanoseconds_per_byte": 0.4699764225196464,
+      "median_managed_bytes_per_operation": 821781,
+      "median_one_value_microseconds": 0.92574,
+      "maximum_rsd_percent": 4.296495923864954
+    },
+    {
+      "entry_id": "raw-utf8-string",
+      "group": "string-control",
+      "samples": 3,
+      "median_mib_per_second": 571.0342243285988,
+      "median_nanoseconds_per_byte": 1.6700825901066534,
+      "median_managed_bytes_per_operation": 783701,
+      "median_one_value_microseconds": 0.9017000000000001,
+      "maximum_rsd_percent": 3.83185673561368
+    },
+    {
+      "entry_id": "raw-utf8-io",
+      "group": "guardrail",
+      "samples": 3,
+      "median_mib_per_second": 406.58692978627687,
+      "median_nanoseconds_per_byte": 2.34556068220774,
+      "median_managed_bytes_per_operation": 819733,
+      "median_one_value_microseconds": 2.02378,
+      "maximum_rsd_percent": 2.3498982814946436
+    },
+    {
+      "entry_id": "raw-utf8-chunked",
+      "group": "guardrail",
+      "samples": 3,
+      "median_mib_per_second": 410.5859194726738,
+      "median_nanoseconds_per_byte": 2.3227155905177623,
+      "median_managed_bytes_per_operation": 818976,
+      "median_one_value_microseconds": 2.18228,
+      "maximum_rsd_percent": 1.7221840839984972
+    },
+    {
+      "entry_id": "escape-sparse-string",
+      "group": "string-control",
+      "samples": 3,
+      "median_mib_per_second": 390.09040474722957,
+      "median_nanoseconds_per_byte": 2.444752049269735,
+      "median_managed_bytes_per_operation": 3472320,
+      "median_one_value_microseconds": 1.42066,
+      "maximum_rsd_percent": 2.8331020068917807
+    },
+    {
+      "entry_id": "escape-sparse-io",
+      "group": "guardrail",
+      "samples": 3,
+      "median_mib_per_second": 417.24066360984756,
+      "median_nanoseconds_per_byte": 2.285669637650681,
+      "median_managed_bytes_per_operation": 1011051,
+      "median_one_value_microseconds": 2.3810599999999997,
+      "maximum_rsd_percent": 2.6648256420084353
+    },
+    {
+      "entry_id": "escape-sparse-chunked",
+      "group": "guardrail",
+      "samples": 3,
+      "median_mib_per_second": 412.18772147054443,
+      "median_nanoseconds_per_byte": 2.313689289442847,
+      "median_managed_bytes_per_operation": 1012384,
+      "median_one_value_microseconds": 2.1079399999999997,
+      "maximum_rsd_percent": 3.145438383447997
+    },
+    {
+      "entry_id": "escape-dense-string",
+      "group": "string-control",
+      "samples": 3,
+      "median_mib_per_second": 203.7240745471978,
+      "median_nanoseconds_per_byte": 4.681205785452261,
+      "median_managed_bytes_per_operation": 3376576,
+      "median_one_value_microseconds": 3.78146,
+      "maximum_rsd_percent": 2.340196725238065
+    },
+    {
+      "entry_id": "escape-dense-io",
+      "group": "guardrail",
+      "samples": 3,
+      "median_mib_per_second": 221.15943846345164,
+      "median_nanoseconds_per_byte": 4.31215743280996,
+      "median_managed_bytes_per_operation": 1364736,
+      "median_one_value_microseconds": 4.20926,
+      "maximum_rsd_percent": 2.715159128844922
+    },
+    {
+      "entry_id": "escape-dense-chunked",
+      "group": "guardrail",
+      "samples": 3,
+      "median_mib_per_second": 220.07461927131203,
+      "median_nanoseconds_per_byte": 4.333413455690421,
+      "median_managed_bytes_per_operation": 1363952,
+      "median_one_value_microseconds": 4.42948,
+      "maximum_rsd_percent": 1.4080653469814395
+    },
+    {
+      "entry_id": "unicode-escape-string",
+      "group": "string-control",
+      "samples": 3,
+      "median_mib_per_second": 287.77900279705955,
+      "median_nanoseconds_per_byte": 3.313912089266557,
+      "median_managed_bytes_per_operation": 883109,
+      "median_one_value_microseconds": 1.8382399999999999,
+      "maximum_rsd_percent": 1.4056707262378736
+    },
+    {
+      "entry_id": "unicode-escape-io",
+      "group": "guardrail",
+      "samples": 3,
+      "median_mib_per_second": 236.00063476421738,
+      "median_nanoseconds_per_byte": 4.0409819971842165,
+      "median_managed_bytes_per_operation": 1106624,
+      "median_one_value_microseconds": 4.79896,
+      "maximum_rsd_percent": 1.3818112136458718
+    },
+    {
+      "entry_id": "unicode-escape-chunked",
+      "group": "guardrail",
+      "samples": 3,
+      "median_mib_per_second": 235.42319871147123,
+      "median_nanoseconds_per_byte": 4.050893546710532,
+      "median_managed_bytes_per_operation": 1106507,
+      "median_one_value_microseconds": 4.25036,
+      "maximum_rsd_percent": 0.8728579588017777
+    },
+    {
+      "entry_id": "surrogate-escape-string",
+      "group": "string-control",
+      "samples": 3,
+      "median_mib_per_second": 339.376452733064,
+      "median_nanoseconds_per_byte": 2.810078037901943,
+      "median_managed_bytes_per_operation": 880293,
+      "median_one_value_microseconds": 1.5116199999999997,
+      "maximum_rsd_percent": 2.0021502585318056
+    },
+    {
+      "entry_id": "surrogate-escape-io",
+      "group": "guardrail",
+      "samples": 3,
+      "median_mib_per_second": 273.7579744344879,
+      "median_nanoseconds_per_byte": 3.483640315414705,
+      "median_managed_bytes_per_operation": 1107467,
+      "median_one_value_microseconds": 3.9149200000000004,
+      "maximum_rsd_percent": 0.9113573934123089
+    },
+    {
+      "entry_id": "surrogate-escape-chunked",
+      "group": "guardrail",
+      "samples": 3,
+      "median_mib_per_second": 272.7903891458979,
+      "median_nanoseconds_per_byte": 3.495996759241365,
+      "median_managed_bytes_per_operation": 1106677,
+      "median_one_value_microseconds": 4.3056399999999995,
+      "maximum_rsd_percent": 6.042596458697031
+    },
+    {
+      "entry_id": "plain-boundary-io",
+      "group": "guardrail",
+      "samples": 3,
+      "median_mib_per_second": 1550.5271524479376,
+      "median_nanoseconds_per_byte": 0.6150645700725784,
+      "median_managed_bytes_per_operation": 2399259,
+      "median_one_value_microseconds": 40.729800000000004,
+      "maximum_rsd_percent": 18.45701975330342
+    },
+    {
+      "entry_id": "plain-boundary-chunked",
+      "group": "guardrail",
+      "samples": 3,
+      "median_mib_per_second": 1565.9490555018542,
+      "median_nanoseconds_per_byte": 0.6090072426402257,
+      "median_managed_bytes_per_operation": 2628251,
+      "median_one_value_microseconds": 44.7567,
+      "maximum_rsd_percent": 3.0056276285241323
+    },
+    {
+      "entry_id": "sparse-boundary-io",
+      "group": "guardrail",
+      "samples": 3,
+      "median_mib_per_second": 463.7074760762956,
+      "median_nanoseconds_per_byte": 2.056629158701203,
+      "median_managed_bytes_per_operation": 2397659,
+      "median_one_value_microseconds": 151.38198,
+      "maximum_rsd_percent": 1.41348420940044
+    },
+    {
+      "entry_id": "sparse-boundary-chunked",
+      "group": "guardrail",
+      "samples": 3,
+      "median_mib_per_second": 463.3048459118061,
+      "median_nanoseconds_per_byte": 2.0584164504676683,
+      "median_managed_bytes_per_operation": 2677920,
+      "median_one_value_microseconds": 151.58736000000002,
+      "maximum_rsd_percent": 2.807008722370034
+    },
+    {
+      "entry_id": "dense-boundary-io",
+      "group": "guardrail",
+      "samples": 3,
+      "median_mib_per_second": 226.924528327665,
+      "median_nanoseconds_per_byte": 4.2026057008222715,
+      "median_managed_bytes_per_operation": 2641253,
+      "median_one_value_microseconds": 433.73592,
+      "maximum_rsd_percent": 1.8974369911298337
+    },
+    {
+      "entry_id": "dense-boundary-chunked",
+      "group": "guardrail",
+      "samples": 3,
+      "median_mib_per_second": 228.44206971323595,
+      "median_nanoseconds_per_byte": 4.1746877779710205,
+      "median_managed_bytes_per_operation": 2921595,
+      "median_one_value_microseconds": 429.32845999999995,
+      "maximum_rsd_percent": 1.4279837342086397
+    },
+    {
+      "entry_id": "unicode-boundary-io",
+      "group": "guardrail",
+      "samples": 3,
+      "median_mib_per_second": 255.44425974044802,
+      "median_nanoseconds_per_byte": 3.7333949777351036,
+      "median_managed_bytes_per_operation": 834064,
+      "median_one_value_microseconds": 249.86577999999997,
+      "maximum_rsd_percent": 2.162139709354501
+    },
+    {
+      "entry_id": "unicode-boundary-chunked",
+      "group": "guardrail",
+      "samples": 3,
+      "median_mib_per_second": 248.28419466206586,
+      "median_nanoseconds_per_byte": 3.8410593058663083,
+      "median_managed_bytes_per_operation": 862197,
+      "median_one_value_microseconds": 255.32298,
+      "maximum_rsd_percent": 2.8396127651058127
+    },
+    {
+      "entry_id": "surrogate-boundary-io",
+      "group": "guardrail",
+      "samples": 3,
+      "median_mib_per_second": 298.8613134925118,
+      "median_nanoseconds_per_byte": 3.191026316727157,
+      "median_managed_bytes_per_operation": 834144,
+      "median_one_value_microseconds": 213.53259999999997,
+      "maximum_rsd_percent": 2.256798837624649
+    },
+    {
+      "entry_id": "surrogate-boundary-chunked",
+      "group": "guardrail",
+      "samples": 3,
+      "median_mib_per_second": 299.1439163942643,
+      "median_nanoseconds_per_byte": 3.1880117366295715,
+      "median_managed_bytes_per_operation": 862171,
+      "median_one_value_microseconds": 221.53358,
+      "maximum_rsd_percent": 1.188131924275468
+    },
+    {
+      "entry_id": "sparse-skip",
+      "group": "guardrail",
+      "samples": 3,
+      "median_mib_per_second": 1325.356586647338,
+      "median_nanoseconds_per_byte": 0.7195605514880289,
+      "median_managed_bytes_per_operation": 35307,
+      "median_one_value_microseconds": 2.0829,
+      "maximum_rsd_percent": 1.5008864032786577
+    },
+    {
+      "entry_id": "sparse-tree",
+      "group": "guardrail",
+      "samples": 3,
+      "median_mib_per_second": 409.37100040906546,
+      "median_nanoseconds_per_byte": 2.3296088766749175,
+      "median_managed_bytes_per_operation": 1053093,
+      "median_one_value_microseconds": 2.50188,
+      "maximum_rsd_percent": 3.5761255339397406
+    },
+    {
+      "entry_id": "sparse-typed",
+      "group": "guardrail",
+      "samples": 3,
+      "median_mib_per_second": 414.55912257005684,
+      "median_nanoseconds_per_byte": 2.300454300689252,
+      "median_managed_bytes_per_operation": 1011749,
+      "median_one_value_microseconds": 2.23078,
+      "maximum_rsd_percent": 3.3274778505197613
+    },
+    {
+      "entry_id": "sparse-doc-dynamic",
+      "group": "guardrail",
+      "samples": 3,
+      "median_mib_per_second": 409.3813019795511,
+      "median_nanoseconds_per_byte": 2.3295502549696,
+      "median_managed_bytes_per_operation": 1012309,
+      "median_one_value_microseconds": 2.3355799999999998,
+      "maximum_rsd_percent": 7.559015071242757
+    },
+    {
+      "entry_id": "sparse-doc-typed",
+      "group": "guardrail",
+      "samples": 3,
+      "median_mib_per_second": 419.0971109510411,
+      "median_nanoseconds_per_byte": 2.275544954824702,
+      "median_managed_bytes_per_operation": 1011152,
+      "median_one_value_microseconds": 2.5385400000000002,
+      "maximum_rsd_percent": 3.265679564287373
+    },
+    {
+      "entry_id": "key-repeated-plain",
+      "group": "guardrail",
+      "samples": 3,
+      "median_mib_per_second": 327.4953069113894,
+      "median_nanoseconds_per_byte": 2.912024374945581,
+      "median_managed_bytes_per_operation": 1538907,
+      "median_one_value_microseconds": 1.0561800000000001,
+      "maximum_rsd_percent": 2.935444732216138
+    },
+    {
+      "entry_id": "key-repeated-plain-cached",
+      "group": "guardrail",
+      "samples": 3,
+      "median_mib_per_second": 329.944640040624,
+      "median_nanoseconds_per_byte": 2.890407058253258,
+      "median_managed_bytes_per_operation": 1473723,
+      "median_one_value_microseconds": 1.9747,
+      "maximum_rsd_percent": 5.623917426430418
+    },
+    {
+      "entry_id": "key-repeated-escaped",
+      "group": "guardrail",
+      "samples": 3,
+      "median_mib_per_second": 311.8093640275088,
+      "median_nanoseconds_per_byte": 3.058517242997596,
+      "median_managed_bytes_per_operation": 1730917,
+      "median_one_value_microseconds": 2.06344,
+      "maximum_rsd_percent": 1.8772790310594158
+    },
+    {
+      "entry_id": "key-repeated-escaped-cached",
+      "group": "guardrail",
+      "samples": 3,
+      "median_mib_per_second": 295.0276783164025,
+      "median_nanoseconds_per_byte": 3.2324910050760787,
+      "median_managed_bytes_per_operation": 1730160,
+      "median_one_value_microseconds": 2.22436,
+      "maximum_rsd_percent": 2.1715495394625015
+    },
+    {
+      "entry_id": "key-unique-plain",
+      "group": "guardrail",
+      "samples": 3,
+      "median_mib_per_second": 324.41439624226166,
+      "median_nanoseconds_per_byte": 2.939679396021866,
+      "median_managed_bytes_per_operation": 1602832,
+      "median_one_value_microseconds": 1.96166,
+      "maximum_rsd_percent": 2.096389160599131
+    },
+    {
+      "entry_id": "key-unique-escaped",
+      "group": "guardrail",
+      "samples": 3,
+      "median_mib_per_second": 295.40961320166986,
+      "median_nanoseconds_per_byte": 3.228311719683939,
+      "median_managed_bytes_per_operation": 1795141,
+      "median_one_value_microseconds": 2.4059,
+      "maximum_rsd_percent": 11.882846728777546
+    },
+    {
+      "entry_id": "sparse-token-limit",
+      "group": "guardrail",
+      "samples": 3,
+      "median_mib_per_second": 299.1798483341783,
+      "median_nanoseconds_per_byte": 3.187628851730059,
+      "median_managed_bytes_per_operation": 1012805,
+      "median_one_value_microseconds": 2.8862,
+      "maximum_rsd_percent": 1.6977451080300316
+    },
+    {
+      "entry_id": "sparse-document-limit",
+      "group": "guardrail",
+      "samples": 3,
+      "median_mib_per_second": 305.7335557713939,
+      "median_nanoseconds_per_byte": 3.1192988090562768,
+      "median_managed_bytes_per_operation": 1010997,
+      "median_one_value_microseconds": 3.29356,
+      "maximum_rsd_percent": 2.313476195503246
+    },
+    {
+      "entry_id": "sparse-duplicate-check",
+      "group": "guardrail",
+      "samples": 3,
+      "median_mib_per_second": 332.79834973781306,
+      "median_nanoseconds_per_byte": 2.865622131713029,
+      "median_managed_bytes_per_operation": 1011909,
+      "median_one_value_microseconds": 2.66238,
+      "maximum_rsd_percent": 2.20730266958583
+    }
+  ],
+  "noisy_observations": [
+    {
+      "pair_id": "collect-01",
+      "entry_id": "plain-boundary-io",
+      "rsd_percent": 18.45701975330342
+    },
+    {
+      "pair_id": "collect-01",
+      "entry_id": "key-unique-escaped",
+      "rsd_percent": 11.882846728777546
+    },
+    {
+      "pair_id": "collect-03",
+      "entry_id": "key-unique-escaped",
+      "rsd_percent": 10.953828060807542
+    }
+  ]
+}

@@ -1,0 +1,110 @@
+{
+  "format": "fused-json-streaming-performance-build",
+  "version": 1,
+  "recorded_at": "2026-08-31T10:23:20-06:00",
+  "shared_build_root": "/tmp/fused-json-streaming-build",
+  "baseline_commit": "773124b6c9a0e0ab9e659c27edc5a37cd6cbaeda",
+  "candidate_commit": "ab892f2c67e2379c368a2825a03dba6714add55f",
+  "runner_commit": "dd8cbae2b713fda4b8dd0268388ba3427ff67c06",
+  "compiler": {
+    "path": "/tmp/crystal-1.21.0-1/bin/crystal",
+    "sha256": "7dc591ee59502bcb00af893eeab95fdb1c4a98e53e107b4df4e4ba29942e3dc8",
+    "crystal": "1.21.0 [57cf7da50]",
+    "llvm": "20.1.8",
+    "target": "x86_64-unknown-linux-gnu",
+    "cache": "/tmp/fused-json-crystal-1.21-cache"
+  },
+  "host": {
+    "cpu": "AMD Ryzen 9 7940HS w/ Radeon 780M Graphics",
+    "logical_cpus": 16,
+    "threads_per_core": 2,
+    "kernel": "Linux 7.0.11-76070011-generic",
+    "architecture": "x86_64"
+  },
+  "sources": [
+    {
+      "path": "bench/streaming_token_cost.cr",
+      "sha256": "1d1c85c5656fcedb5101c4545b5dd1cb5419726f99484b82381136f4bddea0b2"
+    },
+    {
+      "path": "bench/streaming_token_support.cr",
+      "sha256": "6ddc220954a999d0016b30cc1f4a163a52271d4e6ee8d44077bbb5dce8309fa9"
+    },
+    {
+      "path": "bench/streaming_tree_cost.cr",
+      "sha256": "487746f0fd1896e2cd8549caef40d0cddc0dad09209536baffc2958b53baeef6"
+    },
+    {
+      "path": "scripts/streaming_performance_campaign.mjs",
+      "sha256": "9ce4573912ca6844fcfaf7d8c5d6b4d3ecd13964e8b4c39ae5a036e49b357151"
+    }
+  ],
+  "source_parity": {
+    "commits": [
+      "773124b6c9a0e0ab9e659c27edc5a37cd6cbaeda",
+      "ab892f2c67e2379c368a2825a03dba6714add55f"
+    ],
+    "paths": [
+      "bench/streaming_token_cost.cr",
+      "bench/streaming_token_support.cr",
+      "bench/streaming_tree_cost.cr"
+    ],
+    "identical": true
+  },
+  "build_commands": {
+    "token": "CRYSTAL_CACHE_DIR=/tmp/fused-json-crystal-1.21-cache /tmp/crystal-1.21.0-1/bin/crystal build --release --no-debug bench/streaming_token_cost.cr -o OUTPUT",
+    "tree": "CRYSTAL_CACHE_DIR=/tmp/fused-json-crystal-1.21-cache /tmp/crystal-1.21.0-1/bin/crystal build --release --no-debug bench/streaming_tree_cost.cr -o OUTPUT"
+  },
+  "binaries": [
+    {
+      "kind": "token",
+      "role": "baseline",
+      "path": "/tmp/fused-json-streaming-token-cost-normalized-baseline-773124b",
+      "bytes": 1564840,
+      "sha256": "5f03006e2c927fc88f925e90c91890fa5716d939a48d4ced5500cad7a814001f"
+    },
+    {
+      "kind": "token",
+      "role": "candidate",
+      "path": "/tmp/fused-json-streaming-token-cost-normalized-candidate-ab892f2",
+      "bytes": 1564920,
+      "sha256": "a671a2677d152c251cf1415adac51e9327fbd41a1bce81d7c453cffd744ebfc1"
+    },
+    {
+      "kind": "tree",
+      "role": "baseline",
+      "path": "/tmp/fused-json-streaming-tree-cost-normalized-baseline-773124b",
+      "bytes": 1351776,
+      "sha256": "d47c7fc7bcd27ea5a2ae809b5a99dcff51c50095a7445af563bf88da0f66efe3"
+    },
+    {
+      "kind": "tree",
+      "role": "candidate",
+      "path": "/tmp/fused-json-streaming-tree-cost-normalized-candidate-ab892f2",
+      "bytes": 1351832,
+      "sha256": "72a7de6c95b37d08dc17d7f84d0e1502677c290dae9d94070c247e3a9f465452"
+    }
+  ],
+  "tools": {
+    "node": {
+      "path": "/home/wyhaines/.local/bin/node",
+      "version": "v24.13.0",
+      "sha256": "53fb205ae78805130177e24bcb459a69a1518c8d98f8965f31d85aae7ea840fc"
+    },
+    "gnu_time": {
+      "path": "/usr/bin/time",
+      "version": "GNU Time UNKNOWN",
+      "sha256": "7310b9b4c51a8f4d26c1af0da250f03a49ec8a8141033123e79196ad18f6c81b"
+    },
+    "taskset": {
+      "path": "/usr/bin/taskset",
+      "version": "util-linux 2.37.2",
+      "sha256": "63e52c4b99a688ccd7bab6edbc6df2af1acad124eb852adcb4d20043d28eb2d3"
+    }
+  },
+  "verification": {
+    "shared_worktree_head": "ab892f2c67e2379c368a2825a03dba6714add55f",
+    "shared_worktree_clean": true,
+    "token_binaries_embed_shared_build_root": true
+  }
+}

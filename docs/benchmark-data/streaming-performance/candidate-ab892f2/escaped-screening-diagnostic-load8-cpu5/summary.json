@@ -1,0 +1,302 @@
+{
+  "mode": "compare",
+  "profiles": [
+    {
+      "entry_id": "sparse-string",
+      "group": "string-control",
+      "pairs": 5,
+      "ratios": [
+        0.9987306258014481,
+        1.0085109250611597,
+        0.9867631665704149,
+        0.9918476615013074,
+        0.9826545673067112
+      ],
+      "median_throughput_ratio": 0.9918476615013074,
+      "geometric_mean_throughput_ratio": 0.9936594132797057,
+      "minimum_throughput_ratio": 0.9826545673067112,
+      "median_allocation_delta_bytes": -96,
+      "median_latency_ratio": 1.0054295934217838
+    },
+    {
+      "entry_id": "sparse-io",
+      "group": "target",
+      "pairs": 5,
+      "ratios": [
+        1.2284646702924265,
+        1.1879656073461957,
+        1.1729950988684006,
+        1.181709951789787,
+        1.1829589624358494
+      ],
+      "median_throughput_ratio": 1.1829589624358494,
+      "geometric_mean_throughput_ratio": 1.190662461353965,
+      "minimum_throughput_ratio": 1.1729950988684006,
+      "median_allocation_delta_bytes": -95664,
+      "median_latency_ratio": 0.7951067884521688
+    },
+    {
+      "entry_id": "sparse-chunked",
+      "group": "target",
+      "pairs": 5,
+      "ratios": [
+        1.1896160043872992,
+        1.1657554539421964,
+        1.1711247035196042,
+        1.171436534873057,
+        1.145054040136813
+      ],
+      "median_throughput_ratio": 1.1711247035196042,
+      "geometric_mean_throughput_ratio": 1.1685099878569,
+      "minimum_throughput_ratio": 1.145054040136813,
+      "median_allocation_delta_bytes": -96101,
+      "median_latency_ratio": 1.0075100816270868
+    },
+    {
+      "entry_id": "dense-string",
+      "group": "string-control",
+      "pairs": 5,
+      "ratios": [
+        0.9461690747195203,
+        0.9751348648592261,
+        0.983870063368839,
+        0.9967352846135831,
+        0.9766802448905747
+      ],
+      "median_throughput_ratio": 0.9766802448905747,
+      "geometric_mean_throughput_ratio": 0.9755750462697832,
+      "minimum_throughput_ratio": 0.9461690747195203,
+      "median_allocation_delta_bytes": -821,
+      "median_latency_ratio": 1.0181609195402301
+    },
+    {
+      "entry_id": "dense-io",
+      "group": "target",
+      "pairs": 5,
+      "ratios": [
+        1.1893218068613824,
+        1.1756630070656693,
+        1.2058703961864865,
+        1.1916729531129888,
+        1.2354091046934605
+      ],
+      "median_throughput_ratio": 1.1916729531129888,
+      "geometric_mean_throughput_ratio": 1.1994168610596547,
+      "minimum_throughput_ratio": 1.1756630070656693,
+      "median_allocation_delta_bytes": -94992,
+      "median_latency_ratio": 0.8964970873122982
+    },
+    {
+      "entry_id": "dense-chunked",
+      "group": "target",
+      "pairs": 5,
+      "ratios": [
+        1.2202595743998796,
+        1.2609916038630413,
+        1.2216077657174154,
+        1.2096260705753927,
+        1.1999291660916132
+      ],
+      "median_throughput_ratio": 1.2202595743998796,
+      "geometric_mean_throughput_ratio": 1.222307820207987,
+      "minimum_throughput_ratio": 1.1999291660916132,
+      "median_allocation_delta_bytes": -94150,
+      "median_latency_ratio": 0.8409772318427127
+    },
+    {
+      "entry_id": "unicode-string",
+      "group": "string-control",
+      "pairs": 5,
+      "ratios": [
+        1.0504734661796982,
+        1.0125479047915769,
+        1.0100803756063166,
+        0.9910017768309172,
+        1.0184699796428853
+      ],
+      "median_throughput_ratio": 1.0125479047915769,
+      "geometric_mean_throughput_ratio": 1.0163325924797042,
+      "minimum_throughput_ratio": 0.9910017768309172,
+      "median_allocation_delta_bytes": 1504,
+      "median_latency_ratio": 0.9488915480539111
+    },
+    {
+      "entry_id": "unicode-io",
+      "group": "target",
+      "pairs": 5,
+      "ratios": [
+        1.2767700182248891,
+        1.1555207526566196,
+        1.2680061956303181,
+        1.303145855338539,
+        1.24113591068474
+      ],
+      "median_throughput_ratio": 1.2680061956303181,
+      "geometric_mean_throughput_ratio": 1.2478570412064227,
+      "minimum_throughput_ratio": 1.1555207526566196,
+      "median_allocation_delta_bytes": -98491,
+      "median_latency_ratio": 1.0240560076833645
+    },
+    {
+      "entry_id": "unicode-chunked",
+      "group": "target",
+      "pairs": 5,
+      "ratios": [
+        1.22310704473474,
+        1.280501941605931,
+        1.2498840326444358,
+        1.2369662971767101,
+        1.2518851771634874
+      ],
+      "median_throughput_ratio": 1.2498840326444358,
+      "geometric_mean_throughput_ratio": 1.2483241102222884,
+      "minimum_throughput_ratio": 1.22310704473474,
+      "median_allocation_delta_bytes": -96832,
+      "median_latency_ratio": 1.0007894554604002
+    },
+    {
+      "entry_id": "surrogate-string",
+      "group": "string-control",
+      "pairs": 5,
+      "ratios": [
+        1.0009609381525375,
+        1.1309872093616884,
+        0.9329509818239101,
+        0.9958025201110385,
+        0.9865125322938263
+      ],
+      "median_throughput_ratio": 0.9958025201110385,
+      "geometric_mean_throughput_ratio": 1.0073998814157137,
+      "minimum_throughput_ratio": 0.9329509818239101,
+      "median_allocation_delta_bytes": -667,
+      "median_latency_ratio": 1.0094471240084506
+    },
+    {
+      "entry_id": "surrogate-io",
+      "group": "target",
+      "pairs": 5,
+      "ratios": [
+        1.0560920511937968,
+        1.086755244135215,
+        1.0882846657839065,
+        1.1040122386851117,
+        1.099067042698009
+      ],
+      "median_throughput_ratio": 1.0882846657839065,
+      "geometric_mean_throughput_ratio": 1.086712894463349,
+      "minimum_throughput_ratio": 1.0560920511937968,
+      "median_allocation_delta_bytes": -94768,
+      "median_latency_ratio": 0.9805443907893087
+    },
+    {
+      "entry_id": "surrogate-chunked",
+      "group": "target",
+      "pairs": 5,
+      "ratios": [
+        1.1058043109768856,
+        1.2140245387909423,
+        1.0805700003300422,
+        1.100662427917817,
+        1.096361074020894
+      ],
+      "median_throughput_ratio": 1.100662427917817,
+      "geometric_mean_throughput_ratio": 1.1184930242514333,
+      "minimum_throughput_ratio": 1.0805700003300422,
+      "median_allocation_delta_bytes": -96896,
+      "median_latency_ratio": 1.0170055615396454
+    },
+    {
+      "entry_id": "sparse-tree",
+      "group": "target",
+      "pairs": 5,
+      "ratios": [
+        1.1716562863421383,
+        1.186173675664677,
+        1.1570680495169352,
+        1.135845014109825,
+        1.1530572732428024
+      ],
+      "median_throughput_ratio": 1.1570680495169352,
+      "geometric_mean_throughput_ratio": 1.1606344926764671,
+      "minimum_throughput_ratio": 1.135845014109825,
+      "median_allocation_delta_bytes": -95989,
+      "median_latency_ratio": 0.9209999545061645
+    },
+    {
+      "entry_id": "sparse-typed",
+      "group": "target",
+      "pairs": 5,
+      "ratios": [
+        1.1826013533531874,
+        1.2205836943328274,
+        1.1582506128578265,
+        1.1825715591577324,
+        1.1750124157822646
+      ],
+      "median_throughput_ratio": 1.1825715591577324,
+      "geometric_mean_throughput_ratio": 1.1836292037205558,
+      "minimum_throughput_ratio": 1.1582506128578265,
+      "median_allocation_delta_bytes": -94544,
+      "median_latency_ratio": 0.9086002020311065
+    },
+    {
+      "entry_id": "sparse-doc-dynamic",
+      "group": "target",
+      "pairs": 5,
+      "ratios": [
+        1.146954633167609,
+        1.1432047747585292,
+        1.1407128408281395,
+        1.1575551319827728,
+        1.162913693133042
+      ],
+      "median_throughput_ratio": 1.146954633167609,
+      "geometric_mean_throughput_ratio": 1.1502365239904433,
+      "minimum_throughput_ratio": 1.1407128408281395,
+      "median_allocation_delta_bytes": -95830,
+      "median_latency_ratio": 0.8659830360462404
+    },
+    {
+      "entry_id": "sparse-doc-typed",
+      "group": "target",
+      "pairs": 5,
+      "ratios": [
+        1.1320099669288162,
+        1.1448547847064567,
+        1.1203141259670073,
+        1.0820696870691984,
+        1.0843940013145472
+      ],
+      "median_throughput_ratio": 1.1203141259670073,
+      "geometric_mean_throughput_ratio": 1.1124399086235797,
+      "minimum_throughput_ratio": 1.0820696870691984,
+      "median_allocation_delta_bytes": -96699,
+      "median_latency_ratio": 1.021294171638366
+    }
+  ],
+  "matrix_geometric_mean_throughput_ratio": 1.1266335640420428,
+  "matrix_paired_bootstrap_lower_95": 1.121385371897246,
+  "minimum_profile_median": 0.9766802448905747,
+  "groups": {
+    "string-control": {
+      "profile_count": 4,
+      "geometric_mean_throughput_ratio": 0.9981228447122028,
+      "paired_bootstrap_lower_95": 0.986420721403228,
+      "minimum_profile_median": 0.9766802448905747
+    },
+    "target": {
+      "profile_count": 12,
+      "geometric_mean_throughput_ratio": 1.1730474557726154,
+      "paired_bootstrap_lower_95": 1.1675377652974648,
+      "minimum_profile_median": 1.0882846657839065
+    }
+  },
+  "screening": {
+    "target_geometric_mean_at_least_1_05": true,
+    "every_target_median_at_least_0_98": true,
+    "guardrail_geometric_mean_at_least_0_99": null,
+    "every_guardrail_median_at_least_0_97": null,
+    "string_control_geometric_mean_at_least_0_99": true,
+    "every_string_control_median_at_least_0_97": true
+  }
+}
