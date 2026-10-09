@@ -1,6 +1,6 @@
 # Repeated-document streams
 
-Status: implemented as an experimental API in 0.3.0. The completed
+Status: implemented as an experimental API in 0.4.0. The completed
 [implementation plan](repeated-document-plan.md) records its validation and
 performance requirements.
 

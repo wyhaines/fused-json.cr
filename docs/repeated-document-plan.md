@@ -1,6 +1,6 @@
 # Repeated-document reader implementation plan
 
-Status: implemented for 0.3.0. This plan records how FusedJSON implemented and
+Status: implemented for 0.4.0. This plan records how FusedJSON implemented and
 validated the contracts in the
 [repeated-document reader specification](repeated-document-reader.md).
 

@@ -1,6 +1,8 @@
 # Streaming performance implementation plan
 
-Status: in progress. This plan implements the contracts in the
+Status: paused at 0.4.0 during escaped-string acceptance; the
+[specification](streaming-performance.md#status-at-040) records what shipped
+and what remains. This plan implements the contracts in the
 [streaming performance specification](streaming-performance.md). The
 [measurement protocol](streaming-performance-protocol.md) freezes the first
 runtime candidate's benchmark target and controls.

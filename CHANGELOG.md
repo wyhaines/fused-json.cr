@@ -4,6 +4,8 @@ All notable changes to FusedJSON are recorded here. The project follows semantic
 
 ## Unreleased
 
+## 0.4.0 - 2026-10-09
+
 ### Added
 
 - Experimental `FusedJSON.documents` dynamic and typed iterators for NDJSON
@@ -13,14 +15,25 @@ All notable changes to FusedJSON are recorded here. The project follows semantic
 - Deterministic repeated-document benchmarks comparing parser reuse with
   FusedJSON and Crystal `IO#each_line` loops and checking no-retention peak RSS
   without retaining a generated input.
+- A token-focused streaming benchmark and a paired, checksummed campaign runner
+  for streaming performance work.
 
 ### Changed
 
+- Escaped strings read from `IO` now decode directly into a right-sized
+  `String` instead of through an intermediate builder. Plain, skipped, and
+  `String`-input parsing are unchanged. The change passed screening, but its
+  formal acceptance campaigns are pending; see
+  [`docs/streaming-performance.md`](docs/streaming-performance.md#status-at-040).
 - Streaming root completion now has an internal document-boundary hook; all
   existing single-document entry points retain their strict physical-EOF
   requirement.
 
-## 0.2.0 - 2026-08-25
+## 0.3.0 - 2026-08-25
+
+Version 0.2.0 was prepared and reviewed but never tagged. Its changes, together
+with the post-0.2 typed-decoding and key-cache work below, were published as
+0.3.0.
 
 ### Added
 

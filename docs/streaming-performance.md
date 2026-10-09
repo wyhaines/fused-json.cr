@@ -1,12 +1,45 @@
 # Streaming performance specification
 
-Status: in progress. The runtime reference is
-`1d7e5e0ea88940946fd1ea25d30241331442b344`, after the repeated-document
-reader was added. The accompanying
+Status: paused at 0.4.0; see [Status at 0.4.0](#status-at-040). The runtime
+reference is `1d7e5e0ea88940946fd1ea25d30241331442b344`, after the
+repeated-document reader was added. The accompanying
 [implementation plan](streaming-performance-plan.md) describes how candidates
 will be built and evaluated, and the
 [measurement protocol](streaming-performance-protocol.md) freezes the first
 candidate's workloads and acceptance gates.
+
+## Status at 0.4.0
+
+Escaped-string candidate `ab892f2c67e2379c368a2825a03dba6714add55f` ships in
+0.4.0 on screening evidence only. The release was cut before the remaining
+acceptance campaigns could run on a quiet host, so 0.4.0 makes no throughput
+claim for it.
+
+- Rejected: `bc99cd589f385acadb42b55c4bbab9b5015b8559` tracked decoded size
+  during the streaming scan. It cleared the escaped-string target gate, but its
+  attribution campaign failed the per-profile guardrail floor; the lowest
+  median was 0.924x on `plain-long-io`.
+- Shipped: `ab892f2` restores the string and escape scanners to the runtime
+  reference and changes only escaped-value decoding. Three version-4 five-pair
+  screens measured target geometric means of 1.170x, 1.181x, and 1.174x, with
+  a lowest target median of 1.058x. String controls stayed between 1.00x and
+  1.02x, and managed allocation and peak RSS stayed within tolerance.
+- Unresolved: the 1.02x first-value latency limit held in only one of the three
+  screens. `sparse-doc-typed` measured 1.03x in two screens; `dense-io` (1.38x),
+  `surrogate-chunked` (1.19x), and `sparse-doc-dynamic` (1.04x) each missed
+  once. Only the 20-pair formal campaign can settle this.
+- Correctness: the complete suite passed in all four fallback configurations
+  on Crystal 1.21.0 and 1.22.0-dev.
+- Outstanding: the 51-profile `attribution` guardrail comparison, the `tree`
+  comparison, the 20-pair formal campaign, and the bounded large-input
+  closeout.
+
+Rebuilding at the recorded paths with Crystal 1.21.0 reproduces all four
+binaries in
+[`build-ab892f2.json`](benchmark-data/streaming-performance/build-ab892f2.json)
+byte for byte, so the outstanding campaigns can resume from them. Receipts for
+every screen live under
+[`benchmark-data/streaming-performance/`](benchmark-data/streaming-performance/).
 
 ## Objective
 

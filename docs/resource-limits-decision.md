@@ -1,7 +1,7 @@
 # Resource limits API decision
 
-Status: accepted and implemented in 0.2.0, with repeated-document scope rules
-added in 0.3.0.
+Status: accepted and implemented in the 0.2.0 candidate, which was published as
+0.3.0. Repeated-document scope rules were added in 0.4.0.
 
 ## Public API
 

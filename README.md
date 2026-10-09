@@ -5,8 +5,8 @@
 
 FusedJSON is an experimental, strict JSON parser for Crystal. It provides a fast in-memory `String` path and incremental `IO` parsing without first copying the complete input. Both paths avoid the standard parser's intermediate lexer.
 
-Version 0.3 adds reusable readers for NDJSON and whitespace-separated JSON
-streams. Version 0.2 added typed reads at a pull cursor, non-accumulating typed
+Version 0.4 adds reusable readers for NDJSON and whitespace-separated JSON
+streams. Version 0.3 added typed reads at a pull cursor, non-accumulating typed
 arrays, exact raw-number access, and one resource-limit policy across dynamic,
 typed, pull, and streaming entry points. All paths enforce strict JSON,
 validated UTF-8, Unicode escapes, and nesting limits. Crystal 1.21 through the
@@ -20,7 +20,7 @@ Add the shard to your application's `shard.yml`:
 dependencies:
   fused_json:
     github: wyhaines/fused-json.cr
-    version: ~> 0.3.0
+    version: ~> 0.4.0
 ```
 
 Run `shards install`, then `require "fused_json"` in application code.
@@ -288,8 +288,11 @@ The next planned work is:
 - Improve streaming performance by profiling buffer refills, token scanning,
   and escaped-string decoding. The [specification](docs/streaming-performance.md)
   and [measurement protocol](docs/streaming-performance-protocol.md) define the
-  workloads and acceptance criteria. An eventless `IO` tree builder was tested,
-  but its gains were inconsistent and it made escaped-string workloads slower.
+  workloads and acceptance criteria. Version 0.4 includes a leaner `IO`
+  escaped-string decoder that passed screening; its formal guardrail and
+  latency campaigns are still to be run. An eventless `IO` tree builder was
+  tested, but its gains were inconsistent and it made escaped-string workloads
+  slower.
 - Expand fuzzing and platform coverage on ARM64 and macOS. The word scanner
   also needs testing on real 32-bit and big-endian hardware. The public float
   fallback will remain available until the compiler-specific fast path can use
