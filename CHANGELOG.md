@@ -4,6 +4,10 @@ All notable changes to FusedJSON are recorded here. The project follows semantic
 
 ## Unreleased
 
+- Faster full-document streaming reads for compact JSON, including ordinary
+  strings and arrays. [Real-file benchmarks](docs/large-file-streaming-performance.md)
+  compare the optimized reader with 0.4.0 and its immediate baseline.
+
 - Native pull readers support `read_object_keys` for key-only traversal,
   including streams with 64-bit columns. Typed hashes now report failed key
   conversions at 64-bit locations.

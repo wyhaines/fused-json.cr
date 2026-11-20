@@ -90,7 +90,7 @@ module FusedJSON
 
     protected def skip_whitespace_unlimited : Nil
       while (byte = current_byte?) && inline_whitespace?(byte)
-        advance_byte_unlimited
+        consume_ascii_unlimited(byte)
       end
     end
 
@@ -105,15 +105,15 @@ module FusedJSON
       when nil
         mark_source_exhausted
       when 0x0a_u8
-        advance_byte_unlimited
+        consume_ascii_unlimited(0x0a_u8)
       when 0x0d_u8
         carriage_return = current_offset
-        column = @stream_column
-        advance_byte_unlimited
+        column = current_column
+        consume_ascii_unlimited(0x0d_u8)
         unless current_byte? == 0x0a_u8
           raise ParseError.new("expected LF after CR in NDJSON", carriage_return, @stream_line, column)
         end
-        advance_byte_unlimited
+        consume_ascii_unlimited(0x0a_u8)
       else
         raise_error("unexpected trailing content", current_offset)
       end

@@ -113,6 +113,34 @@ class FusedJSON::StreamingPullParser
 end
 
 describe "streaming FusedJSON::PullParser" do
+  it "preserves values and event coordinates across plain string spans and refills" do
+    source = "[\r\n" + %q(["","ab","12345678","🚢ab","tail\n"],) + "\n" +
+             %q({"é":"前𝄞","key":"z"},12345]) + "\r\n"
+    expected = StreamingPullSpec.trace(FusedJSON::PullParser.new(source))
+    limits = FusedJSON::Limits.new(max_token_bytes: 32, max_container_entries: 10)
+    {1, 2, 3, 7, 8, 9, 32, 1024}.each do |size|
+      {FusedJSON::Limits::DEFAULT, limits}.each do |policy|
+        pull = FusedJSON::PullParser.new(IO::Memory.new(source), buffer_size: size, limits: policy)
+        StreamingPullSpec.assert_trace(expected, StreamingPullSpec.trace(pull), "buffer size #{size}")
+      end
+    end
+  end
+
+  it "reports the forbidden byte inside an ASCII span after a newline and multibyte text" do
+    { %q("abcdefghijklmnop"), "1234567890123456" }.each do |token|
+      prefix = "[\n" + %q("雪",)
+      source = "#{prefix}#{token}]"
+      budget = prefix.bytesize + 7
+      limits = FusedJSON::Limits.new(max_document_bytes: budget)
+      {1, 4, 8, 32}.each do |size|
+        error = expect_raises(FusedJSON::ParseError, "max_document_bytes") do
+          FusedJSON.load(IO::Memory.new(source), buffer_size: size, limits: limits)
+        end
+        {error.byte_offset, error.location_i64}.should eq({budget.to_i64, {2_i64, 12_i64}})
+      end
+    end
+  end
+
   it "matches every in-memory event, value, and location at every byte split" do
     source = StreamingPullSpec::COMPREHENSIVE
     expected = StreamingPullSpec.trace(FusedJSON::PullParser.new(source))

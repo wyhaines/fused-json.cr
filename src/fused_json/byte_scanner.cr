@@ -472,7 +472,7 @@ module FusedJSON
       enforce_consumed_bytes
     end
 
-    protected def advance_byte_unlimited : Nil
+    protected def advance_punctuation_unlimited : Nil
       @pos += 1
     end
 

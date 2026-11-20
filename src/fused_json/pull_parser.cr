@@ -457,7 +457,7 @@ module FusedJSON
           emit_container_end_unlimited(Kind::EndArray)
           return
         when 0x2c_u8 # ,
-          advance_byte_unlimited
+          advance_punctuation_unlimited
           skip_whitespace_unlimited
           raise_error("trailing comma in array") if current_byte? == 0x5d_u8
         else
@@ -465,7 +465,7 @@ module FusedJSON
         end
       end
 
-      set_top_state(FrameState::ArrayCommaOrEnd)
+      set_top_state(FrameState::ArrayCommaOrEnd) if first
       emit_value_unlimited
     end
 
@@ -483,7 +483,7 @@ module FusedJSON
           emit_container_end_unlimited(Kind::EndObject)
           return
         when 0x2c_u8 # ,
-          advance_byte_unlimited
+          advance_punctuation_unlimited
           skip_whitespace_unlimited
           raise_error("trailing comma in object") if current_byte? == 0x7d_u8
         else
@@ -566,7 +566,7 @@ module FusedJSON
 
     private def enter_container_unlimited(state : FrameState, kind : Kind) : Nil
       raise_error("nesting exceeds #{@max_nesting}") if @frames.size >= @max_nesting
-      advance_byte_unlimited
+      advance_punctuation_unlimited
       @next_frame_id += 1
       @frames << Frame.new(state, @next_frame_id)
       @kind = kind
@@ -575,7 +575,7 @@ module FusedJSON
     private def emit_container_end_unlimited(kind : Kind) : Nil
       set_event_position
       @event_context_id = @frames.last.id
-      advance_byte_unlimited
+      advance_punctuation_unlimited
       @frames.pop
       @kind = kind
       @object_key = false
@@ -613,7 +613,7 @@ module FusedJSON
         end
       end
 
-      set_top_state(FrameState::LimitedArrayCommaOrEnd)
+      set_top_state(FrameState::LimitedArrayCommaOrEnd) if first
       record_container_entry
       emit_value
     end
@@ -746,10 +746,10 @@ module FusedJSON
     end
 
     private def set_top_state(state : FrameState) : Nil
-      index = @frames.size - 1
-      frame = @frames[index]
-      frame.state = state
-      @frames[index] = frame
+      @frames.update(-1) do |frame|
+        frame.state = state
+        frame
+      end
     end
 
     private def start_string : Nil
