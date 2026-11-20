@@ -520,28 +520,10 @@ module FusedJSON
 
   # Borrows an in-memory reader and exposes only its current value.
   private class BoundedJSONPullAdapter < BoundedNativeJSONPullAdapter(PullParser)
-    @source_bytes : Bytes
+    private PROTOTYPE = new(PullParser.new("null"), max_nesting: PullParser::MAX_NESTING)
 
-    private PROTOTYPE_SOURCE = "null"
-    private PROTOTYPE        = new(
-      PullParser.new(PROTOTYPE_SOURCE),
-      PROTOTYPE_SOURCE.to_slice,
-      max_nesting: PullParser::MAX_NESTING
-    )
-
-    def initialize(native : PullParser, @source_bytes : Bytes, *, max_nesting : Int)
-      super(native, max_nesting: max_nesting)
-    end
-
-    def self.borrow(native : PullParser, source_bytes : Bytes, *, max_nesting : Int) : self
-      adapter = PROTOTYPE.dup
-      adapter.reset(native, source_bytes, max_nesting: max_nesting)
-      adapter
-    end
-
-    protected def reset(native : PullParser, @source_bytes : Bytes, *, max_nesting : Int) : self
-      reset_bounded(native, max_nesting: max_nesting)
-      self
+    def self.borrow(native : PullParser, *, max_nesting : Int) : self
+      PROTOTYPE.dup.reset_bounded(native, max_nesting: max_nesting)
     end
 
     protected def capture_boundary_location : Tuple(Int64, Int64)?
@@ -549,35 +531,7 @@ module FusedJSON
     end
 
     protected def locate_boundary(byte_offset : Int64) : Tuple(Int64, Int64)
-      target = byte_offset.to_i32
-      index = 0
-      line = 1_i64
-      column = 1_i64
-
-      while index < target
-        byte = @source_bytes[index]
-        if byte == 0x0a_u8
-          line += 1
-          column = 1_i64
-          index += 1
-        else
-          column += 1
-          width = if byte < 0x80_u8
-                    1
-                  elsif byte < 0xe0_u8
-                    2
-                  elsif byte < 0xf0_u8
-                    3
-                  elsif byte < 0xf5_u8
-                    4
-                  else
-                    1
-                  end
-          index += Math.min(width, target - index)
-        end
-      end
-
-      {line, column}
+      @native.cursor_location_at(byte_offset)
     end
   end
 
@@ -617,7 +571,7 @@ module FusedJSON
       {% if T == Nil || T == Bool || T == String || Number::Primitive.union_types.includes?(T) %}
         return read_typed_scalar(type) if typed_scalar_kind?(type)
       {% end %}
-      adapter = BoundedJSONPullAdapter.borrow(self, @bytes, max_nesting: @max_nesting)
+      adapter = BoundedJSONPullAdapter.borrow(self, max_nesting: @max_nesting)
       value = T.new(adapter)
       adapter.finish_value
       value
@@ -698,7 +652,6 @@ module FusedJSON
                              "Int8"    => "i8",
                              "Int16"   => "i16",
                              "Int32"   => "i32",
-                             "Int64"   => "i64",
                              "Int128"  => "i128",
                              "UInt8"   => "u8",
                              "UInt16"  => "u16",
@@ -707,7 +660,10 @@ module FusedJSON
                              "UInt128" => "u128",
                            } %}
       private def read_typed_scalar(_type : {{ type.id }}.class) : {{ type.id }}
-        location = location_i64
+        # String inputs retain the token, so its coordinates can be resolved on error.
+        # Streaming readers already track coordinates and may discard bytes on advance.
+        offset = @byte_offset
+        stream_location = location_i64 if self.is_a?(StreamingPullParser)
         value =
           {% if type == "UInt64" || type == "UInt128" || type == "Int128" %}
             read_raw_number
@@ -717,10 +673,16 @@ module FusedJSON
         begin
           value.to_{{ method.id }}
         rescue ex : OverflowError | ArgumentError
+          location = stream_location || cursor_location_at(offset)
           raise JSON::ParseException.new("Can't read {{ type.id }}", *location, ex)
         end
       end
     {% end %}
+
+    @[AlwaysInline]
+    private def read_typed_scalar(_type : Int64.class) : Int64
+      read_int
+    end
 
     @[AlwaysInline]
     private def read_typed_scalar(_type : Float32.class) : Float32

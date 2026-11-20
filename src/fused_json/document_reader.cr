@@ -94,6 +94,10 @@ module FusedJSON
       end
     end
 
+    protected def record_separator?(byte : UInt8) : Bool
+      byte == 0x0a_u8 || byte == 0x0d_u8
+    end
+
     private def finish_ndjson_record(*, limited : Bool) : Nil
       limited ? skip_whitespace : skip_whitespace_unlimited
 
@@ -104,9 +108,10 @@ module FusedJSON
         advance_byte_unlimited
       when 0x0d_u8
         carriage_return = current_offset
+        column = @stream_column
         advance_byte_unlimited
         unless current_byte? == 0x0a_u8
-          raise_error("expected LF after CR in NDJSON", carriage_return)
+          raise ParseError.new("expected LF after CR in NDJSON", carriage_return, @stream_line, column)
         end
         advance_byte_unlimited
       else
@@ -138,7 +143,7 @@ module FusedJSON
 
       unless @first_document
         return exhaust if eof?
-        unless json_whitespace?(current_byte)
+        unless record_separator?(current_byte)
           raise_error("expected JSON whitespace between documents", current_offset)
         end
       end
@@ -158,7 +163,7 @@ module FusedJSON
         raise_error("expected end of document stream", byte_offset)
       end
 
-      if !@first_document && !eof? && !json_whitespace?(current_byte)
+      if !@first_document && !eof? && !record_separator?(current_byte)
         raise_error("expected JSON whitespace between documents", current_offset)
       end
 
@@ -183,7 +188,7 @@ module FusedJSON
     end
 
     @[AlwaysInline]
-    private def json_whitespace?(byte : UInt8) : Bool
+    protected def record_separator?(byte : UInt8) : Bool
       byte == 0x20_u8 || byte == 0x09_u8 || byte == 0x0a_u8 || byte == 0x0d_u8
     end
   end
@@ -196,7 +201,6 @@ module FusedJSON
     getter documents_read : Int64
 
     @pull : RepeatedStreamingPullParser
-    @tree : StreamingTreeBuilder
     @exhausted : Bool
     @failed : Bool
 
@@ -206,7 +210,7 @@ module FusedJSON
                    max_nesting : Int = PullParser::MAX_NESTING,
                    cache_keys : Bool = false, max_token_bytes : Int? = nil,
                    limits : Limits = Limits::DEFAULT)
-      enforce_dynamic_numbers = {{ T == JSON::Any }}
+      enforce_dynamic_numbers = enforce_dynamic_numbers?
       @pull = case framing
               when .ndjson?
                 NDJSONStreamingPullParser.new(
@@ -231,7 +235,6 @@ module FusedJSON
               else
                 raise ArgumentError.new("unsupported document framing #{framing}")
               end
-      @tree = StreamingTreeBuilder.new(@pull)
       @documents_read = 0_i64
       @exhausted = false
       @failed = false
@@ -276,12 +279,27 @@ module FusedJSON
       end
     end
 
-    private def read_document : T
-      {% if T == JSON::Any %}
-        @tree.read
-      {% else %}
-        @pull.read(T)
-      {% end %}
+    protected def enforce_dynamic_numbers? : Bool
+      false
+    end
+
+    protected def read_document : T
+      @pull.read(T)
+    end
+  end
+
+  private class DynamicDocumentReader < DocumentReader(JSON::Any)
+    def initialize(source : IO, **options)
+      super(source, JSON::Any, **options)
+      @tree = StreamingTreeBuilder.new(@pull)
+    end
+
+    protected def enforce_dynamic_numbers? : Bool
+      true
+    end
+
+    protected def read_document : JSON::Any
+      @tree.read
     end
   end
 
@@ -291,9 +309,8 @@ module FusedJSON
                      max_nesting : Int = PullParser::MAX_NESTING,
                      cache_keys : Bool = false, max_token_bytes : Int? = nil,
                      limits : Limits = Limits::DEFAULT) : DocumentReader(JSON::Any)
-    DocumentReader.new(
+    DynamicDocumentReader.new(
       source,
-      JSON::Any,
       framing: framing,
       buffer_size: buffer_size,
       max_nesting: max_nesting,

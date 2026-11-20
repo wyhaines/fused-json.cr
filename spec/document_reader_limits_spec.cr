@@ -41,6 +41,63 @@ describe "FusedJSON::DocumentReader resource limits" do
     short.documents_read.should eq(0)
   end
 
+  it "accepts a numeric root ending exactly at the framing boundary" do
+    ["0", "-12", "1.25", "1e2", "1.2e-3"].each do |token|
+      expected = FusedJSON.load(token)
+      limits = FusedJSON::Limits.new(max_document_bytes: token.bytesize)
+      {1, 3, 32}.each do |buffer_size|
+        {"\n", "\r\n"}.each do |ending|
+          reader = FusedJSON.documents(IO::Memory.new((token + ending) * 2),
+            framing: :ndjson, buffer_size: buffer_size, limits: limits)
+          reader.to_a.should eq([expected, expected])
+        end
+
+        reader = FusedJSON.documents(IO::Memory.new("#{token}\t0"),
+          framing: :whitespace_separated, buffer_size: buffer_size, limits: limits)
+        reader.next.should eq(expected)
+        if token.bytesize == 1
+          expect_raises(FusedJSON::ParseError, "max_document_bytes") { reader.next }
+        else
+          reader.next.should eq(JSON::Any.new(0_i64))
+        end
+      end
+    end
+  end
+
+  it "still charges bytes inside a record and gives byte limits precedence over syntax errors" do
+    {"1 \n" => 1, "01\n" => 1, "12\n" => 1, "1.x\n" => 2,
+     "1e+\n" => 2, "[1\n" => 2}.each do |source, maximum|
+      {1, 32}.each do |buffer_size|
+        reader = FusedJSON.documents(IO::Memory.new(source), framing: :ndjson, buffer_size: buffer_size,
+          limits: FusedJSON::Limits.new(max_document_bytes: maximum))
+        error = expect_raises(FusedJSON::ParseError, "max_document_bytes") { reader.next }
+        error.byte_offset.should eq(maximum)
+      end
+    end
+  end
+
+  it "applies the selected-value limit only when a type is supplied, including JSON::Any" do
+    FusedJSON::DocumentFraming.each do |framing|
+      ["12", "[1]"].each do |source|
+        limits = FusedJSON::Limits.new(max_typed_value_bytes: source.bytesize - 1)
+        dynamic = FusedJSON.documents(IO::Memory.new(source), framing: framing, limits: limits)
+        dynamic.next.should eq(FusedJSON.load(source))
+
+        typed = FusedJSON.documents(IO::Memory.new(source), JSON::Any, framing: framing, limits: limits)
+        direct = FusedJSON::DocumentReader.new(IO::Memory.new(source), JSON::Any, framing: framing, limits: limits)
+        {typed, direct}.each do |reader|
+          error = expect_raises(FusedJSON::ParseError, "max_typed_value_bytes") { reader.next }
+          error.byte_offset.should eq(source.bytesize - 1)
+          reader.documents_read.should eq(0)
+        end
+
+        exact = FusedJSON::Limits.new(max_typed_value_bytes: source.bytesize)
+        FusedJSON.documents(IO::Memory.new(source), JSON::Any, framing: framing, limits: exact)
+          .to_a.should eq([FusedJSON.load(source)])
+      end
+    end
+  end
+
   it "counts leading separators in the next whitespace-separated budget" do
     source = "1  2"
     exact = limited_dynamic_reader(

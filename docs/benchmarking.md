@@ -54,6 +54,15 @@ Record the shared build directory with the binary hashes. Separate worktrees
 are suitable for correctness work, but not for binaries in the same formal
 performance comparison.
 
+Version 2 token and tree receipts identify the benchmark source compiled into
+the executable. Token receipts also identify the shared token fixture and
+consumer code. The runner compares these hashes within each benchmark family.
+Build both workers with the same harness for a new comparison. Archived
+version 1 receipts can be inspected with their original runner.
+
+The 0.4.0 parser review measured typed integer reads, repeated source-location
+queries, and escaped-key interning on the Dell. [Paired results and reproduction commands](parser-review.md)
+
 `typed-cursor-cost` compares native structural reads, repeated `read(T)`, and
 `read_array(T)` for scalar arrays and a record ladder covering empty, integer,
 string, nested, negotiated-price, partially repeated key, unique key, and

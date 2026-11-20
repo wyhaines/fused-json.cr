@@ -163,6 +163,18 @@ describe FusedJSON::DocumentReader do
     io.pos.should eq(encoded.size)
   end
 
+  it "reports the byte and character column of an unmatched carriage return" do
+    ["", "!"].each do |tail|
+      source = %("🚢"\r\n"α"\r#{tail})
+      {1, 32}.each do |buffer_size|
+        reader = FusedJSON.documents(IO::Memory.new(source), framing: :ndjson, buffer_size: buffer_size)
+        reader.next.should eq(JSON::Any.new("🚢"))
+        error = expect_raises(FusedJSON::ParseError, "expected LF after CR") { reader.next }
+        {error.byte_offset, error.location_i64}.should eq({12_i64, {2_i64, 4_i64}})
+      end
+    end
+  end
+
   it "rejects empty records, line-internal newlines, lone CR, and trailing content" do
     invalid = {
       "\n"             => 0_i64,

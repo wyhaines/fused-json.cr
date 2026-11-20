@@ -506,7 +506,7 @@ function receiptIssues(receipt, entryValue, options, commitValue, pairId, orderP
     receipt.managed_bytes_per_operation >= 0, "invalid allocation result");
 
   if (entryValue.benchmark === "tree") {
-    check(receipt?.receipt === "fused-json-streaming-tree-cost" && receipt?.version === 1,
+    check(receipt?.receipt === "fused-json-streaming-tree-cost" && receipt?.version === 2,
       "wrong receipt identity");
     check(receipt?.shape === entryValue.shape && receipt?.mode === entryValue.transport,
       "workload identity mismatch");
@@ -519,9 +519,10 @@ function receiptIssues(receipt, entryValue, options, commitValue, pairId, orderP
       receipt?.calculation_seconds === options.time &&
       receipt?.allocation_iterations === options.allocations, "measurement parameters differ");
     check(/^[0-9a-f]{64}$/.test(receipt?.source_sha256 ?? "") &&
+      /^[0-9a-f]{64}$/.test(receipt?.benchmark_source_sha256 ?? "") &&
       /^[0-9a-f]{64}$/.test(receipt?.result_sha256 ?? ""), "invalid source identity");
   } else {
-    check(receipt?.receipt === "fused-json-streaming-token-cost" && receipt?.version === 1,
+    check(receipt?.receipt === "fused-json-streaming-token-cost" && receipt?.version === 2,
       "wrong receipt identity");
     check(receipt?.profile === entryValue.profile && receipt?.consumer === entryValue.consumer &&
       receipt?.transport === entryValue.transport, "workload identity mismatch");
@@ -803,12 +804,18 @@ function bootstrapLowerBound(profileRatios, samples, seed) {
 
 function crossObservationIssues(entries, observations, options) {
   const issues = [];
-  const tokenObservations = observations.filter((item) =>
-    entries.find((entryValue) => entryValue.id === item.entry_id)?.benchmark === "token");
-  const benchmarkSources = new Set(tokenObservations.map((item) =>
-    `${item.measurement.benchmark_source_sha256}:${item.measurement.benchmark_support_sha256}`));
-  if (tokenObservations.length > 0 && benchmarkSources.size !== 1) {
-    issues.push("benchmark source hashes differ across observations");
+  const benchmarkByEntry = new Map(entries.map((entry) => [entry.id, entry.benchmark]));
+  const harnesses = new Map();
+  for (const {entry_id, measurement} of observations) {
+    const family = benchmarkByEntry.get(entry_id);
+    const identity = family === "token"
+      ? measurement.benchmark_source_sha256 + ":" + measurement.benchmark_support_sha256
+      : measurement.benchmark_source_sha256;
+    if (harnesses.has(family) && harnesses.get(family) !== identity) {
+      issues.push(`${family} benchmark source hashes differ across observations`);
+      break;
+    }
+    harnesses.set(family, identity);
   }
 
   for (const entryValue of entries) {
@@ -1048,7 +1055,7 @@ function selfAudit() {
   const fakeEntry = MATRICES.smoke[0];
   const fakeReceipt = {
     receipt: "fused-json-streaming-token-cost",
-    version: 1,
+    version: 2,
     release_build: true,
     fused_json_commit: "a".repeat(40),
     profile: fakeEntry.profile,
@@ -1093,7 +1100,8 @@ function selfAudit() {
   const fakeTreeEntry = MATRICES.tree[0];
   const fakeTreeReceipt = {
     receipt: "fused-json-streaming-tree-cost",
-    version: 1,
+    version: 2,
+    benchmark_source_sha256: "e".repeat(64),
     release_build: true,
     fused_json_commit: "a".repeat(40),
     shape: fakeTreeEntry.shape,
@@ -1118,6 +1126,20 @@ function selfAudit() {
   if (receiptIssues(fakeTreeReceipt, fakeTreeEntry, fakeOptions, "a".repeat(40),
     "self-audit", "measured").length !== 0) {
     throw new Error("tree receipt validation self-audit rejected valid data");
+  }
+  for (const [entry, receipt] of [[fakeEntry, fakeReceipt], [fakeTreeEntry, fakeTreeReceipt]]) {
+    const legacy = {...receipt, version: 1};
+    if (!receiptIssues(legacy, entry, fakeOptions, "a".repeat(40), "self-audit", "measured")
+      .includes("wrong receipt identity")) {
+      throw new Error(`${entry.benchmark} self-audit accepted a legacy receipt`);
+    }
+    const observations = ["a", "b"].map((hash) => ({
+      entry_id: entry.id, measurement: {...receipt, benchmark_source_sha256: hash.repeat(64)},
+    }));
+    if (!crossObservationIssues([entry], observations, {mode: "collect"})
+      .includes(`${entry.benchmark} benchmark source hashes differ across observations`)) {
+      throw new Error(`${entry.benchmark} self-audit accepted different compiled benchmarks`);
+    }
   }
   fakeTreeReceipt.result_sha256 = "bad";
   if (!receiptIssues(fakeTreeReceipt, fakeTreeEntry, fakeOptions, "a".repeat(40),

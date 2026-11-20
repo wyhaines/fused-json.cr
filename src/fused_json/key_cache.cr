@@ -14,7 +14,7 @@ module FusedJSON
     end
 
     def get(string : String) : String
-      get(string.to_unsafe, string.bytesize)
+      get_or_insert(string.to_unsafe, string.bytesize) { string }
     end
 
     def get?(string : String) : String?
@@ -22,6 +22,10 @@ module FusedJSON
     end
 
     def get(bytes : UInt8*, size : Int32) : String
+      get_or_insert(bytes, size) { String.new(bytes, size) }
+    end
+
+    private def get_or_insert(bytes : UInt8*, size : Int32, &) : String
       hash = hash(bytes, size)
       mask = (@capacity - 1).to_u64
       index = hash & mask
@@ -48,7 +52,7 @@ module FusedJSON
       end
 
       @size += 1
-      entry = String.new(bytes, size)
+      entry = yield
       @hashes[index] = hash
       @values[index] = entry
       entry

@@ -348,8 +348,7 @@ module FusedJSON
     end
 
     def location_i64 : Tuple(Int64, Int64)
-      update_location(@byte_offset)
-      {@location_line, @location_column}
+      cursor_location_at(@byte_offset)
     end
 
     def location : Tuple(Int32, Int32)
@@ -785,33 +784,15 @@ module FusedJSON
       end
     end
 
-    private def update_location(position : Int64) : Nil
-      target = position.to_i32
-      index = @location_position
-      while index < target
-        byte = @bytes[index]
-        if byte == 0x0a_u8
-          @location_line += 1
-          @location_column = 1_i64
-          index += 1
-        else
-          @location_column += 1
-          width = if byte < 0x80_u8
-                    1
-                  elsif byte < 0xe0_u8
-                    2
-                  elsif byte < 0xf0_u8
-                    3
-                  elsif byte < 0xf5_u8
-                    4
-                  else
-                    1
-                  end
-          index += Math.min(width, target - index)
-        end
+    protected def cursor_location_at(position : Int64) : Tuple(Int64, Int64)
+      # An adapter retained by a typed constructor may ask about an earlier event.
+      return location_at(position) if position < @location_position
+      if position > @location_position
+        @location_line, @location_column = location_at(position, index: @location_position,
+          line: @location_line, column: @location_column)
+        @location_position = position.to_i32
       end
-
-      @location_position = target
+      {@location_line, @location_column}
     end
 
     private def expect_kind(expected : Kind) : Nil

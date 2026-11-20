@@ -5,6 +5,11 @@ require "json"
 require "./streaming_token_support"
 
 module StreamingTokenBenchmark
+  RUNTIME_SOURCE_SHA256 = {{ run("./runtime_source_identity.cr") }}
+
+  BENCHMARK_SOURCE_SHA256  = {{ run("./runtime_source_identity.cr", "streaming_token_cost.cr") }}
+  BENCHMARK_SUPPORT_SHA256 = {{ run("./runtime_source_identity.cr", "streaming_token_support.cr") }}
+
   class Sink
     @@result = StreamingTokenCost::RunResult.new(
       StreamingTokenCost::SemanticResult.new(0_i64, 0_u64),
@@ -75,10 +80,6 @@ module StreamingTokenBenchmark
       iterations.times { Sink.store(operation.call) }
     end
     elapsed.total_seconds * 1_000_000.0 / iterations
-  end
-
-  def file_sha256(path : String) : String
-    Digest::SHA256.hexdigest(File.read(path))
   end
 end
 
@@ -205,7 +206,7 @@ puts "  #{mib_per_second.round(3)} MiB/s, #{records_per_second.round(1)} values/
 receipt = JSON.build do |json|
   json.object do
     json.field "receipt", "fused-json-streaming-token-cost"
-    json.field "version", 1
+    json.field "version", 2
     json.field "recorded_at", Time.utc.to_rfc3339
     json.field "fused_json_version", FusedJSON::VERSION
     json.field "fused_json_commit", commit
@@ -214,10 +215,9 @@ receipt = JSON.build do |json|
     json.field "llvm_version", Crystal::LLVM_VERSION
     json.field "target", Crystal::TARGET_TRIPLE
     json.field "release_build", true
-    json.field "benchmark_source_sha256", StreamingTokenBenchmark.file_sha256(__FILE__)
-    json.field "benchmark_support_sha256", StreamingTokenBenchmark.file_sha256(
-      File.expand_path("streaming_token_support.cr", __DIR__)
-    )
+    json.field "benchmark_source_sha256", StreamingTokenBenchmark::BENCHMARK_SOURCE_SHA256
+    json.field "runtime_source_sha256", StreamingTokenBenchmark::RUNTIME_SOURCE_SHA256
+    json.field "benchmark_support_sha256", StreamingTokenBenchmark::BENCHMARK_SUPPORT_SHA256
     json.field "profile", profile
     json.field "consumer", consumer
     json.field "transport", transport

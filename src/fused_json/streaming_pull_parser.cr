@@ -125,7 +125,7 @@ module FusedJSON
     end
 
     @[AlwaysInline]
-    protected def enforce_available_byte : Nil
+    protected def enforce_available_byte(*, after_number : Bool = false) : Nil
       state = resource_limits || return
       limit = state.byte_limit || return
       return if @stream_offset < limit
@@ -136,7 +136,15 @@ module FusedJSON
       if @input_position >= @input_size
         return unless refill
       end
+      # A root number can end at the record limit. Its separator belongs to the framing.
+      if after_number && state.byte_kind.document? && @frames.empty? && record_separator?(@input_buffer[@input_position])
+        return
+      end
       raise_stream_byte_limit(state, limit, @stream_line, @stream_column)
+    end
+
+    protected def record_separator?(byte : UInt8) : Bool
+      false
     end
 
     protected def prepare_string_token : Nil
@@ -356,7 +364,7 @@ module FusedJSON
 
       if current_byte == 0x30_u8
         consume_token_ascii(0x30_u8)
-        enforce_available_byte
+        enforce_available_byte(after_number: true)
         raise_error("leading zero in number") if (byte = current_byte?) && digit?(byte)
       elsif nonzero_digit?(current_byte)
         consume_token_digits
@@ -365,12 +373,12 @@ module FusedJSON
       end
 
       floating = false
-      if consume_token_if(0x2e_u8) # .
+      if consume_token_if(0x2e_u8, after_number: true) # .
         floating = true
         raise_error("expected digit after decimal point") unless consume_token_digits
       end
 
-      enforce_available_byte
+      enforce_available_byte(after_number: true)
       if (byte = current_byte?) && (byte == 0x65_u8 || byte == 0x45_u8) # e/E
         floating = true
         consume_token_ascii(byte)
@@ -539,8 +547,8 @@ module FusedJSON
       @stream_offset += 1
     end
 
-    private def consume_token_if(byte : UInt8) : Bool
-      enforce_available_byte
+    private def consume_token_if(byte : UInt8, *, after_number : Bool = false) : Bool
+      enforce_available_byte(after_number: after_number)
       return false unless current_byte? == byte
       consume_token_ascii(byte)
       true
@@ -555,7 +563,7 @@ module FusedJSON
     private def consume_token_digits : Bool
       consumed = false
       loop do
-        enforce_available_byte
+        enforce_available_byte(after_number: consumed)
         if @input_position >= @input_size
           return consumed unless refill
         end

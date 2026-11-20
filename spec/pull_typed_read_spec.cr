@@ -475,6 +475,42 @@ describe "FusedJSON::PullParser#read" do
     end
   end
 
+  it "reports integer conversion errors at the selected event after checking the next event" do
+    {"4]" => false, "?]" => true}.each do |tail, invalid_sibling|
+      source = %(["é",\n  256,#{tail})
+      {FusedJSON::PullParser.new(source), FusedJSON::PullParser.new(IO::Memory.new(source), buffer_size: 1)}.each do |pull|
+        pull.read_begin_array
+        pull.skip
+        if invalid_sibling
+          error = expect_raises(FusedJSON::ParseError) { pull.read(UInt8) }
+          error.location_i64.should eq({2_i64, 7_i64})
+        else
+          error = expect_raises(JSON::ParseException, "Can't read UInt8") { pull.read(UInt8) }
+          error.location_i64.should eq({2_i64, 3_i64})
+          error.cause.should be_a(OverflowError)
+          pull.read_int.should eq(4_i64)
+        end
+      end
+    end
+  end
+
+  it "resolves retained boundaries out of order without disturbing later locations" do
+    pull = FusedJSON::PullParser.new(%(["é",0,\n1,2,3]))
+    pull.read_begin_array
+    pull.skip
+    pull.read(PullTypedRetainsAdapter)
+    first = PullTypedRetainsAdapter.retained
+    pull.read(PullTypedRetainsAdapter)
+    second = PullTypedRetainsAdapter.retained
+    pull.read(PullTypedRetainsAdapter)
+    third = PullTypedRetainsAdapter.retained
+    second.location_i64.should eq({2_i64, 3_i64})
+    first.location_i64.should eq({2_i64, 1_i64})
+    third.location_i64.should eq({2_i64, 5_i64})
+    pull.read_int.should eq(3_i64)
+    pull.location_i64.should eq({2_i64, 6_i64})
+  end
+
   it "keeps a retained adapter permanently isolated from the sibling" do
     pull = FusedJSON::PullParser.new("{\"first\":1,\n\"secret\":\"hidden\"}")
     pull.read_begin_object

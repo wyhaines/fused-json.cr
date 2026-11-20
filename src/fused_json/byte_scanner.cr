@@ -567,10 +567,8 @@ module FusedJSON
       resource_limits.try &.max_token_bytes
     end
 
-    protected def location_at(position : Int64) : Tuple(Int64, Int64)
-      line = 1_i64
-      column = 1_i64
-      index = 0
+    protected def location_at(position : Int64, *, index : Int32 = 0,
+                              line : Int64 = 1_i64, column : Int64 = 1_i64) : Tuple(Int64, Int64)
       limit = Math.min(position, @size.to_i64).to_i32
       while index < limit
         byte = @bytes[index]

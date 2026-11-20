@@ -5,6 +5,10 @@ require "json"
 require "../src/fused_json"
 
 module StreamingTreeCost
+  RUNTIME_SOURCE_SHA256 = {{ run("./runtime_source_identity.cr") }}
+
+  BENCHMARK_SOURCE_SHA256 = {{ run("./runtime_source_identity.cr", "streaming_tree_cost.cr") }}
+
   MODES = [
     "string",
     "io-memory",
@@ -354,7 +358,7 @@ mib_per_second = item.mean * source.bytesize / 1_048_576.0
 receipt = JSON.build do |json|
   json.object do
     json.field "receipt", "fused-json-streaming-tree-cost"
-    json.field "version", 1
+    json.field "version", 2
     json.field "recorded_at", Time.utc.to_rfc3339
     json.field "fused_json_version", FusedJSON::VERSION
     json.field "fused_json_commit", commit
@@ -364,6 +368,8 @@ receipt = JSON.build do |json|
     json.field "target", Crystal::TARGET_TRIPLE
     json.field "release_build", true
     json.field "mode", mode
+    json.field "benchmark_source_sha256", StreamingTreeCost::BENCHMARK_SOURCE_SHA256
+    json.field "runtime_source_sha256", StreamingTreeCost::RUNTIME_SOURCE_SHA256
     json.field "shape", shape
     json.field "source_label", source_label
     json.field "generated_records", path ? nil : records

@@ -4,6 +4,14 @@ All notable changes to FusedJSON are recorded here. The project follows semantic
 
 ## Unreleased
 
+- Framed readers accept numeric records that exactly fill their document-byte
+  budget. NDJSON errors for a lone carriage return point to its character column.
+- Passing `JSON::Any` explicitly to a document reader applies the same typed
+  value limit as other selected types.
+- Successful typed integer reads from String inputs skip the source-location
+  scan. Typed constructors that request successive end positions reuse the String reader's
+  location cursor. The key cache reuses an already-decoded string on insertion.
+
 ## 0.4.0 - 2026-10-09
 
 ### Added
