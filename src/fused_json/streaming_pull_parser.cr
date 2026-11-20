@@ -4,8 +4,9 @@ module FusedJSON
   # Input buffering is bounded by `buffer_size`; the reusable token buffer can
   # grow to the size of the current string or number.
   class StreamingPullParser < PullParser
-    DEFAULT_BUFFER_SIZE   = 32 * 1024
-    MAX_BUFFER_SIZE       = 16 * 1024 * 1024
+    DEFAULT_BUFFER_SIZE = 32 * 1024
+    MAX_BUFFER_SIZE     = 16 * 1024 * 1024
+
     private MIN_SCRATCH_RETENTION = 64 * 1024
 
     @input : IO

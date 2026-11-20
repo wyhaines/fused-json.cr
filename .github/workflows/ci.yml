@@ -77,9 +77,16 @@ jobs:
         run: shards check
 
       - name: Run Ameba
+        env:
+          CRYSTAL_CHANNEL: ${{ matrix.label }}
         run: |
           shards build ameba
-          bin/ameba src spec bench examples scripts
+          args=()
+          # On Crystal nightly, Ameba 1.7.0 flags existing &.method shorthand.
+          if [[ "$CRYSTAL_CHANNEL" == nightly && "$(bin/ameba --version)" == 1.7.0 ]]; then
+            args+=(--except Style/VerboseBlock)
+          fi
+          bin/ameba "${args[@]}" src spec bench examples scripts
 
       - name: Check consumer installation
         shell: bash
