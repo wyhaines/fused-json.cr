@@ -202,7 +202,9 @@ jobs:
             > /tmp/fused-json-streaming-token-cost.txt
           tail -n 1 /tmp/fused-json-streaming-token-cost.txt \
             | jq -e --arg commit "$GITHUB_SHA" \
-              '.receipt == "fused-json-streaming-token-cost" and .version == 1 and .fused_json_commit == $commit and .profile == "escape-dense" and .consumer == "typed" and .transport == "chunked-memory" and .boundary_preflight == true and .expected_values == 16 and .preflight_bytes_read == .source_bytes' \
+              --arg harness "$(sha256sum bench/streaming_token_cost.cr | cut -d' ' -f1)" \
+              --arg support "$(sha256sum bench/streaming_token_support.cr | cut -d' ' -f1)" \
+              '.receipt == "fused-json-streaming-token-cost" and .version == 2 and .benchmark_source_sha256 == $harness and .benchmark_support_sha256 == $support and .fused_json_commit == $commit and .profile == "escape-dense" and .consumer == "typed" and .transport == "chunked-memory" and .boundary_preflight == true and .expected_values == 16 and .preflight_bytes_read == .source_bytes' \
             > /dev/null
 
       - name: Smoke test Sunlight scanner
