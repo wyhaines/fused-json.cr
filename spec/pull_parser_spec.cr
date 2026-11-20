@@ -338,3 +338,22 @@ describe FusedJSON::PullParser do
     expect_raises(FusedJSON::ParseError) { pull.skip_value }
   end
 end
+
+describe "key-only object traversal" do
+  it "consumes one value per key and leaves the cursor at the sibling" do
+    pull = FusedJSON::PullParser.new(%q([{"a":{},"b":true},3]))
+    pull.read_begin_array
+    keys = [] of String
+    pull.read_object_keys do |key|
+      keys << key
+      pull.skip
+    end
+    keys.should eq(["a", "b"])
+    pull.read_int.should eq(3)
+    pull.read_end_array
+    pull.finish
+
+    other = FusedJSON::PullParser.new(%q({"a":1}))
+    expect_raises(FusedJSON::ParseError, "consume one complete value") { other.read_object_keys { |_| } }
+  end
+end

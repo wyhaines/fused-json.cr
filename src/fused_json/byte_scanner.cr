@@ -40,7 +40,7 @@ module FusedJSON
     # the state occupies the same slot and retains the source through its anchor.
     @source_or_limits : String | ResourceLimitState
 
-    def initialize(source : String, *, max_nesting : Int = MAX_NESTING,
+    def initialize(source : String?, *, max_nesting : Int = MAX_NESTING,
                    cache_keys : Bool = false, limits : Limits = Limits::DEFAULT,
                    max_token_bytes : Int? = nil)
       unless max_nesting > 0 && max_nesting <= MAX_NESTING
@@ -50,7 +50,8 @@ module FusedJSON
         raise ArgumentError.new("max_token_bytes must be between 1 and #{Int32::MAX}")
       end
 
-      @bytes = source.to_slice
+      anchor = source || ""
+      @bytes = anchor.to_slice
       @size = @bytes.size
       @pos = 0
       @max_nesting = Math.min(max_nesting.to_i64, limits.max_nesting.to_i64).to_i32
@@ -61,17 +62,24 @@ module FusedJSON
                               else
                                 limits.max_token_bytes
                               end
-      if ResourceLimitState.required?(limits, effective_token_limit, cache_keys: cache_keys)
-        @source_or_limits = ResourceLimitState.new(
-          source,
-          limits,
-          max_token_bytes: effective_token_limit
-        )
-        @limits_active = ResourceLimitState.traversal_required?(limits, effective_token_limit)
-      else
-        @source_or_limits = source
-        @limits_active = false
+      known_size = source.try(&.bytesize)
+      if known_size && (effective_token_limit || limits.max_document_bytes || limits.max_typed_value_bytes)
+        # A truncated Unicode escape is diagnosed differently under byte limits.
+        # Keep the original scanner if a two-escape surrogate pair could straddle EOF.
+        suffix = Math.max(0, known_size - 12)
+        known_size = nil if @bytes[suffix, known_size - suffix].includes?(0x5c_u8)
       end
+      token_bytes = ResourceLimitState.binding_limit(effective_token_limit, known_size)
+      document_bytes = ResourceLimitState.binding_limit(limits.max_document_bytes, known_size)
+      typed_bytes = ResourceLimitState.binding_limit(limits.max_typed_value_bytes, known_size)
+      @limits_active = !!(token_bytes || document_bytes || typed_bytes ||
+                          limits.max_total_values || limits.max_container_entries || limits.reject_duplicate_keys)
+      @source_or_limits = if @limits_active || (cache_keys && limits.max_cached_keys)
+                            ResourceLimitState.new(anchor, limits,
+                              max_token_bytes: token_bytes, max_document_bytes: document_bytes, max_typed_value_bytes: typed_bytes)
+                          else
+                            anchor
+                          end
     end
 
     @[AlwaysInline]
@@ -523,8 +531,8 @@ module FusedJSON
     end
 
     @[AlwaysInline]
-    protected def enter_limit_container(*, object : Bool) : Nil
-      resource_limits.try &.enter_container(object)
+    protected def enter_limit_container(*, track_keys : Bool) : Nil
+      resource_limits.try &.enter_container(track_keys)
     end
 
     @[AlwaysInline]

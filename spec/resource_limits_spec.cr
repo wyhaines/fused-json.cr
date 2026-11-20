@@ -998,3 +998,27 @@ describe "FusedJSON duplicate and key-cache limits" do
     end
   end
 end
+
+describe "String limits satisfied by the input size" do
+  it "preserves checked escape errors near EOF" do
+    { %q("\u0Z) => 4, %q("\uD800\u) => 9 }.each do |source, offset|
+      {FusedJSON::Limits.new(max_document_bytes: source.bytesize),
+       FusedJSON::Limits.new(max_token_bytes: source.bytesize),
+      }.each do |limits|
+        error = expect_raises(FusedJSON::ParseError) { FusedJSON.load(source, limits: limits) }
+        error.byte_offset.should eq(offset)
+      end
+    end
+  end
+
+  it "enforces independent limits and observes duplicate keys before parsing the value" do
+    source = %q({"a":null,"\u0061":!})
+    caps = FusedJSON::Limits.new(max_document_bytes: source.bytesize, reject_duplicate_keys: true)
+    error = expect_raises(FusedJSON::ParseError, "duplicate object key") { FusedJSON.load(source, limits: caps) }
+    error.byte_offset.should eq(10)
+
+    capped = FusedJSON::Limits.new(max_token_bytes: 100, max_container_entries: 1, reject_duplicate_keys: true)
+    expect_raises(FusedJSON::ParseError, "max_container_entries") { FusedJSON.load(source, limits: capped) }
+    FusedJSON.load(%q({"a":{"a":null}}), limits: caps)["a"]["a"].raw.should be_nil
+  end
+end

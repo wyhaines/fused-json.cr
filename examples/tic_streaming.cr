@@ -124,7 +124,7 @@ module TICStreamingExample
     reporting_entity = nil.as(String?)
     pull = FusedJSON::PullParser.new(input, buffer_size: buffer_size)
 
-    pull.read_object do |key|
+    pull.read_object_keys do |key|
       case key
       when "reporting_entity_name"
         reporting_entity = pull.read_string
@@ -148,11 +148,11 @@ module TICStreamingExample
     rate_id = 0_i64
     pull = FusedJSON::PullParser.new(input, buffer_size: buffer_size)
 
-    pull.read_object do |root_key|
+    pull.read_object_keys do |root_key|
       if root_key == "in_network"
         pull.read_array do
           item_id += 1
-          pull.read_object do |item_key|
+          pull.read_object_keys do |item_key|
             case item_key
             when "billing_code", "description"
               stage.metadata.write(item_id, item_key, pull.read_string)
@@ -160,7 +160,7 @@ module TICStreamingExample
               pull.read_array do
                 rate_id += 1
                 current_rate_id = rate_id
-                pull.read_object do |rate_key|
+                pull.read_object_keys do |rate_key|
                   case rate_key
                   when "provider_references"
                     pull.read_array(UInt64) do |provider_group_id|

@@ -68,7 +68,7 @@ The intended pattern mixes scalar reads, typed elements, and skipped fields:
 ```text
 pull = FusedJSON::PullParser.new(io)
 
-pull.read_object do |key|
+pull.read_object_keys do |key|
   case key
   when "reporting_entity_name"
     reporting_entity = pull.read_string
@@ -96,14 +96,14 @@ children to separate sinks:
 item_id = 0_i64
 pull.read_array do
   item_id += 1
-  pull.read_object do |key|
+  pull.read_object_keys do |key|
     case key
     when "billing_code"
       metadata_sink.call(item_id, pull.read_string)
     when "negotiated_rates"
       pull.read_array do
         rate_id = next_rate_id.call
-        pull.read_object do |rate_key|
+        pull.read_object_keys do |rate_key|
           case rate_key
           when "provider_references"
             pull.read_array(UInt64) { |id| provider_sink.call(rate_id, id) }

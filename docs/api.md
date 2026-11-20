@@ -187,6 +187,14 @@ A normal root traversal advances through trailing JSON whitespace to EOF. Call
 does not consume unread values, complete an abandoned block, or validate a
 remaining document tail.
 
+Use `read_object_keys { |key| ... }` to traverse a native object when you only
+need its keys. Each callback must consume its value. The existing
+`read_object { |key, location| ... }` also computes a `Tuple(Int32, Int32)`
+for each key, even if the block ignores the second argument. For a stream
+with line or column positions beyond Int32, use `read_object_keys`, or call
+`location_i64` before `read_object_key` if you need the coordinates.
+Typed `Hash(K, V)` decoding uses 64-bit key-error locations.
+
 A normally completed nested `read_array` or `read_object` leaves the cursor on
 the following sibling or enclosing end event, so continue the enclosing
 traversal before calling `finish`. An exception, `break`, non-local return, or

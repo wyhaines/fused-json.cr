@@ -158,7 +158,7 @@ module FusedJSON
 
     private def parse_array : JSON::Any
       enter_container
-      enter_limit_container(object: false)
+      enter_limit_container(track_keys: false)
       advance_byte
       skip_whitespace
       enforce_available_byte
@@ -195,7 +195,7 @@ module FusedJSON
 
     private def parse_object : JSON::Any
       enter_container
-      enter_limit_container(object: true)
+      enter_limit_container(track_keys: false)
       advance_byte
       skip_whitespace
       enforce_available_byte
@@ -212,7 +212,9 @@ module FusedJSON
         raise_error("expected a string object key") unless current_byte? == 0x22_u8
         key_position = current_offset
         key = parse_string(key: true)
-        enforce_duplicate_key(key, key_position)
+        if duplicate_keys? && object.has_key?(key)
+          raise_error("duplicate object key", key_position)
+        end
         skip_whitespace
         enforce_available_byte
         raise_error("expected ':' after object key") unless consume_if(0x3a_u8)

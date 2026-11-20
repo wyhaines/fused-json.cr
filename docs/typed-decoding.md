@@ -56,7 +56,7 @@ end
 
 pull = FusedJSON::PullParser.new(%({"metadata":{"skip":true},"event":{"id":42,"name":"selected"}}))
 events = [] of SelectedEvent
-pull.read_object do |key|
+pull.read_object_keys do |key|
   key == "event" ? events << pull.read(SelectedEvent) : pull.skip
 end
 pull.finish
@@ -77,7 +77,7 @@ end
 
 pull = FusedJSON::PullParser.new(%({"events":[{"id":1},{"id":2}]}))
 ids = [] of UInt64
-pull.read_object do |key|
+pull.read_object_keys do |key|
   key == "events" ? pull.read_array(StreamedEvent) { |event| ids << event.id } : pull.skip
 end
 pull.finish

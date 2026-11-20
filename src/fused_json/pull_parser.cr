@@ -81,7 +81,7 @@ module FusedJSON
       )
     end
 
-    protected def initialize(source : String, *, max_nesting : Int, cache_keys : Bool,
+    protected def initialize(source : String?, *, max_nesting : Int, cache_keys : Bool,
                              limits : Limits, enforce_dynamic_numbers : Bool, prime : Bool,
                              max_token_bytes : Int? = nil)
       super(
@@ -289,7 +289,7 @@ module FusedJSON
 
     # Reads an object and yields each owned key. The block must consume the
     # associated value.
-    def read_object(& : String ->) : Nil
+    def read_object_keys(& : String ->) : Nil
       expect_kind(Kind::BeginObject)
       container_id = @frames.last.id
       read_next
@@ -327,13 +327,17 @@ module FusedJSON
       when .null?, .bool?, .int?, .float?, .string?
         advance
       when .begin_array?, .begin_object?
-        target_depth = @frames.size
-        while @frames.size >= target_depth
-          advance
-        end
+        skip_container_contents
         advance
       else
         raise_error("expected a JSON value", @byte_offset)
+      end
+    end
+
+    protected def skip_container_contents : Nil
+      target_depth = @frames.size
+      while @frames.size >= target_depth
+        advance
       end
     end
 
@@ -719,7 +723,7 @@ module FusedJSON
     private def enter_container(state : FrameState, kind : Kind) : Nil
       raise_error("nesting exceeds #{@max_nesting}") if @frames.size >= @max_nesting
       advance_byte
-      enter_limit_container(object: kind.begin_object?)
+      enter_limit_container(track_keys: kind.begin_object?)
       @next_frame_id += 1
       @frames << Frame.new(state, @next_frame_id)
       @kind = kind

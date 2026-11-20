@@ -30,7 +30,7 @@ end
 
 typed = FusedJSON::PullParser.new(%({"metadata":{"ignored":true},"record":{"id":7,"name":"selected"}}))
 records = [] of PullExampleRecord
-typed.read_object do |key|
+typed.read_object_keys do |key|
   key == "record" ? records << typed.read(PullExampleRecord) : typed.skip
 end
 typed.finish

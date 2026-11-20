@@ -21,6 +21,9 @@ module FusedJSON
     @token_offset : Int64
     @token_line : Int64
     @token_column : Int64
+    @discard_container_tokens = false
+    @discarded_escape_offset = 0_i64
+    @discarded_escape_column = 1_i64
     @token_active : Bool
     @token_buffer_start : Int32
     @token_length : Int32
@@ -72,7 +75,7 @@ module FusedJSON
       @token = IO::Memory.new(Math.min(buffer_size.to_i32, 256))
       @scratch_retention_limit = Math.max(@input_buffer.size * 2, MIN_SCRATCH_RETENTION)
       super(
-        "",
+        nil,
         max_nesting: max_nesting,
         cache_keys: cache_keys,
         limits: limits,
@@ -159,6 +162,17 @@ module FusedJSON
       @event_line = @stream_line
       @event_column = @stream_column
       @token_active = false
+    end
+
+    protected def skip_container_contents : Nil
+      # Duplicate checks materialize keys, and the dynamic reader converts numbers.
+      # Keep their raw tokens. The sibling lookahead runs after this method returns.
+      @discard_container_tokens = !duplicate_keys? && !@enforce_dynamic_numbers
+      begin
+        super
+      ensure
+        @discard_container_tokens = false
+      end
     end
 
     protected def release_token : Nil
@@ -625,8 +639,16 @@ module FusedJSON
       @stream_column += count
     end
 
+    private def mark_escape : Int64
+      if @discard_container_tokens
+        @discarded_escape_offset = @stream_offset
+        @discarded_escape_column = @stream_column
+      end
+      @stream_offset
+    end
+
     private def scan_escape : Nil
-      slash_offset = @stream_offset
+      slash_offset = mark_escape
       consume_token_ascii(0x5c_u8)
       enforce_available_byte
       byte = current_byte? || raise_error("unterminated string escape", slash_offset)
@@ -650,7 +672,7 @@ module FusedJSON
     end
 
     private def scan_escape_unlimited : Nil
-      slash_offset = @stream_offset
+      slash_offset = mark_escape
       consume_token_ascii_unlimited(0x5c_u8)
       byte = current_byte? || raise_error("unterminated string escape", slash_offset)
 
@@ -960,11 +982,18 @@ module FusedJSON
       return {@stream_line, @stream_column} if position == @stream_offset
       return {@event_line, @event_column} if position == @byte_offset
 
-      if (@kind.null? || @kind.bool?) && @byte_offset < position < @stream_offset
+      if !@token_active && (@kind.null? || @kind.bool?) && @byte_offset < position < @stream_offset
         return {@event_line, @event_column + position - @byte_offset}
       end
 
       if @token_active && @token_offset <= position <= @stream_offset
+        return {@token_line, @token_column} if position == @token_offset
+        if @discard_container_tokens
+          # Within a skipped string, retrospective syntax errors point into the
+          # current escape. Its valid prefix consists entirely of ASCII bytes.
+          return {@token_line, @discarded_escape_column + (position - @discarded_escape_offset)}
+        end
+
         line = @token_line
         column = @token_column
         index = 0
@@ -999,7 +1028,9 @@ module FusedJSON
     end
 
     private def finish_token : Nil
-      if @token_uses_scratch
+      if @discard_container_tokens
+        @token_length = discard_token_span
+      elsif @token_uses_scratch
         flush_token_span
         @token_length = @token.bytesize
       else
@@ -1008,7 +1039,17 @@ module FusedJSON
       enforce_token_size(@token_length)
     end
 
+    private def discard_token_span : Int32
+      length = @stream_offset - @token_offset
+      raise_error("token exceeds maximum supported size", @token_offset) if length > Int32::MAX
+      length.to_i32
+    end
+
     private def flush_token_span : Nil
+      if @discard_container_tokens
+        enforce_token_size(discard_token_span)
+        return
+      end
       count = @input_position - @token_buffer_start
       if count > 0
         if count > Int32::MAX - @token.bytesize

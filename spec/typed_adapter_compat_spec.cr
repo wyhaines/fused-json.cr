@@ -205,3 +205,32 @@ describe "typed JSON adapter compatibility" do
     circle.as(AdapterCompatCircle).radius.should eq(2.5)
   end
 end
+
+private struct LegacyObjectKeyLocations
+  getter locations = [] of Tuple(Int32, Int32)
+
+  def initialize(pull : JSON::PullParser)
+    pull.read_object do |_key, location|
+      @locations << location
+      pull.skip
+    end
+  end
+end
+
+private struct NestedIntegerKeyMap
+  include JSON::Serializable
+  getter values : Hash(Int32, Array(Hash(String, Bool)))
+end
+
+describe "typed map keys" do
+  it "preserves stdlib key conversion in nested hashes and types with their own JSON constructors" do
+    source = %q({"values":{"12":[{"ok":true}]}})
+    FusedJSON.from_json(IO::Memory.new(source), NestedIntegerKeyMap).values.should eq({12 => [{"ok" => true}]})
+    FusedJSON.from_json(%q({"x":0}), LegacyObjectKeyLocations).locations.should eq([{1, 2}])
+
+    error = expect_raises(JSON::ParseException, "Can't convert") do
+      FusedJSON::PullParser.new(IO::Memory.new(%({\n "bad":42})), buffer_size: 1).read(Hash(Int32, Int32))
+    end
+    error.location_i64.should eq({2_i64, 2_i64})
+  end
+end

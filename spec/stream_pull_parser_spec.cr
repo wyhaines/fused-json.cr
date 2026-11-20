@@ -591,3 +591,57 @@ describe "streaming FusedJSON::PullParser" do
     end
   end
 end
+
+private class SkipScratchProbe < FusedJSON::StreamingPullParser
+  getter peak_scratch = 0
+
+  private def refill : Bool
+    super.tap { @peak_scratch = Math.max(@peak_scratch, @token.bytesize) }
+  end
+end
+
+describe "skipping streaming containers" do
+  it "discards descendant token bytes and materializes the next event" do
+    key = "é" * 2048
+    escaped = "λ\\n" * 2048
+    number = "9" * 4096
+    pull = SkipScratchProbe.new(IO::Memory.new(%([{"#{key}":["#{escaped}",#{number}]},"tail\\n"])), buffer_size: 16)
+    pull.read_begin_array
+    pull.skip
+    pull.peak_scratch.should be <= 16
+    pull.read_string.should eq("tail\n")
+    pull.read_end_array
+    pull.finish
+  end
+
+  it "still enforces duplicate keys and byte budgets while skipping" do
+    { {FusedJSON::Limits.new(reject_duplicate_keys: true), %q([{"é":1,"\u00e9":2}])},
+     {FusedJSON::Limits.new(max_token_bytes: 9), %q(["abcdefghijk"])},
+     {FusedJSON::Limits.new(max_document_bytes: 7), %q([12345678])},
+    }.each do |limits, source|
+      expected = expect_raises(FusedJSON::ParseError) { FusedJSON::PullParser.new(source, limits: limits).skip }
+      actual = expect_raises(FusedJSON::ParseError) do
+        FusedJSON::PullParser.new(IO::Memory.new(source), buffer_size: 2, limits: limits).skip
+      end
+      {actual.byte_offset, actual.location_i64}.should eq({expected.byte_offset, expected.location_i64})
+    end
+  end
+
+  it "keeps Unicode error columns both while reading and while skipping after a literal" do
+    {"true", "false", "null"}.each do |literal|
+      { %q(\q), %q(\u00zz), %q(\uD900\uDDz0) }.each do |escape|
+        source = %([#{literal},"雪é#{escape}"])
+        expected = expect_raises(FusedJSON::ParseError) { FusedJSON.load(source) }
+        {1, 5, 128}.each do |buffer_size|
+          {FusedJSON::Limits::DEFAULT, FusedJSON::Limits.new(max_token_bytes: 64)}.each do |limits|
+            read = expect_raises(FusedJSON::ParseError) { FusedJSON.load(IO::Memory.new(source), buffer_size: buffer_size, limits: limits) }
+            skip = expect_raises(FusedJSON::ParseError) { FusedJSON::PullParser.new(IO::Memory.new(source), buffer_size: buffer_size, limits: limits).skip }
+            {read, skip}.each do |error|
+              {error.byte_offset, error.location_i64}.should eq({expected.byte_offset, expected.location_i64})
+            end
+          end
+        end
+      end
+    end
+  end
+end

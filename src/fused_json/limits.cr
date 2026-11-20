@@ -90,34 +90,15 @@ module FusedJSON
     @total_values : Int64
     @containers : Array(ContainerState)?
 
-    def self.required?(limits : Limits, max_token_bytes : Int32?, *, cache_keys : Bool) : Bool
-      !!(
-        max_token_bytes ||
-          limits.max_document_bytes ||
-          limits.max_typed_value_bytes ||
-          limits.max_total_values ||
-          limits.max_container_entries ||
-          (cache_keys && limits.max_cached_keys) ||
-          limits.reject_duplicate_keys
-      )
-    end
-
-    def self.traversal_required?(limits : Limits, max_token_bytes : Int32?) : Bool
-      !!(
-        max_token_bytes ||
-          limits.max_document_bytes ||
-          limits.max_typed_value_bytes ||
-          limits.max_total_values ||
-          limits.max_container_entries ||
-          limits.reject_duplicate_keys
-      )
+    # No token or selected value can be larger than its complete String source.
+    def self.binding_limit(limit : T?, known_size : Int32?) : T? forall T
+      limit unless limit && known_size && known_size <= limit
     end
 
     # String-backed scanners store this state in their source-retention slot,
     # so this reference must keep the memory behind ByteScanner#@bytes alive.
-    def initialize(@source_anchor : String, limits : Limits, *, @max_token_bytes : Int32?)
-      @max_document_bytes = limits.max_document_bytes
-      @max_typed_value_bytes = limits.max_typed_value_bytes
+    def initialize(@source_anchor : String, limits : Limits, *, @max_token_bytes : Int32?,
+                   @max_document_bytes : Int64?, @max_typed_value_bytes : Int64?)
       @max_total_values = limits.max_total_values
       @max_container_entries = limits.max_container_entries
       @max_cached_keys = limits.max_cached_keys
@@ -146,8 +127,8 @@ module FusedJSON
       true
     end
 
-    def enter_container(object : Bool) : Nil
-      @containers.try &.<< ContainerState.new(object && @reject_duplicate_keys)
+    def enter_container(track_keys : Bool) : Nil
+      @containers.try &.<< ContainerState.new(track_keys && @reject_duplicate_keys)
     end
 
     def leave_container : Nil

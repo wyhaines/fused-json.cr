@@ -79,3 +79,27 @@ rescue error : FusedJSON::ParseError
 else
   raise "expected max_document_bytes to reject the sentinel at byte #{prefix_bytes}"
 end
+
+# Object iteration and typed map conversion must also work at wide columns.
+objects = %q([{"key":7},{"1":{"2":3}},{"bad":0}])
+pull = FusedJSON::PullParser.new(LargeOffsetGeneratedIO.new(prefix_bytes, objects),
+  buffer_size: FusedJSON::StreamingPullParser::MAX_BUFFER_SIZE)
+pull.read_begin_array
+keys = [] of String
+pull.read_object_keys do |key|
+  keys << key
+  raise "wrong value" unless pull.read_int == 7
+end
+raise "wrong keys" unless keys == ["key"]
+raise "wrong map" unless pull.read(Hash(Int32, Hash(Int32, Int32))) == {1 => {2 => 3}}
+begin
+  pull.read(Hash(Int32, Int32))
+rescue error : JSON::ParseException
+  key_offset = objects.index(%q("bad")) || raise "missing fixture key"
+  unless error.location_i64 == {1_i64, prefix_bytes + key_offset + 1}
+    raise "wrong key conversion location: #{error.location_i64}"
+  end
+else
+  raise "expected invalid integer key"
+end
+puts "key iteration and typed maps passed beyond a 32-bit column"

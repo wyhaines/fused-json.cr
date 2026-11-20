@@ -4,6 +4,16 @@ All notable changes to FusedJSON are recorded here. The project follows semantic
 
 ## Unreleased
 
+- Native pull readers support `read_object_keys` for key-only traversal,
+  including streams with 64-bit columns. Typed hashes now report failed key
+  conversions at 64-bit locations.
+- Skipping a streamed container avoids buffering descendant tokens when they
+  are used only for syntax validation. Streaming error columns account for
+  UTF-8 characters in a string following a Boolean or null.
+- String readers can omit byte-limit checks when the complete input fits the
+  budget. Dynamic String object parsing uses the result table to detect
+  duplicate keys.
+
 - Framed readers accept numeric records that exactly fill their document-byte
   budget. NDJSON errors for a lone carriage return point to its character column.
 - Passing `JSON::Any` explicitly to a document reader applies the same typed

@@ -29,3 +29,27 @@ An initial integer change slowed streaming Int32 reads in all six pairs. The fin
 - Token and tree benchmark workers embed their harness hashes at compile time. New campaigns verify source identity within each benchmark family. Earlier receipts retain their original interpretation.
 
 The development checkout included nine additional experimental specs. On Crystal 1.21.0 and 1.22.3, its default and scalar-scanner suites each passed 302 examples. The portable-float and combined-fallback suites each passed 303. The standalone review changes passed all 293 default specs on Crystal 1.22.3. The documentation check compiled 17 examples, Ameba reported zero failures, and the streaming offset check reported the expected byte 4,294,967,333.
+
+## Second review at `7cc7d17`
+
+Skipping a streamed container holding a 1 MiB string took 193 µs on the Dell, down from 413 µs. Managed allocation fell from 4.00 MiB to 32.9 KiB per parse. The reader validates every byte and keeps the next sibling available to the caller. It retains raw tokens when duplicate-key checks or dynamic number conversion require them.
+
+| Workload | Before (µs) | After (µs) | Paired speedup | Managed bytes per parse, before → after |
+| --- | ---: | ---: | ---: | ---: |
+| 1,024 objects, exact document cap | 320.98 | 233.75 | 1.370× | 286,512 → 286,321 |
+| 4,096 integers, exact document cap | 180.47 | 114.00 | 1.578× | 274,768 → 274,577 |
+| 1,024 objects, duplicate rejection | 343.03 | 308.35 | 1.116× | 434,066 → 286,610 |
+| Select an integer after a 64 KiB field | 159.73 | 10.17 | 15.705× | 337 → 336 |
+| Skip a container holding a 1 MiB string, IO | 413.01 | 193.17 | 2.132× | 4,195,682 → 33,681 |
+| Read 1,024 entries into a typed hash | 136.04 | 132.37 | 1.029× | 91,216 → 91,216 |
+| 1,024 objects, default String reader | 229.21 | 232.66 | 0.981× | 286,321 → 286,321 |
+| 4,096 integers, default String reader | 114.87 | 114.41 | 1.006× | 274,577 → 274,577 |
+| Materialize 256 escaped strings, IO | 118.89 | 120.89 | 0.984× | 75,584 → 75,601 |
+
+The selection workload uses the existing `read_object` on the baseline and the new `read_object_keys` on the candidate. The latter skips the location scan when the caller only wants keys. Existing callers of `read_object` still receive 32-bit coordinates. Typed hashes use 64-bit locations for key conversion errors, including nested hashes in a user-defined model.
+
+The capped workloads set the byte limit to the size of the complete String. The baseline checks the limit throughout traversal. The new reader can establish at construction that it fits. Duplicate rejection now checks the keys already present in the dynamic result object. The uncapped integer control measured close to baseline. The default object and escaped-stream controls took about 2% longer.
+
+Each row uses six alternating pairs on the same Dell and compiler as the first review. All 108 measurements passed the host checks. [Raw measurements, worker, runtime patch and reproduction commands](benchmark-data/parser-review-7cc7d17.tar.gz)
+
+The before-and-after fixture comparison matched acceptance, exception class, byte offset and line/column for 5,088 combinations across the 318 JSONTestSuite fixtures. The generated 4 GiB stream check also exercised key-only iteration, nested typed hashes and the column reported for an invalid map key.

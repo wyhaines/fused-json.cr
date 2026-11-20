@@ -43,11 +43,17 @@ module FusedJSON
     end
   end
 
+  # :nodoc:
+  module HashPullReader
+  end
+
   # Shared nominal stdlib adapter specialized for one concrete native reader.
   # This unbounded form serves whole-document `from_json` without cursor-boundary
   # bookkeeping on its hot path. Concrete factories duplicate a valid
   # initialized prototype so `super("")` runs only once per adapter class.
   private abstract class NativeJSONPullAdapter(N) < JSON::PullParser
+    include HashPullReader
+
     {% unless FusedJSON::PullParser::Kind::Null == JSON::PullParser::Kind::Null &&
                 FusedJSON::PullParser::Kind::Bool == JSON::PullParser::Kind::Bool &&
                 FusedJSON::PullParser::Kind::Int == JSON::PullParser::Kind::Int &&
@@ -720,5 +726,28 @@ module FusedJSON
       adapter.finish_value
       value
     end
+  end
+end
+
+# Crystal's Hash reader asks the pull parser for 32-bit object key locations.
+# Keep stdlib key conversion and use the native coordinates on these adapters.
+class Hash(K, V)
+  # :nodoc:
+  def self.new(pull : FusedJSON::HashPullReader)
+    result = new
+    pull.read_begin_object
+    until pull.kind.end_object?
+      key = {% if K == String %}
+              K.from_json_object_key?(pull.read_object_key)
+            {% else %}
+              location = pull.location_i64
+              raw_key = pull.read_object_key
+              K.from_json_object_key?(raw_key) ||
+                raise JSON::ParseException.new("Can't convert #{raw_key.inspect} into #{K}", *location)
+            {% end %}
+      result[key] = V.new(pull)
+    end
+    pull.read_end_object
+    result
   end
 end
