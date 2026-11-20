@@ -1,8 +1,7 @@
 # Security Policy
 
-Security fixes are provided for the latest published `0.x` release. The main
-branch receives fixes first; older pre-1.0 releases are not maintained in
-parallel.
+Security fixes are provided for the latest published release. Fixes land on
+`main` first and are included in a subsequent release.
 
 Report suspected vulnerabilities privately through the repository's GitHub
 Security Advisory form. If that is unavailable, email `wyhaines@gmail.com`.

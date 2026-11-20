@@ -1,6 +1,6 @@
 # Typed Decoding
 
-Typed decoding is experimental. `FusedJSON.from_json` consumes one complete
+`FusedJSON.from_json` consumes one complete
 `String` or `IO` document; `PullParser#read(T)` decodes one selected value at
 the current cursor. Both construct the requested Crystal type without first
 building a `JSON::Any` tree:

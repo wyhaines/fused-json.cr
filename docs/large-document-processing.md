@@ -148,9 +148,8 @@ This means unmaterialized or skipped pull numbers become range neutral.
 `float_value` still require a finite `Float64`. Reading an integer through
 `read_float` first applies the checked `Int64` conversion, matching the current
 Crystal pull behavior. `load` and `parse` keep their existing `JSON::Any`
-behavior and reject values outside those domains. This is a pre-1.0 revision
-to the experimental pull contract and must be documented in the changelog and
-migration guide.
+behavior and reject values outside those domains. See the
+[migration guide](migration.md) for the change to pull numbers in 0.3.0.
 
 Raw-number reads never perform a numeric conversion. They still require a
 grammar-valid JSON number, respect `max_token_bytes` on streaming input, and

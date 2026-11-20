@@ -1,6 +1,6 @@
 # Public API and Compatibility
 
-FusedJSON's supported pre-1.0 surface is the `FusedJSON` facade,
+FusedJSON's supported 1.x interface consists of the `FusedJSON` facade,
 `FusedJSON::Limits`, `FusedJSON::ParseError`, `FusedJSON::PullParser`,
 `FusedJSON::PullParser::Kind`, `FusedJSON::DocumentFraming`, and
 `FusedJSON::DocumentReader(T)`. The shard name and require path are
@@ -245,7 +245,7 @@ nightly is a non-gating early-warning target, not a supported release. A
 minimum-version increase will be recorded in the changelog and made only in a
 minor release.
 
-During `0.x`, patch releases preserve documented APIs and behavior. Minor
-releases may revise the experimental typed and pull surfaces with changelog and
-migration notes. The dynamic facade, option meanings, and error-location
-contract are intended to remain source-compatible throughout `0.x`.
+Patch and minor releases within 1.x preserve the documented entry points,
+option meanings, numeric domains and error locations. Minor releases can add
+APIs. Incompatible changes to the documented interface require a major
+release. Exact diagnostic wording and internal implementation types may change.

@@ -3,14 +3,15 @@
 
 # FusedJSON
 
-FusedJSON is an experimental, strict JSON parser for Crystal. It provides a fast in-memory `String` path and incremental `IO` parsing without first copying the complete input. Both paths avoid the standard parser's intermediate lexer.
+FusedJSON is a strict JSON parser for Crystal 1.21 and later 1.x releases.
+It reads strings and streams, builds `JSON::Any` trees, and decodes typed
+values. A forward-only pull reader lets you process large documents a value
+at a time. Reusable readers handle NDJSON and whitespace-separated documents.
 
-Version 0.4 adds reusable readers for NDJSON and whitespace-separated JSON
-streams. Version 0.3 added typed reads at a pull cursor, non-accumulating typed
-arrays, exact raw-number access, and one resource-limit policy across dynamic,
-typed, pull, and streaming entry points. All paths enforce strict JSON,
-validated UTF-8, Unicode escapes, and nesting limits. Crystal 1.21 through the
-current stable 1.x release is supported.
+On a Dell Core i9-12900HK, streaming the complete 17.61 GiB Aetna file with
+the default collector took **203 seconds** with the 1.0 parser, down from
+242 seconds with v0.4.0. Both times include single-core gzip decompression.
+[Benchmark results and reproduction instructions](docs/large-file-streaming-performance.md)
 
 ## Installation
 
@@ -20,7 +21,7 @@ Add the shard to your application's `shard.yml`:
 dependencies:
   fused_json:
     github: wyhaines/fused-json.cr
-    version: ~> 0.4.0
+    version: ~> 1.0.0
 ```
 
 Run `shards install`, then `require "fused_json"` in application code.
@@ -102,7 +103,7 @@ end
 See the compile-checked [typed example](examples/typed.cr) for a runnable
 `String` and `IO` decode.
 
-This API is experimental and requires the requested type to consume a `JSON::PullParser`. See the [typed decoding guide](docs/typed-decoding.md) for the tested feature matrix, `BigInt`, `BigFloat`, and `BigDecimal` support through `big/json`, and current limitations.
+The requested type must accept a `JSON::PullParser` in its constructor. See the [typed decoding guide](docs/typed-decoding.md) for the tested feature matrix, `BigInt`, `BigFloat`, and `BigDecimal` support through `big/json`, and current limitations.
 
 ### Pull parsing
 
@@ -288,7 +289,7 @@ The next planned work is:
 - Improve streaming performance by profiling buffer refills, token scanning,
   and escaped-string decoding. The [specification](docs/streaming-performance.md)
   and [measurement protocol](docs/streaming-performance-protocol.md) define the
-  workloads and acceptance criteria. Version 0.4 includes a leaner `IO`
+  workloads and acceptance criteria. Version 0.4 introduced a leaner `IO`
   escaped-string decoder that passed screening; its formal guardrail and
   latency campaigns are still to be run. An eventless `IO` tree builder was
   tested, but its gains were inconsistent and it made escaped-string workloads
@@ -297,9 +298,6 @@ The next planned work is:
   also needs testing on real 32-bit and big-endian hardware. The public float
   fallback will remain available until the compiler-specific fast path can use
   a stable upstream API.
-- Refine the experimental typed and pull APIs using feedback from real
-  applications. Version 1.0 will define stable contracts for limits, numbers,
-  errors, and compiler compatibility.
 
 FusedJSON will stay focused on strict JSON parsing. JSON generation, JSON5,
 Ruby-specific Oj modes, and a rewrite in C are not planned.

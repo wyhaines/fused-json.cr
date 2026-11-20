@@ -1,8 +1,14 @@
 # Changelog
 
-All notable changes to FusedJSON are recorded here. The project follows semantic versioning, with the pre-1.0 compatibility policy described in [`docs/api.md`](docs/api.md).
+All notable changes to FusedJSON are recorded here. The project follows semantic versioning, with the public API compatibility policy described in [`docs/api.md`](docs/api.md).
 
 ## Unreleased
+
+## 1.0.0 - 2026-11-19
+
+Version 1.0 establishes the documented dynamic, typed, pull, and framed
+reader APIs as the supported 1.x interface. Existing 0.4 callers can keep
+their current calls and options. [Public API and compatibility](docs/api.md)
 
 - Faster full-document streaming reads for compact JSON, including ordinary
   strings and arrays. [Real-file benchmarks](docs/large-file-streaming-performance.md)

@@ -30,3 +30,5 @@ protection rules.
 
 For a prerelease version containing `-`, the workflow marks the GitHub release
 as a prerelease. Never rerun a successful version; release tags are immutable.
+
+The [1.0.0 release verification](release-1.0.0.md) records the procedure for this release.

@@ -1,6 +1,6 @@
 # Repeated-document streams
 
-Status: implemented as an experimental API in 0.4.0. The completed
+The framed reader was introduced in 0.4.0 and is part of the 1.x public API. The
 [implementation plan](repeated-document-plan.md) records its validation and
 performance requirements.
 

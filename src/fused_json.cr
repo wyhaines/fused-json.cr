@@ -14,7 +14,7 @@ require "./fused_json/document_reader"
 
 # A fast, strict JSON parser for Crystal.
 module FusedJSON
-  VERSION = "0.4.0"
+  VERSION = "1.0.0"
 
   # Parses *source* into Crystal's standard `JSON::Any` representation.
   def self.load(source : String, *, max_nesting : Int = 512,

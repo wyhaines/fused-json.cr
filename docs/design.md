@@ -1,6 +1,6 @@
 # Parser Design Specification
 
-Status: working specification for the pre-1.0 `0.x` implementation.
+This specification describes the 1.x implementation.
 When code, tests, and this document disagree, correctness bugs should be fixed
 first and the intended behavior clarified here in the same change.
 
@@ -43,7 +43,7 @@ result model.
 
 ## Public Contract
 
-The final pre-1.0 names are the `fused_json` shard and require path and the
+The public names are the `fused_json` shard and require path and the
 `FusedJSON` namespace. The name describes the direct scan-and-build paths
 without implying that this strict Crystal-native subset is a drop-in Ruby Oj
 port. The supported surface is the module facade, `Limits`, `ParseError`,
@@ -111,7 +111,7 @@ increased allocation by 9-10% and time by 22-29%; see the
 [key-cache results](post-0.2-key-cache-results.md). No repetition heuristic scans
 the input or changes policy during a parse.
 
-The experimental typed entry point is:
+Use this entry point for typed decoding.
 
 ```text
 FusedJSON.from_json(source : String, type : T.class, *,
@@ -132,7 +132,7 @@ tree. The compatibility surface and deferred types are listed in
 [`typed-decoding.md`](typed-decoding.md). The internal stdlib adapter is not a
 public API.
 
-The experimental pull API is:
+The pull reader exposes these operations.
 
 ```text
 FusedJSON::PullParser.new(source : String, *, max_nesting : Int = 512,
@@ -283,7 +283,7 @@ preceding input is valid UTF-8. For an `IO` configured with another encoding,
 byte offsets refer to its decoded UTF-8 stream.
 
 The exception type and location fields are API. Exact English messages remain
-diagnostic and may change before 1.0. Malformed input must never cause an
+diagnostic and may change between releases. Malformed input must never cause an
 out-of-bounds read, arithmetic overflow, hang, or process crash.
 
 ## Security and Resource Limits
