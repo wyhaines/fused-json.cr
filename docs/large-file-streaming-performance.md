@@ -2,6 +2,8 @@
 
 On the complete Aetna in-network file, the optimized parser used 27.0% less CPU time than `7d48dc5` with Boehm and 26.1% less with gcry. Including single-core gzip decompression, wall time fell 18.5% and 17.6%, respectively.
 
+The [original Aetna baseline](aetna-streaming-benchmark.md) compares v0.4.0 and the previous main before the streaming optimizations.
+
 ## Aetna, whole file
 
 The input was `2026-10-05_pl-5b7-tr25_Aetna-Life-Insurance-Company.json.gz`, SHA-256 `355e2c8f25692c58f7a5b14fc01a5599e6dbf676ea6332f1ff813dbfb07fecec`. The 1,050,199,136-byte gzip expanded to 18,904,745,400 bytes. Every run found 67,237,517 negotiated rate keys and returned checksum `aac3a2613c1340b6`.
